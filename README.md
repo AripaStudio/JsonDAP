@@ -44,4 +44,4 @@ All public methods are static and accessible via the `JsonAP` class, prefixed wi
 
 ## Downloads
 
-Compiled binaries (DLLs for Windows, SOs for Linux) of the library will be made available in the Releases section of this GitHub repository. You can download the pre-built files from there for direct use in your projects.
+Compiled binaries (DLLs for Windows) of the library will be made available in the Releases section of this GitHub repository. You can download the pre-built files from there for direct use in your projects.
