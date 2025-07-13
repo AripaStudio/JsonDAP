@@ -506,6 +506,7 @@
  </Config>
  <Folder name="JsonDAP">
   <File path="CoreAP.d" />
+  <File path="dub.json" />
   <File path="FileAP.d" />
   <File path="JsonDAP.d" />
   <File path="PublicCodeOtherCode.d" />
