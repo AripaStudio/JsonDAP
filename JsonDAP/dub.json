@@ -11,13 +11,13 @@
     "release": {
       "buildOptions": [ "releaseMode", "optimize", "inline" ],
       "targetType": "dynamicLibrary",
-      "targetPath": "bin/Release" 
+      "targetPath": "bin/release" 
     },
     "debug": {
       "buildOptions": [ "debugMode" ],
       "dflags": [ "-boundscheck=off" ],
       "targetType": "dynamicLibrary",
-      "targetPath": "bin/Debug" 
+      "targetPath": "bin/debug" 
     }
   }
 }
