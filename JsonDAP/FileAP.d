@@ -117,3 +117,27 @@ public static class CL_FileAP
 
 
 }
+
+public static class CL_FileAP_Edit
+{
+	public static bool updateJsonValue(V)(string filePath , string jsonPath , V value)
+	{
+
+	}
+
+	public static bool addJsonItem(T)(string filePath , string jsonPath , T item)
+	{
+
+	}
+
+	static bool removeJsonItem(string filePath, string jsonPath)
+	{
+
+	}
+
+	static bool mergeJson(string filePath, string jsonContentToMerge, bool overwriteExisting = true)
+	{
+
+	}
+
+}

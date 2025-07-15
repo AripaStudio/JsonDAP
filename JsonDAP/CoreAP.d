@@ -177,6 +177,7 @@ public class CL_CoreAP
 		}
 	}
 
+	
 
 
 
