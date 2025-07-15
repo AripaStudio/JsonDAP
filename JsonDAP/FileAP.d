@@ -16,6 +16,7 @@ alias Optional = Nullable;
 public static class CL_FileAP
 {
 	//Fix Deserialization and serialize and Other
+
 	public static Optional!T readJsonFile(string filePath)(){
 		try{
 			enforce(exists(filePath)) , new FileException("File not found.",filePath);
@@ -87,7 +88,6 @@ public static class CL_FileAP
 	}
 
 	//اضافه شود :
-
 	public static bool Exists(string filePath)
 	{
 		if(filePath.empty)
@@ -129,24 +129,100 @@ public static class CL_FileAP
 
 
 //اضافه بشه :
+
 public static class CL_FileAP_Edit
 {
-	public static bool updateJsonValue(V)(string filePath , string jsonPath , V value)
+
+
+
+	//not Complete : 
+	public static bool updateJsonValueOBJECT(V)(string filePath , string jsonPath , V value)
 	{
 		if(!existsFile(filePath))
 		{
 			return false;
 		}
-		auto readFile = readJsonFile!V(filePath);
+		auto readFile = readJsonFile!JSONValue(filePath);
 		if(!readFile.isSet)
 		{
 			return false;
 		}
+
+		string[] ways  = jsonPath.split(".");
+		if(ways.length == 0)
+		{
+			return false;
+		}
+		int intWays = ways.length;
+
+		JSONValue rootJson = readFile.get;		
+		JSONValue currentJsonNodeToTraverse = rootJson;
 		
+		if(rootJson.type != JSONType.OBJECT)
+		{
+			return false;	
+		}
+		
+		string finalKey = ways[intWays - 1];
+		byte checkComplete = 1;
+
+		for(int i = 0; i < intway - 1; i++)
+		{
+			string currentKey = ways[i];
+
+			if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+			{
+				return false;
+			}
+
+			if(!(currentKey in currentJsonNodeToTraverse.object))
+			{
+				return false;
+			}
+
+			currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentKey];
+
+			
+
+			if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+			{
+				return false;
+			}
+			
+			if(i == finalKey && currentJsonNodeToTraverse[finalKey].type == JSONType.OBJECT)
+			{
+				auto convertValue = serializeToJson(value);
+				currentJsonNodeToTraverse[intWays] = convertValue;
+								
+				
+				auto writeFile = writeJsonFile(filePath , rootJson);
+				if(!writeFile)
+				{
+					return false;
+				}
 
 
-		
-		
+				checkComplete = 0;
+				
+			}
+			
+
+
+		}
+		if(checkComplete == 0)
+		{
+			return true;
+		}else{
+			return false;
+		}
+						
+		return false;
+	}
+
+
+	public static bool updateJsonValueARRAY(V)(string filePath , string jsonPath , V value)
+	{
+		return false;
 	}
 
 	public static bool addJsonItem(T)(string filePath , string jsonPath , T item)
@@ -167,6 +243,7 @@ public static class CL_FileAP_Edit
 }
 
 //اضافه شود :
+
 public static class CL_File_JSON
 {
 	public static Optional!(T[]) deserializeJsonArray(T)(string jsonContent)
@@ -199,13 +276,14 @@ public static class CL_File_JSON
 		{
 			throw new JSONExceptionAP("Error during JSON array element conversion: " ~ e.msg);
 		}
+		return Optional!(T[]).init;
 	}
 
 	public static Optional!(T) deserializeJson(T)(string jsonContent)
 	{
 		try{
 			JSONValue val = parseJsonString(jsonContent);
-			if(val.type = JSONType.OBJECT)
+			if(val.type == JSONType.OBJECT)
 			{
 				T obj;
 				auto convertedItemOptional = convertJsonValueToT!T(val);
@@ -225,6 +303,28 @@ public static class CL_File_JSON
 		{
 			throw new JSONExceptionAP("Error during JSON  element conversion: " ~ e.msg);
 		}
+		return Optional!(T).init;
+	}
+
+
+	public static JSONValue serializeToJson(T)(T obj)
+	{
+		try{
+			JSONValue jsonVal = serializeTToJsonValue!T(obj);
+			return jsonVal.toString();
+		}catch (Exception e) {
+            throw new JsonOperationExceptionAP("Failed to serialize object to JSON string: " ~ e.msg, __FILE__, __LINE__, e);
+        }
+	}
+
+	public static  JSONValue[] serializeToJsonArray(T)(T data)
+	{
+		try{
+			JSONValue jsonVal = serializeTToJsonValue!T(obj);
+			return jsonVal.toPrettyString();
+		}catch (Exception e) {
+            throw new JsonOperationExceptionAP("Failed to serialize object to pretty JSON string: " ~ e.msg, __FILE__, __LINE__, e);
+        }
 	}
 
 }

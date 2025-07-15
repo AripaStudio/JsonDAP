@@ -183,6 +183,7 @@ public class CL_CoreAP
 
 
 	//اضافه شود :
+
 	public static JSONType getJsonValueType(JSONValue jsonValue)
 	{
 	
@@ -195,6 +196,7 @@ public class CL_CoreAP
 
 
 //اضافه شود :
+
 public static class  CL_CoreAP_Conv
 {
 	public static Optional!T convertJsonValueToT(T)(JSONValue jsonValue) {
@@ -276,6 +278,62 @@ public static class  CL_CoreAP_Conv
 	    } else {
 	        static assert(0, "Unsupported type " ~ T.stringof ~ " for JSON conversion.");
 	    }
+	}
+
+
+	public static JSONValue serializeTToJsonValue(T)(T obj){
+		try{			
+			static if(isIntegral!T || isFloating!T || isBoolean!T)
+			{
+				return JSONValue(obj);
+			}else static if(is(T == string))
+			{
+				return JSONvalue(obj);
+			}else static if(is(T : Optional!U , U))
+			{
+				if(obj.isSet)
+				{
+					return serializeTToJsonValue!U(obj.get);
+				}else
+				{
+					return JSONValue.init;
+				}
+			}else static if (isArray!T)
+			{
+				alias ElementType = ElementType!T;
+				JSONValue[] jsonArray;
+				foreach(o; obj)
+				{
+					jsonArray ~= serializeTToJsonValue!ElementType(o);
+				}
+				return JSONValue(jsonArray);
+			}else static if(isClass!T || isStruct!T)
+			{
+			    JSONValue jsonobject;
+				jsonobject.object = new JSONValue.Object;
+
+				foreach(memeber; __traits(allMembers , T))
+				{
+					string fieldName = member;
+					auto fieldValue = __traits(getField , obj , member);
+
+					JSONValue memeberJsonValue = serializeTToJsonValue!(typeof(fieldValue)(fieldValue));
+
+					jsonobject[fieldName] = memeberJsonValue;
+				}
+			}
+			else
+			{
+				static assert(0, "Unsupported type " ~ T.stringof ~ " for JSON serialization.");
+			}
+
+		}catch(JSONException e)
+		{	
+			throw new JSONExcptionAP("Error to Seralization JSON : " ~ e.msg);
+		}catch(Exception e)
+		{
+			throw new JSONExcptionAP("Error during data = T  element conversion : " ~ e.msg);
+		}
 	}
 }
 
