@@ -82,7 +82,7 @@ public static class CL_FileAP
 		}
 	}
 
-	private bool Exists(string filePath)
+	public static bool Exists(string filePath)
 	{
 		if(filePath.empty)
 		{
