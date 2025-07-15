@@ -11,6 +11,7 @@ alias Optional = Nullable;
 
 
 //ایکسپشن ها به لیست ایکسپورت ها اضافه شود 
+
 public static class JsonOperationExceptionAP : Exception{
 	this(string msg, string file = __FILE__ , size_t line = __LINE__ , Throwable next = null) pure{
 		super(msg,file,line,next);

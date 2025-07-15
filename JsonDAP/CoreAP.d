@@ -7,6 +7,7 @@ import std.conv;
 import std.json;
 import std.stdio;
 import std.array;
+import std.string;
 import std.traits;
 import std.exception;
 import std.typecons;
@@ -182,8 +183,10 @@ public class CL_CoreAP
 
 
 	//اضافه شود :
+
 	public static JSONType getJsonValueType(JSONValue jsonValue)
 	{
+	
 		return jsonValue.type;
 	}
 	
@@ -193,10 +196,16 @@ public class CL_CoreAP
 
 
 //اضافه شود :
+
 public static class  CL_CoreAP_Conv
 {
 	public static Optional!T convertJsonValueToT(T)(JSONValue jsonValue) {
-	    auto typeJsonValue = jsonValue.type;
+		if(jsonValue == null)
+		{
+			 throw new JSONConvertExceptionAP("input Jsonvalue is Null " ~ T.stringof ~ ", Is Null" , __FILE__ , __LINE__);
+		}
+	    auto typeJsonValue = getJsonValueType(jsonValue);
+		
 
 	    static if (isIntegral!T || isFloating!T || isBoolean!T || is(T == string)) {
 	        switch(typeJsonValue) {
@@ -208,19 +217,19 @@ public static class  CL_CoreAP_Conv
 	                static if (is(T == string)) {
 	                    return Optional!T(jsonValue.stringValue);
 	                } else {
-	                    throw new JSONConvertExceptionAP("Expected numeric/boolean JSON type for " ~ T.stringof ~ ", got string");
+	                    throw new JSONConvertExceptionAP("Expected numeric/boolean JSON type for " ~ T.stringof ~ ", got string", __FILE__ , __LINE__);
 	                }
 	            case JSONType.TRUE:
 	            case JSONType.FALSE:
 	                static if (is(T == bool)) {
 	                    return Optional!T(jsonValue.boolean);
 	                } else {
-	                    throw new JSONConvertExceptionAP("Expected numeric/string JSON type for " ~ T.stringof ~ ", got boolean");
+	                    throw new JSONConvertExceptionAP("Expected numeric/string JSON type for " ~ T.stringof ~ ", got boolean", __FILE__ , __LINE__);
 	                }
 	            case JSONType.NULL:
 	                return Optional!T.init;
 	            default:
-	                throw new JSONConvertExceptionAP("Unsupported JSON type for primitive conversion: " ~ typeJsonValue.to!string);
+	                throw new JSONConvertExceptionAP("Unsupported JSON type for primitive conversion: " ~ typeJsonValue.to!string , __FILE__ , __LINE__);
 	        }
 	    } else static if (isArray!T) {
 	        alias ElementType = ElementType!T;
@@ -231,12 +240,14 @@ public static class  CL_CoreAP_Conv
 	                if (convertedItem.isSet) {
 	                    result ~= convertedItem.get;
 	                } else {
-	                    throw new JSONConvertExceptionAP("Failed to convert array element to " ~ ElementType.stringof);
+	                    static if (!is(ElementType : Optional!U, U)) {
+							throw new JSONConvertException("Failed to convert array element to " ~ ElementType.stringof , __FILE__ , __LINE__);
+                        }
 	                }
 	            }
 	            return Optional!T(result);
 	        } else {
-	            throw new JSONConvertExceptionAP("Expected array JSON type for " ~ T.stringof ~ ", got " ~ typeJsonValue.to!string);
+	            throw new JSONConvertExceptionAP("Expected array JSON type for " ~ T.stringof ~ ", got " ~ typeJsonValue.to!string , __FILE__ , __LINE__);
 	        }
 	    } else static if (isStruct!T || isClass!T) {
 	        if (typeJsonValue == JSONType.OBJECT) {
@@ -255,7 +266,7 @@ public static class  CL_CoreAP_Conv
 	                            mixin("obj." ~ fieldName ~ " = convertedMember.get;");
 	                        } else {
 	                            static if (!is(FieldType : Optional!U, U)) {
-	                                throw new JSONConvertExceptionAP("Failed to convert field '" ~ fieldName ~ "' to " ~ FieldType.stringof);
+	                                throw new JSONConvertExceptionAP("Failed to convert field '" ~ fieldName ~ "' to " ~ FieldType.stringof , __FILE__ , __LINE__);
 	                            }
 	                        }
 	                    } else {
@@ -266,7 +277,7 @@ public static class  CL_CoreAP_Conv
 	            }
 	            return Optional!T(obj);
 	        } else {
-	            throw new JSONConvertExceptionAP("Expected object JSON type for " ~ T.stringof ~ ", got " ~ typeJsonValue.to!string);
+	            throw new JSONConvertExceptionAP("Expected object JSON type for " ~ T.stringof ~ ", got " ~ typeJsonValue.to!string , __FILE__ , __LINE__);
 	        }
 	    } else {
 	        static assert(0, "Unsupported type " ~ T.stringof ~ " for JSON conversion.");

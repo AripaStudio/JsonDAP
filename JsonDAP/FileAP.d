@@ -82,6 +82,7 @@ public static class CL_FileAP
 		}
 	}
 
+	//اضافه شود :
 	public static bool Exists(string filePath)
 	{
 		if(filePath.empty)
@@ -123,6 +124,7 @@ public static class CL_FileAP
 
 
 //اضافه بشه :
+
 public static class CL_FileAP_Edit
 {
 	public static bool updateJsonValue(V)(string filePath , string jsonPath , V value)
@@ -152,6 +154,7 @@ public static class CL_FileAP_Edit
 }
 
 //اضافه شود :
+
 public static class CL_File_JSON
 {
 	public static Optional!(T[]) deserializeJsonArray(T)(strign jsonContent)
