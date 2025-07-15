@@ -9,12 +9,35 @@ import std.string;
 
 alias Optional = Nullable;
 
-public static class JsonOperationException : Exception{
+
+//ایکسپشن ها به لیست ایکسپورت ها اضافه شود 
+public static class JsonOperationExceptionAP : Exception{
 	this(string msg, string file = __FILE__ , size_t line = __LINE__ , Throwable next = null) pure{
 		super(msg,file,line,next);
 	}
 }
 
+public static class FileOperationExceptionAP : Exception{
+	string filePath;
+	this(string msg, string filePath, string file = __FILE__, int line = __LINE__, Throwable next = null) {
+        super(msg, file, line, next);
+        this.filePath = filePath;
+    }
+}
+
+public static class JSONExceptionAP : Exception {
+    this(string msg, string file = __FILE__, int line = __LINE__, Throwable next = null) {
+        super(msg, file, line, next);
+    }
+}
+
+public static class JSONConvertExceptionAP : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__)
+    {
+        super(msg, file, line);
+    }
+}
 public static class CL_PublicCodeOtherCode
 {
 	public static isDigitAP(dchar c)
