@@ -183,7 +183,6 @@ public class CL_CoreAP
 
 
 	//اضافه شود :
-
 	public static JSONType getJsonValueType(JSONValue jsonValue)
 	{
 	
@@ -196,14 +195,9 @@ public class CL_CoreAP
 
 
 //اضافه شود :
-
 public static class  CL_CoreAP_Conv
 {
 	public static Optional!T convertJsonValueToT(T)(JSONValue jsonValue) {
-		if(jsonValue == null)
-		{
-			 throw new JSONConvertExceptionAP("input Jsonvalue is Null " ~ T.stringof ~ ", Is Null" , __FILE__ , __LINE__);
-		}
 	    auto typeJsonValue = getJsonValueType(jsonValue);
 		
 
@@ -217,19 +211,19 @@ public static class  CL_CoreAP_Conv
 	                static if (is(T == string)) {
 	                    return Optional!T(jsonValue.stringValue);
 	                } else {
-	                    throw new JSONConvertExceptionAP("Expected numeric/boolean JSON type for " ~ T.stringof ~ ", got string", __FILE__ , __LINE__);
+	                    throw new JSONConvertExceptionAP("Expected numeric/boolean JSON type for " ~ T.stringof ~ ", got string", __FILE__ , __LINE__ , e);
 	                }
 	            case JSONType.TRUE:
 	            case JSONType.FALSE:
 	                static if (is(T == bool)) {
 	                    return Optional!T(jsonValue.boolean);
 	                } else {
-	                    throw new JSONConvertExceptionAP("Expected numeric/string JSON type for " ~ T.stringof ~ ", got boolean", __FILE__ , __LINE__);
+	                    throw new JSONConvertExceptionAP("Expected numeric/string JSON type for " ~ T.stringof ~ ", got boolean", __FILE__ , __LINE__ , e);
 	                }
 	            case JSONType.NULL:
 	                return Optional!T.init;
 	            default:
-	                throw new JSONConvertExceptionAP("Unsupported JSON type for primitive conversion: " ~ typeJsonValue.to!string , __FILE__ , __LINE__);
+	                throw new JSONConvertExceptionAP("Unsupported JSON type for primitive conversion: " ~ typeJsonValue.to!string , __FILE__ , __LINE__ , e);
 	        }
 	    } else static if (isArray!T) {
 	        alias ElementType = ElementType!T;
@@ -241,13 +235,13 @@ public static class  CL_CoreAP_Conv
 	                    result ~= convertedItem.get;
 	                } else {
 	                    static if (!is(ElementType : Optional!U, U)) {
-							throw new JSONConvertException("Failed to convert array element to " ~ ElementType.stringof , __FILE__ , __LINE__);
+							throw new JSONConvertException("Failed to convert array element to " ~ ElementType.stringof , __FILE__ , __LINE__ ,e);
                         }
 	                }
 	            }
 	            return Optional!T(result);
 	        } else {
-	            throw new JSONConvertExceptionAP("Expected array JSON type for " ~ T.stringof ~ ", got " ~ typeJsonValue.to!string , __FILE__ , __LINE__);
+	            throw new JSONConvertExceptionAP("Expected array JSON type for " ~ T.stringof ~ ", got " ~ typeJsonValue.to!string , __FILE__ , __LINE__ , e);
 	        }
 	    } else static if (isStruct!T || isClass!T) {
 	        if (typeJsonValue == JSONType.OBJECT) {
@@ -266,7 +260,7 @@ public static class  CL_CoreAP_Conv
 	                            mixin("obj." ~ fieldName ~ " = convertedMember.get;");
 	                        } else {
 	                            static if (!is(FieldType : Optional!U, U)) {
-	                                throw new JSONConvertExceptionAP("Failed to convert field '" ~ fieldName ~ "' to " ~ FieldType.stringof , __FILE__ , __LINE__);
+	                                throw new JSONConvertExceptionAP("Failed to convert field '" ~ fieldName ~ "' to " ~ FieldType.stringof , __FILE__ , __LINE__ , e);
 	                            }
 	                        }
 	                    } else {
@@ -277,7 +271,7 @@ public static class  CL_CoreAP_Conv
 	            }
 	            return Optional!T(obj);
 	        } else {
-	            throw new JSONConvertExceptionAP("Expected object JSON type for " ~ T.stringof ~ ", got " ~ typeJsonValue.to!string , __FILE__ , __LINE__);
+	            throw new JSONConvertExceptionAP("Expected object JSON type for " ~ T.stringof ~ ", got " ~ typeJsonValue.to!string , __FILE__ , __LINE__ , e);
 	        }
 	    } else {
 	        static assert(0, "Unsupported type " ~ T.stringof ~ " for JSON conversion.");

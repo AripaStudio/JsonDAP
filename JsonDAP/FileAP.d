@@ -5,13 +5,17 @@ import std.file;
 import std.string;
 import std.json;
 import std.typecons;
+import std.traits;
+import std.conv;
 import std.exception;
+import CoreAP;
 import PublicCodeOtherCode;
 
 alias Optional = Nullable;
 
 public static class CL_FileAP
 {
+	//Fix Deserialization and serialize and Other
 	public static Optional!T readJsonFile(string filePath)(){
 		try{
 			enforce(exists(filePath)) , new FileException("File not found.",filePath);
@@ -83,6 +87,7 @@ public static class CL_FileAP
 	}
 
 	//اضافه شود :
+
 	public static bool Exists(string filePath)
 	{
 		if(filePath.empty)
@@ -124,7 +129,6 @@ public static class CL_FileAP
 
 
 //اضافه بشه :
-
 public static class CL_FileAP_Edit
 {
 	public static bool updateJsonValue(V)(string filePath , string jsonPath , V value)
@@ -133,6 +137,15 @@ public static class CL_FileAP_Edit
 		{
 			return false;
 		}
+		auto readFile = readJsonFile!V(filePath);
+		if(!readFile.isSet)
+		{
+			return false;
+		}
+		
+
+
+		
 		
 	}
 
@@ -154,25 +167,63 @@ public static class CL_FileAP_Edit
 }
 
 //اضافه شود :
-
 public static class CL_File_JSON
 {
-	public static Optional!(T[]) deserializeJsonArray(T)(strign jsonContent)
+	public static Optional!(T[]) deserializeJsonArray(T)(string jsonContent)
 	{
 		try{
 			JSONValue val = parseJsonString(jsonContent);
-			if(val.type == JSONType.Array)
+			if(val.type == JSONType.ARRAY)
 			{
-				T[] arr;
-				foreach(item; val.array)
-				{
-					arr ~= convertJsonValueToT!T(item);
-				}
-				return arr;
+					T[] arr;
+					foreach(item; val.array)
+					{
+						auto convertedItemOptional = convertJsonValueToT!T(item);
+							
+						if(convertedItemOptional.isSet)
+						{
+							arr ~= convertedItemOptional.get;
+						}else{
+							throw new JSONConvertExceptionAP("Failed to convert array element from JSON to type " ~ T.stringof , __FILE__ , __LINE__);
+						}
+					}
+					return Optional!(T[])(arr);
+			}else
+			{
+                throw new JSONConvertExceptionAP("Expected a JSON array, but got type: " ~ val.type.to!string , __FILE__ , __LINE__);
 			}
 		}catch(JSONException e)
 		{
 			throw new JSONExceptionAP("Failed to deseralize JSON Array : " ~ e.msg);
+		}catch(Exception e)
+		{
+			throw new JSONExceptionAP("Error during JSON array element conversion: " ~ e.msg);
+		}
+	}
+
+	public static Optional!(T) deserializeJson(T)(string jsonContent)
+	{
+		try{
+			JSONValue val = parseJsonString(jsonContent);
+			if(val.type = JSONType.OBJECT)
+			{
+				T obj;
+				auto convertedItemOptional = convertJsonValueToT!T(val);
+				if(convertedItemOptional.isSet)
+				{
+					obj ~= convertedItemOptional.get;
+				}else
+				{
+					throw new JSONConvertExceptionAP("Failed to convert  element from JSON to type " ~ T.stringof , __FILE__ , __LINE__);
+				}
+				return Optional!(T)(obj);
+			}
+		}catch(JSONException e)
+		{
+			throw new JSONExceptionAP("Failed to deseralize JSON  : " ~ e.msg);
+		}catch(Exception e)
+		{
+			throw new JSONExceptionAP("Error during JSON  element conversion: " ~ e.msg);
 		}
 	}
 
