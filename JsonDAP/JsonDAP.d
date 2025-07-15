@@ -66,4 +66,9 @@ public class JsonAP
     export static bool APisInteger(string s){
         return CL_PublicCodeOtherCode.isInteger(s);
     }
+    
+    export static bool APexistsFile(string filePath)
+	{
+        return CL_FileAP.existsFile(filePath);
+	}
 }

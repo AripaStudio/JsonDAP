@@ -2,6 +2,7 @@ module FileAP;
 
 
 import std.file;
+import std.string;
 import std.json;
 import std.typecons;
 import std.exception;
@@ -77,6 +78,39 @@ public static class CL_FileAP
 		{
 			throw new JsonOperationException("FileAP Error: Unexpected error reading array from  : "~ filePath ~ "Error : " ~ e.msg, __FILE__, __LINE__, e);			
 		}
+	}
+
+	private bool Exists(string filePath)
+	{
+		if(filePath.empty)
+		{
+			return false;
+		}
+		if(!exists(filePath))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public static bool existsFile(string filePath)
+	{
+		try
+		{
+			if(!Exists(filePath))
+			{
+				return false;
+			}
+			return true;
+		}catch(FileException e)
+		{			
+			throw new JsonOperationException("FileAP Error: File I/O error Exists File from: "~ filePath ~ "Error : " ~ e.msg, __FILE__, __LINE__, e);			
+		}catch(Exception e)
+		{
+			throw new JsonOperationException("FileAP Error: Unexpected error Exists File from  : "~ filePath ~ "Error : " ~ e.msg, __FILE__, __LINE__, e);			
+		}
+		
+
 	}
 
 
