@@ -39,6 +39,7 @@ All public methods are static and accessible via the `JsonAP` class, prefixed wi
 * `static bool APisJsonArray(string jsonContent)`: Checks if JSON content is an array.
 * `static bool APisDigitAP(dchar c)`: Checks if a character is a digit (ASCII/Persian).
 * `static bool APisInteger(string s)`: Checks if a string represents an integer (ASCII/Persian digits).
+* `static bool APexistsFile(string filePath)` Check File is Exists.
 
 ---
 
