@@ -79,7 +79,7 @@ public class JsonAP
     // هنوز کامل نشدن 
     
     //CL_PublicCodeOtherCode:
-    export static bool APStrIsNUll(string input)
+    export static void APStrIsNUll(string input, string paramName = "input") 
 	{
         return CL_PublicCodeOtherCode.StrIsNUll(input);
 	}
