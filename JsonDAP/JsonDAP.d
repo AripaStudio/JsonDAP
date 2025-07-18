@@ -110,7 +110,7 @@ public class JsonAP
 
     export static bool APmergeJson(string filePath, string jsonContentToMerge, bool overwriteExisting = true)
 	{
-        return CL_FileAP_Edit.mergeJson(filePath , jsonContentToMerge , overwriteExisting)
+        return CL_FileAP_Edit.mergeJson(filePath , jsonContentToMerge , overwriteExisting);
 	}
 
 
