@@ -20,12 +20,9 @@ public static class CL_FileAP
 	// Fix writeJsonFile , CL_File_JSON and updateJsonValueOBJECT
 
 	public static Optional!T readJsonFile(T)(string filePath){
-		try{
-			if(filePath.empty)
-			{
-				return Optional!T.init;
-			}
-			enforce(exists(filePath)) , new FileException("File not found.",filePath);
+		try{			
+			CL_PublicCodeOtherCode.StrIsNUll(filePath);
+			enforce(exists(filePath), new FileException("File not found.", filePath));
 			string jsonContent = readText(filePath);
 			return deserializeJson!T(jsonContent);
 		}catch(FileException  e)
@@ -47,7 +44,7 @@ public static class CL_FileAP
 			{
 				return false;
 			}
-			enforce(exists(filePath)) , new FileException("File not found.",filePath);
+			enforce(exists(filePath), new FileException("File not found.", filePath));
 			string jsonContent = serializeToJson(data);
 			writeText(filePath , jsonContent);
 		}catch(FileException  e)
