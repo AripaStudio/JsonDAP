@@ -283,7 +283,7 @@ public static class CL_File_JSON
 
 	public static Optional!(T) deserializeJson(T)(string jsonContent)
 	{
-		try{
+		try{		
 			JSONValue val = parseJsonString(jsonContent);
 			if(val.type == JSONType.OBJECT)
 			{

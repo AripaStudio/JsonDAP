@@ -334,7 +334,7 @@ public static class  CL_CoreAP_Conv
 		{
 			throw new JSONExcptionAP("Error during data = T  element conversion : " ~ e.msg);
 		}
-	}
+	}	
 }
 
 
