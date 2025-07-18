@@ -19,8 +19,12 @@ public static class CL_FileAP
 	//Error : 
 	// Fix writeJsonFile , CL_File_JSON and updateJsonValueOBJECT
 
-	public static Optional!T readJsonFile(string filePath)(){
+	public static Optional!T readJsonFile(T)(string filePath){
 		try{
+			if(filePath.empty)
+			{
+				return Optional!T.init;
+			}
 			enforce(exists(filePath)) , new FileException("File not found.",filePath);
 			string jsonContent = readText(filePath);
 			return deserializeJson!T(jsonContent);
@@ -39,6 +43,10 @@ public static class CL_FileAP
 	public static bool writeJsonFile(T)(string filePath , T data)
 	{
 		try{
+			if(filePath.empty)
+			{
+				return false;
+			}
 			enforce(exists(filePath)) , new FileException("File not found.",filePath);
 			string jsonContent = serializeToJson(data);
 			writeText(filePath , jsonContent);
@@ -59,6 +67,10 @@ public static class CL_FileAP
 	{
 		try
 		{
+			if(filePath.empty)
+			{
+				return Optional!long().init;
+			}
 			enforce(exists(filePath), new FileException("File not found for size.", filePath));
 			long fileSize = std.file.getSize(filePath);
 			return Optional!long(fileSize);
@@ -71,9 +83,13 @@ public static class CL_FileAP
 		}
 	}
 
-	public static Optional!(T[]) readJsonArray(string filepath)()
+	public static Optional!(T[]) readJsonArray(T)(string filepath)
 	{
 		try{
+			if(filePath.empty)
+			{
+				return Optional!(T[]).init;
+			}
 			enforce(exists(filePath)) , new FileException("File not found." , filePath);
 			string jsonContent = readText(filePath);
 			return deserializeJsonArray!T[](jsonContent);
