@@ -106,16 +106,13 @@ public static class CL_PublicCodeOtherCode
 	{
 		if(input.empty)
 		{
-			return true;
+			throw new InvalidArgumentExceptionAP("input is empty" , input , "Invalid Value : (STR)" , __FILE__ , __LINE__);
 		}
 		if(input == null)
 		{
-			return true;
+			throw new InvalidArgumentExceptionAP("input is Null" , input , "Invalid Value : (STR)" , __FILE__ , __LINE__);
 		}
-
-
-
-
+				
 		return false;
 	}
 	

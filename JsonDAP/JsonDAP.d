@@ -78,6 +78,11 @@ public class JsonAP
     //متد های اضافه شده 
     // هنوز کامل نشدن 
     
+    //CL_PublicCodeOtherCode:
+    export static bool APStrIsNUll(string input)
+	{
+        return CL_PublicCodeOtherCode.StrIsNUll(input);
+	}
 
     //CL_FileAP:
     export static bool APexists(string filePath)
