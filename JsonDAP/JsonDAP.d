@@ -185,6 +185,38 @@ public class JsonAP
 		}
 	}
 
+    export class InvalidArgumentExceptionAP : Exception{
+		string parameterName;
+		string invalidValue;
+
+		this(string msg, string parameterName , string invalidValue , 
+			 string file = __FILE__ , size_t line = __LINE__ , Throwable next = null) pure
+			 {
+				super(msg,file,line,next);
+				this.parameterName = parameterName; 
+				this.invalidValue = invalidValue;
+			 }
+
+		this(string msg, string parameterName, string invalidValue) pure
+		{
+			this(msg, parameterName, invalidValue, __FILE__, __LINE__, null);
+		}
+		override string toString() {
+			return super.toString() ~
+				"\n Parameter Name : " ~ parameterName ~
+				"\n Invalid Value : " ~ invalidValue;
+		}
+
+		string getParameterName() const {
+			return parameterName;
+		}
+
+		string getInvalidValue() const {
+			return invalidValue;
+		}
+	}
+
+
     
 
 

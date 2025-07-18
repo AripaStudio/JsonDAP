@@ -12,13 +12,13 @@ alias Optional = Nullable;
 
 //ایکسپشن ها به لیست ایکسپورت ها اضافه شود 
 
-public static class JsonOperationExceptionAP : Exception{
+public class JsonOperationExceptionAP : Exception{
 	this(string msg, string file = __FILE__ , size_t line = __LINE__ , Throwable next = null) pure{
 		super(msg,file,line,next);
 	}
 }
 
-public static class FileOperationExceptionAP : Exception{
+public class FileOperationExceptionAP : Exception{
 	string filePath;
 	this(string msg, string filePath, string file = __FILE__, int line = __LINE__, Throwable next = null) {
         super(msg, file, line, next);
@@ -26,19 +26,52 @@ public static class FileOperationExceptionAP : Exception{
     }
 }
 
-public static class JSONExceptionAP : Exception {
+public class JSONExceptionAP : Exception {
     this(string msg, string file = __FILE__, int line = __LINE__, Throwable next = null) pure {
         super(msg, file, line, next);
     }
 }
 
-public static class JSONConvertExceptionAP : Exception
+public class JSONConvertExceptionAP : Exception
 {
     this(string msg, string file = __FILE__, size_t line = __LINE__ , Throwable next = null) pure
     {
         super(msg, file, line , next);
     }
 }
+
+public class InvalidArgumentExceptionAP : Exception{
+	string parameterName;
+	string invalidValue;
+
+	this(string msg, string parameterName , string invalidValue , 
+		 string file = __FILE__ , size_t line = __LINE__ , Throwable next = null) pure
+	{
+		super(msg,file,line,next);
+		this.parameterName = parameterName; 
+		this.invalidValue = invalidValue;
+	}
+
+	this(string msg, string parameterName, string invalidValue) pure
+    {
+        this(msg, parameterName, invalidValue, __FILE__, __LINE__, null);
+    }
+	override string toString() {
+        return super.toString() ~
+            "\n Parameter Name : " ~ parameterName ~
+            "\n Invalid Value : " ~ invalidValue;
+    }
+
+	string getParameterName() const {
+        return parameterName;
+    }
+
+    string getInvalidValue() const {
+        return invalidValue;
+    }
+}
+
+
 public static class CL_PublicCodeOtherCode
 {
 	public static isDigitAP(dchar c)
@@ -68,6 +101,23 @@ public static class CL_PublicCodeOtherCode
         return true;
     }
 
+
+	public static bool StrIsNUll(string input)
+	{
+		if(input.empty)
+		{
+			return true;
+		}
+		if(input == null)
+		{
+			return true;
+		}
+
+
+
+
+		return false;
+	}
 	
 
 
