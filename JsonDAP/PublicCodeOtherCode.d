@@ -102,19 +102,21 @@ public static class CL_PublicCodeOtherCode
     }
 
 
-	public static bool StrIsNUll(string input)
-	{
-		if(input.empty)
-		{
-			throw new InvalidArgumentExceptionAP("input is empty" , input , "Invalid Value : (STR)" , __FILE__ , __LINE__);
-		}
-		if(input == null)
-		{
-			throw new InvalidArgumentExceptionAP("input is Null" , input , "Invalid Value : (STR)" , __FILE__ , __LINE__);
-		}
-				
-		return false;
-	}
+	public static void StrIsNUll(string input, string paramName = "input") 
+    {
+        if (input is null)
+        {
+            throw new InvalidArgumentExceptionAP("Parameter '" ~ paramName ~ "' cannot be null.", paramName, "null", __FILE__, __LINE__);
+        }
+        if (input.empty)
+        {
+            throw new InvalidArgumentExceptionAP("Parameter '" ~ paramName ~ "' cannot be empty.", paramName, "''", __FILE__, __LINE__);
+        }
+        if (input.strip.empty)
+        {
+            throw new InvalidArgumentExceptionAP("Parameter '" ~ paramName ~ "' cannot be just whitespace.", paramName, "'" ~ input ~ "'", __FILE__, __LINE__);
+        }
+    }
 	
 
 
