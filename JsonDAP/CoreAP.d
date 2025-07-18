@@ -23,6 +23,10 @@ public class CL_CoreAP
 	{
 		try
 		{
+			if(jsonContent.empty)
+			{
+				return false;
+			}
 			parseJSON(jsonContent);
 			return true;
 		}catch(JSONException e)
@@ -38,6 +42,10 @@ public class CL_CoreAP
 	{
 		try
 		{
+			if(jsonContent.empty)
+			{
+				return Optional!long.init;
+			}
 			JSONValue parsedJson = parseJSON(jsonContent);
 			if(parsedJson.type == JSONType.OBJECT)
 			{
@@ -62,6 +70,10 @@ public class CL_CoreAP
 	{
 		try
 		{
+			if(jsonContent.empty)
+			{
+				return false;
+			}
 			JSONValue val = parseJSON(jsonContent);
 			return val.type == JSONType.INTEGER || val.type == JSONType.FLOAT;
 		}catch(JSONException e)
@@ -77,6 +89,10 @@ public class CL_CoreAP
 	public static bool isJsonString(string jsonContent)
 	{
 		try {
+			if(jsonContent.empty)
+			{
+				return false;
+			}
             JSONValue val = parseJSON(jsonContent);
             return val.type == JSONType.STRING;
         } catch (JSONException e) {
@@ -89,6 +105,10 @@ public class CL_CoreAP
 	public static Optional!string prettyPrintJson(string jsonContent)
 	{
 		try{
+			if(jsonContent.empty)
+			{
+				return Optional!string.init;
+			}
 
 			JSONValue val = parseJSON(jsonContent);
 			return Optional!string(val.toPrettyString());
@@ -99,9 +119,13 @@ public class CL_CoreAP
         }
 	}
 
-	public static Optional!V getJsonValue(string jsonContent , string path)(){
+	public static Optional!V getJsonValue(V)(string jsonContent , string path){
 
 		try{
+			if(jsonContent.empty || path.empty)
+			{
+				return false;
+			}
 
 			JSONValue root = parseJSON(jsonContent);
 			JSONValue current = root;
@@ -154,6 +178,10 @@ public class CL_CoreAP
 	public static bool isJsonObject(string jsonContent)
 	{
 		try{
+			if(jsonContent.empty)
+			{
+				return false;
+			}
 			auto val = parseJSON(jsonContent);
 			return val.type == JSONType.OBJECT;
 		} catch (JSONException e)
@@ -170,6 +198,10 @@ public class CL_CoreAP
 	public static bool isJsonArray(string jsonContent)
 	{
 		try{
+			if(jsonContent.empty)
+			{
+				return false;
+			}
 			auto val = parseJSON(jsonContent);
 			return val.type == JSONType.ARRAY;
 		} catch (JSONException e)
@@ -185,7 +217,7 @@ public class CL_CoreAP
 	//اضافه شود :
 
 	public static JSONType getJsonValueType(JSONValue jsonValue)
-	{
+	{		
 	
 		return jsonValue.type;
 	}
