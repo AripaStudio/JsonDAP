@@ -22,7 +22,7 @@ public static class CL_FileAP
 	public static Optional!T readJsonFile(T)(string filePath){
 		try{			
 			CL_PublicCodeOtherCode.StrIsNUll(filePath);
-			enforce(exists(filePath), new FileException("File not found.", filePath));
+			enforce(existsFile(filePath), new FileException("File not found.", filePath));
 			string jsonContent = readText(filePath);
 			return deserializeJson!T(jsonContent);
 		}catch(FileException  e)
@@ -44,7 +44,7 @@ public static class CL_FileAP
 			{
 				return false;
 			}
-			enforce(exists(filePath), new FileException("File not found.", filePath));
+			enforce(existsFile(filePath), new FileException("File not found.", filePath));
 			string jsonContent = serializeToJson(data);
 			writeText(filePath , jsonContent);
 		}catch(FileException  e)
@@ -68,7 +68,7 @@ public static class CL_FileAP
 			{
 				return Optional!long().init;
 			}
-			enforce(exists(filePath), new FileException("File not found for size.", filePath));
+			enforce(existsFile(filePath), new FileException("File not found for size.", filePath));
 			long fileSize = std.file.getSize(filePath);
 			return Optional!long(fileSize);
 		}catch(FileException  e)
@@ -87,7 +87,7 @@ public static class CL_FileAP
 			{
 				return Optional!(T[]).init;
 			}
-			enforce(exists(filePath)) , new FileException("File not found." , filePath);
+			enforce(existsFile(filePath)) , new FileException("File not found." , filePath);
 			string jsonContent = readText(filePath);
 			return deserializeJsonArray!T[](jsonContent);
 		}catch(FileException  e)
