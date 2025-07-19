@@ -50,6 +50,7 @@ public static class CL_FileAP
 			enforce(existsFile(filePath), new FileException("File not found.", filePath));
 			string jsonContent = serializeToJson(data);
 			write(filePath , jsonContent);
+			return true;
 		}catch(FileException  e)
 		{
 			throw new JsonOperationExceptionAP("FileAP Error: File I/O error writing to : "~ filePath ~ "Error : " ~ e.msg, __FILE__, __LINE__, e);			
@@ -225,8 +226,7 @@ public static class CL_FileAP_Edit
 			
 
 		}
-		if(currentJsonNodeToTraverse[finalKey].type == JSONType.OBJECT)
-		{
+		
 			auto convertValue = serializeToJson(value);				
 			currentJsonNodeToTraverse[finalKey] = convertValue;
 
@@ -238,10 +238,7 @@ public static class CL_FileAP_Edit
 			}
 
 
-			return true;
-
-		}			
-		return false;
+			return true;		
 	}
 
 
