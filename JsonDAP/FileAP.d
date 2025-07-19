@@ -87,9 +87,12 @@ public static class CL_FileAP
 	public static Optional!(T[]) readJsonArray(T)(string filepath)
 	{
 		try{
-			if(filePath.empty)
+			string errorTextStrIsNull;
+			bool CheckStrIsNull;
+			CL_PublicCodeOtherCode.StrIsNUll(filePath , out CheckStrIsNull , out errorTextStrIsNull);
+			if(CheckStrIsNull)
 			{
-				return Optional!(T[]).init;
+				throw new UnknownErrorexceptionAP("Unknown error." ~ errorTextStrIsNull ~ " |____|  " , __FILE__ , __LINE__);
 			}
 			enforce(existsFile(filePath)) , new FileException("File not found." , filePath);
 			string jsonContent = readText(filePath);
@@ -106,7 +109,6 @@ public static class CL_FileAP
 		}
 	}
 
-	//اضافه شود :
 	public static bool Exists(string filePath)
 	{
 		if(filePath.empty)
@@ -152,7 +154,7 @@ public static class CL_FileAP
 public static class CL_FileAP_Edit
 {
 
-
+	
 	public static bool updateJsonValueOBJECT(V)(string filePath , string jsonPath , V value)
 	{
 		
@@ -166,9 +168,7 @@ public static class CL_FileAP_Edit
 		if(!existsFile(filePath))
 		{
 			return false;
-		}
-
-
+		}		
 		
 
 		auto readFile = readJsonFile!JSONValue(filePath);
@@ -185,6 +185,7 @@ public static class CL_FileAP_Edit
 			return false;	
 		}
 
+		//For example for jsonPath: main.name.khashayar
 		string[] ways  = jsonPath.split(".");
 		if(ways.length == 0)
 		{
@@ -242,9 +243,44 @@ public static class CL_FileAP_Edit
 	}
 
 
+	//not Complete
 	public static bool updateJsonValueARRAY(V)(string filePath , string jsonPath , V value)
 	{
-		return false;
+		string[] checkStrIsNull = [filePath , jsonPath];
+
+		if(CL_PublicCodeOtherCode.checkStringIsNull_array(checkStrIsNull))
+		{
+			return false;
+		}
+
+		if(!existsFile(filePath))
+		{
+			return false;
+		}
+
+
+
+
+		auto readFile = readJsonArray!JSONValue(filePath);
+		if(!readFile.isSet)
+		{
+			return false;
+		}		
+
+		JSONValue rootJson = readFile.get;		
+
+
+		if(rootJson.type != JSONType.ARRAY)
+		{
+			return false;	
+		}
+
+		
+		//کامل شود 
+
+
+
+		return true;
 	}
 
 	public static bool addJsonItem(T)(string filePath , string jsonPath , T item)
