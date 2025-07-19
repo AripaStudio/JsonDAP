@@ -133,6 +133,30 @@ public static class CL_PublicCodeOtherCode
 			ErrorText = e.msg;
 		}
     }
+
+	
+
+	//اضافه شود 
+	public bool checkStringIsNull_array(string[] inputs) {
+		
+
+		if(inputs.length == 0)
+		{
+			return true;
+		}
+		foreach(input; inputs)
+		{
+			string errorText;
+			bool isNull;
+			if (StrIsNUll(input, out isNull, out errorText) && isNull) {
+				throw new UnknownErrorexceptionAP("Unknown error: " ~ errorText ~ " |____|", FILE, LINE);
+			}
+		}
+
+		return false;
+	
+	}
+
 	
 
 

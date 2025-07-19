@@ -49,7 +49,7 @@ public static class CL_FileAP
 			}
 			enforce(existsFile(filePath), new FileException("File not found.", filePath));
 			string jsonContent = serializeToJson(data);
-			writeText(filePath , jsonContent);
+			write(filePath , jsonContent);
 		}catch(FileException  e)
 		{
 			throw new JsonOperationExceptionAP("FileAP Error: File I/O error writing to : "~ filePath ~ "Error : " ~ e.msg, __FILE__, __LINE__, e);			
@@ -152,7 +152,6 @@ public static class CL_FileAP_Edit
 {
 
 
-
 	//not Complete : 
 	public static bool updateJsonValueOBJECT(V)(string filePath , string jsonPath , V value)
 	{
@@ -161,14 +160,13 @@ public static class CL_FileAP_Edit
 			return false;
 		}
 		
+		string[] checkStrIsNull = [filePath , jsonPath];
 		
-		string errorTextStrIsNull;
-		bool CheckStrIsNull;
-		CL_PublicCodeOtherCode.StrIsNUll(filePath , out CheckStrIsNull , out errorTextStrIsNull);
-		if(CheckStrIsNull)
+		if(CL_PublicCodeOtherCode.checkStringIsNull_array(checkStrIsNull))
 		{
-			throw new UnknownErrorexceptionAP("Unknown error." ~ errorTextStrIsNull ~ " |____|  " , __FILE__ , __LINE__);
+			return false;
 		}
+		
 
 		auto readFile = readJsonFile!JSONValue(filePath);
 		if(!readFile.isSet)
