@@ -369,4 +369,3 @@ public static class  CL_CoreAP_Conv
 	}	
 }
 
-

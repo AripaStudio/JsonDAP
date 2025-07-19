@@ -71,6 +71,13 @@ public class InvalidArgumentExceptionAP : Exception{
     }
 }
 
+public class UnknownErrorexceptionAP : Exception{
+	this(string msg , string file = __FILE__ , size_t line = __LINE__ , Throwable next = null ) pure
+	{
+		super(msg , file , line , next);
+	}
+}
+
 
 public static class CL_PublicCodeOtherCode
 {
@@ -102,20 +109,29 @@ public static class CL_PublicCodeOtherCode
     }
 
 
-	public static void StrIsNUll(string input, string paramName = "input") 
+    public static void StrIsNUll(string input, string paramName = "input" , out bool outputBool , out string ErrorText) 
     {
-        if (input is null)
-        {
-            throw new InvalidArgumentExceptionAP("Parameter '" ~ paramName ~ "' cannot be null.", paramName, "null", __FILE__, __LINE__);
-        }
-        if (input.empty)
-        {
-            throw new InvalidArgumentExceptionAP("Parameter '" ~ paramName ~ "' cannot be empty.", paramName, "''", __FILE__, __LINE__);
-        }
-        if (input.strip.empty)
-        {
-            throw new InvalidArgumentExceptionAP("Parameter '" ~ paramName ~ "' cannot be just whitespace.", paramName, "'" ~ input ~ "'", __FILE__, __LINE__);
-        }
+        try
+		{
+			if (input is null)
+			{
+				throw new InvalidArgumentExceptionAP("Parameter '" ~ paramName ~ "' cannot be null.", paramName, "null", __FILE__, __LINE__);
+			}
+			if (input.empty)
+			{
+				throw new InvalidArgumentExceptionAP("Parameter '" ~ paramName ~ "' cannot be empty.", paramName, "''", __FILE__, __LINE__);
+			}
+			if (input.strip.empty)
+			{
+				throw new InvalidArgumentExceptionAP("Parameter '" ~ paramName ~ "' cannot be just whitespace.", paramName, "'" ~ input ~ "'", __FILE__, __LINE__);
+			}
+			outputBool = false;
+			ErrorText = "";
+		}catch(Exception e)
+		{
+			outputBool = true;
+			ErrorText = e.msg;
+		}
     }
 	
 

@@ -15,13 +15,16 @@ alias Optional = Nullable;
 
 public static class CL_FileAP
 {
-	//Fix Deserialization and serialize and Other
-	//Error : 
-	// Fix writeJsonFile , CL_File_JSON and updateJsonValueOBJECT
 
 	public static Optional!T readJsonFile(T)(string filePath){
 		try{			
-			CL_PublicCodeOtherCode.StrIsNUll(filePath);
+			string errorTextStrIsNull;
+			bool CheckStrIsNull;
+			CL_PublicCodeOtherCode.StrIsNUll(filePath , out CheckStrIsNull , out errorTextStrIsNull);
+			if(CheckStrIsNull)
+			{
+				throw new UnknownErrorexceptionAP("Unknown error." ~ errorTextStrIsNull ~ " |____|  " , __FILE__ , __LINE__);
+			}
 			enforce(existsFile(filePath), new FileException("File not found.", filePath));
 			string jsonContent = readText(filePath);
 			return deserializeJson!T(jsonContent);
@@ -108,7 +111,7 @@ public static class CL_FileAP
 		if(filePath.empty)
 		{
 			return false;
-		}
+		}		
 		if(!exists(filePath))
 		{
 			return false;
@@ -157,6 +160,16 @@ public static class CL_FileAP_Edit
 		{
 			return false;
 		}
+		
+		
+		string errorTextStrIsNull;
+		bool CheckStrIsNull;
+		CL_PublicCodeOtherCode.StrIsNUll(filePath , out CheckStrIsNull , out errorTextStrIsNull);
+		if(CheckStrIsNull)
+		{
+			throw new UnknownErrorexceptionAP("Unknown error." ~ errorTextStrIsNull ~ " |____|  " , __FILE__ , __LINE__);
+		}
+
 		auto readFile = readJsonFile!JSONValue(filePath);
 		if(!readFile.isSet)
 		{
@@ -181,7 +194,7 @@ public static class CL_FileAP_Edit
 		string finalKey = ways[intWays - 1];
 		byte checkComplete = 1;
 
-		for(int i = 0; i < intway - 1; i++)
+		for(int i = 0; i < intWays - 1; i++)
 		{
 			string currentKey = ways[i];
 
@@ -207,7 +220,8 @@ public static class CL_FileAP_Edit
 			if(i == finalKey && currentJsonNodeToTraverse[finalKey].type == JSONType.OBJECT)
 			{
 				auto convertValue = serializeToJson(value);
-				currentJsonNodeToTraverse[intWays] = convertValue;
+				int intFinalKey = to!int(finalKey);
+				currentJsonNodeToTraverse[intFinalKey] = convertValue;
 								
 				
 				auto writeFile = writeJsonFile(filePath , rootJson);
@@ -219,9 +233,7 @@ public static class CL_FileAP_Edit
 
 				checkComplete = 0;
 				
-			}
-			
-
+			}			
 
 		}
 		if(checkComplete == 0)

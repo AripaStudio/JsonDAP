@@ -79,9 +79,9 @@ public class JsonAP
     // هنوز کامل نشدن 
     
     //CL_PublicCodeOtherCode:
-    export static void APStrIsNUll(string input, string paramName = "input") 
+    export static void APStrIsNUll(string input, string paramName = "input" , out bool outputBool , out string ErrorText) 
 	{
-        return CL_PublicCodeOtherCode.StrIsNUll(input);
+        return CL_PublicCodeOtherCode.StrIsNUll(input , out outputBool , out ErrorText);
 	}
 
     //CL_FileAP:
@@ -190,7 +190,7 @@ public class JsonAP
 		}
 	}
 
-    export class InvalidArgumentExceptionAP : Exception{
+    export class APInvalidArgumentException : Exception{
 		string parameterName;
 		string invalidValue;
 
@@ -220,6 +220,14 @@ public class JsonAP
 			return invalidValue;
 		}
 	}
+
+    export class APUnknownErrorException : Exception{
+		this(string msg , string file = __FILE__ , size_t line = __LINE__ , Throwable next = null ) pure
+		{
+			super(msg , file , line , next);
+		}
+	}
+
 
 
     
