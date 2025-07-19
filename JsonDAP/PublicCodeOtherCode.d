@@ -134,10 +134,8 @@ public static class CL_PublicCodeOtherCode
 		}
     }
 
-	
-
-	//اضافه شود 
-	public bool checkStringIsNull_array(string[] inputs) {
+		
+	public static  bool checkStringIsNull_array(string[] inputs) {
 		
 
 		if(inputs.length == 0)

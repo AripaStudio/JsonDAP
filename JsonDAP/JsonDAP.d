@@ -84,6 +84,10 @@ public class JsonAP
         return CL_PublicCodeOtherCode.StrIsNUll(input , out outputBool , out ErrorText);
 	}
 
+    export static bool checkStringIsNull_array(string[] inputs) {
+        return CL_PublicCodeOtherCode.checkStringIsNull_array(inputs);
+	}
+
     //CL_FileAP:
     export static bool APexists(string filePath)
 	{
