@@ -152,13 +152,8 @@ public static class CL_FileAP_Edit
 {
 
 
-	//not Complete : 
 	public static bool updateJsonValueOBJECT(V)(string filePath , string jsonPath , V value)
 	{
-		if(!existsFile(filePath))
-		{
-			return false;
-		}
 		
 		string[] checkStrIsNull = [filePath , jsonPath];
 		
@@ -166,12 +161,27 @@ public static class CL_FileAP_Edit
 		{
 			return false;
 		}
+
+		if(!existsFile(filePath))
+		{
+			return false;
+		}
+
+
 		
 
 		auto readFile = readJsonFile!JSONValue(filePath);
 		if(!readFile.isSet)
 		{
 			return false;
+		}		
+
+		JSONValue rootJson = readFile.get;		
+		
+		
+		if(rootJson.type != JSONType.OBJECT)
+		{
+			return false;	
 		}
 
 		string[] ways  = jsonPath.split(".");
@@ -181,15 +191,12 @@ public static class CL_FileAP_Edit
 		}
 		int intWays = ways.length;
 
-		JSONValue rootJson = readFile.get;		
-		JSONValue currentJsonNodeToTraverse = rootJson;
 		
-		if(rootJson.type != JSONType.OBJECT)
-		{
-			return false;	
-		}
 		
 		string finalKey = ways[intWays - 1];
+
+		JSONValue currentJsonNodeToTraverse = rootJson;
+
 		byte checkComplete = 1;
 
 		for(int i = 0; i < intWays - 1; i++)
@@ -215,32 +222,25 @@ public static class CL_FileAP_Edit
 				return false;
 			}
 			
-			if(i == finalKey && currentJsonNodeToTraverse[finalKey].type == JSONType.OBJECT)
-			{
-				auto convertValue = serializeToJson(value);
-				int intFinalKey = to!int(finalKey);
-				currentJsonNodeToTraverse[intFinalKey] = convertValue;
-								
-				
-				auto writeFile = writeJsonFile(filePath , rootJson);
-				if(!writeFile)
-				{
-					return false;
-				}
-
-
-				checkComplete = 0;
-				
-			}			
+			
 
 		}
-		if(checkComplete == 0)
+		if(currentJsonNodeToTraverse[finalKey].type == JSONType.OBJECT)
 		{
+			auto convertValue = serializeToJson(value);				
+			currentJsonNodeToTraverse[finalKey] = convertValue;
+
+
+			auto writeFile = writeJsonFile(filePath , rootJson);
+			if(!writeFile)
+			{
+				return false;
+			}
+
+
 			return true;
-		}else{
-			return false;
-		}
-						
+
+		}			
 		return false;
 	}
 
