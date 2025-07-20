@@ -10,6 +10,11 @@ import std.typecons;
 
 alias Optional = Nullable;
 
+
+//CL_JsonOtherCode :
+export import CL_JsonOtherCode;
+
+
 public class JsonAP
 {
 	export static Optional!T APreadJsonFile(T)(string filePath) {
@@ -81,7 +86,7 @@ public class JsonAP
     //CL_PublicCodeOtherCode:
     export static void APStrIsNUll(string input, string paramName = "input" , out bool outputBool , out string ErrorText) 
 	{
-        return CL_PublicCodeOtherCode.StrIsNUll(input ,  outputBool ,  ErrorText);
+        return CL_PublicCodeOtherCode.StrIsNUll(input , paramName ,  outputBool ,  ErrorText);
 	}
 
     export static bool checkStringIsNull_array(string[] inputs) {
