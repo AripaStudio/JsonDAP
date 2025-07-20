@@ -146,9 +146,11 @@ public static class CL_PublicCodeOtherCode
 		{
 			string errorText;
 			bool isNull;
-			StrIsNUll(input, isNull, errorText);
+			string paramName;
+			string
+			StrIsNUll(input , paramName , isNull, errorText);
 			if (isNull) {
-				throw new UnknownErrorexceptionAP("Unknown error: " ~ errorText ~ " |____|", __FILE__, __LINE__);
+				throw new UnknownErrorexceptionAP("Unknown error: " ~ errorText ~ " |__| Like input : ~ "~ paramName ~  " |____| " , __FILE__, __LINE__);
 			}
 		}
 

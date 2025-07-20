@@ -81,7 +81,7 @@ public class JsonAP
     //CL_PublicCodeOtherCode:
     export static void APStrIsNUll(string input, string paramName = "input" , out bool outputBool , out string ErrorText) 
 	{
-        return CL_PublicCodeOtherCode.StrIsNUll(input , out outputBool , out ErrorText);
+        return CL_PublicCodeOtherCode.StrIsNUll(input ,  outputBool ,  ErrorText);
 	}
 
     export static bool checkStringIsNull_array(string[] inputs) {
