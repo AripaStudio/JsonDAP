@@ -10,6 +10,7 @@ import std.conv;
 import std.exception;
 import CoreAP;
 import PublicCodeOtherCode;
+import ExceptionAP;
 
 alias Optional = Nullable;
 

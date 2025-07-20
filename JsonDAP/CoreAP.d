@@ -12,6 +12,7 @@ import std.traits;
 import std.exception;
 import std.typecons;
 import PublicCodeOtherCode;
+import ExceptionAP;
 
 
 alias Optional = Nullable;

@@ -13,7 +13,8 @@ alias Optional = Nullable;
 
 //CL_JsonOtherCode :
 export import CL_JsonOtherCode;
-
+//Exceptions : 
+export import ExceptionAP;
 
 public class JsonAP
 {
@@ -82,6 +83,12 @@ public class JsonAP
 
     //متد های اضافه شده 
     // هنوز کامل نشدن 
+
+    //CL_JsonOtherCode
+    export static CL_JsonOtherCode.PathStep[] APJsonPathParser(string input ){
+        return CL_JsonOtherCode.JsonPathParserAP(input);
+    }
+
     
     //CL_PublicCodeOtherCode:
     export static void APStrIsNUll(string input, string paramName = "input" , out bool outputBool , out string ErrorText) 
@@ -170,78 +177,5 @@ public class JsonAP
 	{
         return CL_CoreAP_Conv.serializeTToJsonValue!T(obj);
 	}
-
-
-    //Exceptions : 
-
-    export class APJsonOperationException : Exception {
-		this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null) pure {
-			super(msg, file, line, next);
-		}
-	}
-
-	export class APFileOperationException : Exception {
-		string filePath;
-		this(string msg, string filePath, string file = __FILE__, int line = __LINE__, Throwable next = null) {
-			super(msg, file, line, next);
-			this.filePath = filePath;
-		}
-	}
-
-	export class APJSONException : Exception {
-		this(string msg, string file = __FILE__, int line = __LINE__, Throwable next = null) pure {
-			super(msg, file, line, next);
-		}
-	}
-
-	export class APJSONConvertException : Exception {
-		this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null) pure {
-			super(msg, file, line, next);
-		}
-	}
-
-    export class APInvalidArgumentException : Exception{
-		string parameterName;
-		string invalidValue;
-
-		this(string msg, string parameterName , string invalidValue , 
-			 string file = __FILE__ , size_t line = __LINE__ , Throwable next = null) pure
-			 {
-				super(msg,file,line,next);
-				this.parameterName = parameterName; 
-				this.invalidValue = invalidValue;
-			 }
-
-		this(string msg, string parameterName, string invalidValue) pure
-		{
-			this(msg, parameterName, invalidValue, __FILE__, __LINE__, null);
-		}
-		override string toString() {
-			return super.toString() ~
-				"\n Parameter Name : " ~ parameterName ~
-				"\n Invalid Value : " ~ invalidValue;
-		}
-
-		string getParameterName() const {
-			return parameterName;
-		}
-
-		string getInvalidValue() const {
-			return invalidValue;
-		}
-	}
-
-    export class APUnknownErrorException : Exception{
-		this(string msg , string file = __FILE__ , size_t line = __LINE__ , Throwable next = null ) pure
-		{
-			super(msg , file , line , next);
-		}
-	}
-
-
-
-    
-
-
 
 }
