@@ -12,7 +12,7 @@ alias Optional = Nullable;
 
 
 //CL_JsonOtherCode :
-export import CL_JsonOtherCode;
+export import JsonOtherCodeAP;
 //Exceptions : 
 export import ExceptionAP;
 

@@ -510,6 +510,7 @@
   <File path="ExceptionAP.d" />
   <File path="FileAP.d" />
   <File path="JsonDAP.d" />
+  <File path="JsonOtherCodeAP.d" />
   <File path="PublicCodeOtherCode.d" />
  </Folder>
 </DProject>

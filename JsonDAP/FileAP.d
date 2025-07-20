@@ -90,8 +90,8 @@ public static class CL_FileAP
 	{
 		try{
 			string errorTextStrIsNull;
-			bool CheckStrIsNull;
-			CL_PublicCodeOtherCode.StrIsNUll(filePath , out CheckStrIsNull , out errorTextStrIsNull);
+			bool CheckStrIsNull;			
+			CL_PublicCodeOtherCode.StrIsNUll(filePath , "input" ,  CheckStrIsNull ,  errorTextStrIsNull);
 			if(CheckStrIsNull)
 			{
 				throw new UnknownErrorexceptionAP("Unknown error." ~ errorTextStrIsNull ~ " |____|  " , __FILE__ , __LINE__);

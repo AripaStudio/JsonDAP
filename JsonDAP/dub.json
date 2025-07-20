@@ -5,7 +5,7 @@
   "license": "MIT",
   "targetType": "dynamicLibrary",
   "targetName": "JsonDAP",
-  "sourceFiles": [ "JsonDAP.d" , "CoreAP.d" , "PublicCodeOtherCode.d" , "FileAP.d" , "ExceptionAP.d"],
+  "sourceFiles": [ "JsonDAP.d" , "CoreAP.d" , "PublicCodeOtherCode.d" , "FileAP.d" , "ExceptionAP.d" , "JsonOtherCodeAP.d"],
   "libs": [ "msvcrt", "legacy_stdio_definitions", "oldnames" ],
   "buildTypes": {
     "release": {
