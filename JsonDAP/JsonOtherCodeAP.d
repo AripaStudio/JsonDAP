@@ -1,4 +1,5 @@
-module JsonOtherCodeAP;
+module jsonOtherCodeAP;
+
 
 import ExceptionAP;
 import std.stdio;
@@ -108,7 +109,7 @@ public class CL_JsonOtherCode{
 				{
 					throw new UnknownErrorexceptionAP("Convert Error: Convert Not Complete (in JsonPathParserAP). |____|  " , __FILE__ , __LINE__);
 				}
-				
+
 
 				if (dotIndex != -1 && (dotIndex < nextSeparatorIndex))
 				{
