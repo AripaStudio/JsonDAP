@@ -146,8 +146,9 @@ public static class CL_PublicCodeOtherCode
 		{
 			string errorText;
 			bool isNull;
-			if (StrIsNUll(input, out isNull, out errorText) && isNull) {
-				throw new UnknownErrorexceptionAP("Unknown error: " ~ errorText ~ " |____|", FILE, LINE);
+			StrIsNUll(input, isNull, errorText);
+			if (isNull) {
+				throw new UnknownErrorexceptionAP("Unknown error: " ~ errorText ~ " |____|", __FILE__, __LINE__);
 			}
 		}
 
