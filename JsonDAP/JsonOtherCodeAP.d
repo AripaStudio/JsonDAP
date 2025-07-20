@@ -1,6 +1,12 @@
 module JsonOtherCodeAP;
 
-
+import ExceptionAP;
+import std.stdio;
+import std.string;
+import std.array;
+import PublicCodeOtherCode;
+import std.conv;
+import std.exception;
 
 
 //اضافه شود 
@@ -44,7 +50,14 @@ public class CL_JsonOtherCode{
 			{		
 				currentIndex++;
 				auto startIndex = currentIndex;
-				auto closingBracketIndex  = input.indexOf(']' , startIndex);
+				auto closingBracketIndexlong  = input.indexOf(']' , startIndex);
+				int closingBracketIndex;
+				try{
+					closingBracketIndex = to!int(closingBracketIndexlong);
+				}catch(Exception e)
+				{
+					throw new UnknownErrorexceptionAP("Convert Error: Convert Not Complete (in JsonPathParserAP). |____|  " , __FILE__ , __LINE__);
+				}
 
 				if(closingBracketIndex == -1)
 				{
@@ -56,12 +69,13 @@ public class CL_JsonOtherCode{
 				{
 					throw new UnknownErrorexceptionAP("Syntax Error: Empty array index in JSON path. |____|  " , __FILE__ , __LINE__);
 				}
+
 				int IndexValue;
 				try{
 					IndexValue = to!int(indexString);
 				}catch(Exception e)
 				{
-					throw new UnknownErrorexceptionAP("Convert Error: Convert IndexString Not Complete (in JsonPathParserAP). |____|  " , __FILE__ , __LINE__);
+					throw new UnknownErrorexceptionAP("Convert Error: Convert Not Complete (in JsonPathParserAP). |____|  " , __FILE__ , __LINE__);
 				}
 
 				PathStep newStep;
@@ -80,11 +94,21 @@ public class CL_JsonOtherCode{
 					nextSeparatorIndex = to!int(nextSeparatorIndexlong);
 				}catch(Exception e)
 				{
-					throw new UnknownErrorexceptionAP("Convert Error: Convert IndexString Not Complete (in JsonPathParserAP). |____|  " , __FILE__ , __LINE__);
+					throw new UnknownErrorexceptionAP("Convert Error: Convert Not Complete (in JsonPathParserAP). |____|  " , __FILE__ , __LINE__);
 				}
 
-				auto dotIndex = input.indexOf('.' , startIndex);
-				auto bracketIndex = input.indexOf('[' , startIndex);
+				long dotIndexlong = input.indexOf('.' , startIndex);
+				long bracketIndexlong = input.indexOf('[' , startIndex);
+				int bracketIndex;
+				int dotIndex;
+				try{
+					dotIndex = to!int(dotIndexlong);
+					bracketIndex = to!int(bracketIndexlong);
+				}catch(Exception e)
+				{
+					throw new UnknownErrorexceptionAP("Convert Error: Convert Not Complete (in JsonPathParserAP). |____|  " , __FILE__ , __LINE__);
+				}
+				
 
 				if (dotIndex != -1 && (dotIndex < nextSeparatorIndex))
 				{
