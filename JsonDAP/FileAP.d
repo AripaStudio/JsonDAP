@@ -239,7 +239,7 @@ public static class CL_FileAP_Edit
 			{
 				return false;
 			}
-			currentJsonNodeToTraverse[finalStep] = convertValue;
+			currentJsonNodeToTraverse[finalStep.key] = convertValue;
 		}else {
 			return false;
 		}
@@ -352,7 +352,7 @@ public static class CL_FileAP_Edit
 			{
 				return false;
 			}
-			if(finalStep.key >= currentJsonNodeToTraverse.array)
+			if(finalStep.index >= currentJsonNodeToTraverse.array.length)
 			{
 				return false;
 			}
