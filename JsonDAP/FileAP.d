@@ -188,66 +188,71 @@ public static class CL_FileAP_Edit
 			return false;	
 		}
 
-		//For example for jsonPath: main.name.khashayar
-		string[] ways  = jsonPath.split(".");
-		if(ways.length == 0)
+		PathStep[] parsedSteps;
+		parsedSteps = CL_JsonOtherCode.JsonPathParserAP(jsonPath);
+			
+		if(parsedSteps.length == 0)
 		{
 			return false;
 		}
-		int intWays = ways.length;
 
-		
-		
-		string finalKey = ways[intWays - 1];
+		//For example for jsonPath: main.name.khashayar		
 
 		JSONValue currentJsonNodeToTraverse = rootJson;
-
-		byte checkComplete = 1;
-
-		for(int i = 0; i < intWays - 1; i++)
+			
+		for(int i = 0 ; i < parsedSteps.length - 1; i++ )
 		{
-			string currentKey = ways[i];
+			auto currentStep = parsedSteps[i];
+			if(currentStep.type == PathStepType.ObjectKey)
+			{
+				if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+				{
+					return false;
+				}
+				if(!currentStep.key in currentJsonNodeToTraverse.object)
+				{
+					return false;
+				}
+				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
+
+			}else if(currentStep.type == PathStepType.ArrayIndex)
+			{
+				return false;
+			}else
+			{
+				return false;
+			}
 
 			if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
 			{
 				return false;
 			}
-
-			if(!(currentKey in currentJsonNodeToTraverse.object))
-			{
-				return false;
-			}
-
-			currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentKey];
-
-			
-
-			if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
-			{
-				return false;
-			}
-			
-			
-
 		}
+
+		PathStep  finalStep = parsedSteps[parsedSteps.length - 1];
+
 		
-			auto convertValue = serializeToJson(value);				
-			currentJsonNodeToTraverse[finalKey] = convertValue;
-
-
-			auto writeFile = writeJsonFile(filePath , rootJson);
-			if(!writeFile)
+		auto convertValue = serializeToJson(value);				
+		if(finalStep.type == PathStepType.ObjectKey)
+		{
+			if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
 			{
 				return false;
 			}
+			currentJsonNodeToTraverse[finalStep] = convertValue;
+		}else {
+			return false;
+		}
+
+		auto writeFile = writeJsonFile(filePath , rootJson);
+		if(!writeFile)
+		{
+			return false;
+		}
 
 
-			return true;		
+		return true;		
 	}
-
-
-	//not Complete
-
 
 
 	public static bool updateJsonValueARRAY(V)(string filePath , string jsonPath , V value)
@@ -283,16 +288,16 @@ public static class CL_FileAP_Edit
 			return false;
 		}
 		PathStep[] parsedSteps;
-		parsedSteps = CL_JsonOtherCode.JsonParhParserAP(jsonPath);
+		parsedSteps = CL_JsonOtherCode.JsonPathParserAP(jsonPath);
 
-		if(parsedSteps.lenght == 0)
+		if(parsedSteps.length  == 0)
 		{
 			return false;
 		}
 
 		auto currentJsonNodeToTraverse = rootJson;
 		
-		for(int i = 0; i > parsedSteps.lenght - 1 ; i++)
+		for(int i = 0; i < parsedSteps.length  - 1 ; i++)
 		{
 			auto currentStep = parsedSteps[i];
 			if(currentStep.type == PathStepType.ObjectKey)
@@ -306,13 +311,13 @@ public static class CL_FileAP_Edit
 					return false;
 				}
 				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
-			}else if(currentStep.type == PathStepType.ArrayINdex)
+			}else if(currentStep.type == PathStepType.ArrayIndex)
 			{
 				if(currentJsonNodeToTraverse.type != JSONType.ARRAY)
 				{
 					return false;
 				}
-				if(currentStep.index >= currentJsonNodeToTraverse.length)
+				if(currentStep.index >= currentJsonNodeToTraverse.length )
 				{
 					return false;
 				}
@@ -321,19 +326,19 @@ public static class CL_FileAP_Edit
 			}
 
 
-			if(currentJsonNodeToTraverse.type != JSONType.OBJECT && currentJsonNodeToTraverse.type != JSONTyep.ARRAY)
+			if(currentJsonNodeToTraverse.type != JSONType.OBJECT && currentJsonNodeToTraverse.type != JSONType.ARRAY)
 			{
 				return false;
 			}
 		}
 
-		PathStep finalStep = parsedSteps[parsedSteps.lenght - 1];
+		PathStep finalStep = parsedSteps[parsedSteps.length  - 1];
 
 		JSONValue convertValue = serializeToJson(value);
 
 		if(finalStep.type == PathStepType.ObjectKey)
 		{
-			if(finalStep.type != JSONType.OBJECT)
+			if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
 			{
 				return false;
 			}
@@ -343,7 +348,7 @@ public static class CL_FileAP_Edit
 			
 		}else if(finalStep.type == PathStepType.ArrayIndex)
 		{
-			if(finalStep.type != JSONType.ARRAY)
+			if(currentJsonNodeToTraverse.type != JSONType.ARRAY)
 			{
 				return false;
 			}
