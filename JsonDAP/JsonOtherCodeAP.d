@@ -9,22 +9,23 @@ import PublicCodeOtherCode;
 import std.conv;
 import std.exception;
 
+public static enum PathStepType{
+	ObjectKey,
+	ArrayIndex
+}
+
+public static struct PathStep{
+	PathStepType type;
+	union{
+		string key;
+		int index;
+	}
+}
+
 
 //اضافه شود 
 public class CL_JsonOtherCode{
-
-	public static enum PathStepType{
-		ObjectKey,
-		ArrayIndex
-	}
-
-	public static struct PathStep{
-		PathStepType type;
-		union{
-			string key;
-			int index;
-		}
-	}
+	
 
 
 	public static PathStep[] JsonPathParserAP(string input ){

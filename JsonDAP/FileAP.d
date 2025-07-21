@@ -11,6 +11,7 @@ import std.exception;
 import CoreAP;
 import PublicCodeOtherCode;
 import ExceptionAP;
+import jsonOtherCodeAP;
 
 alias Optional = Nullable;
 
@@ -266,6 +267,8 @@ public static class CL_FileAP_Edit
 
 
 
+
+
 		auto readFile = readJsonArray!JSONValue(filePath);
 		if(!readFile.isSet)
 		{
@@ -277,16 +280,88 @@ public static class CL_FileAP_Edit
 
 		if(rootJson.type != JSONType.ARRAY)
 		{
-			return false;	
+			return false;
+		}
+		PathStep[] parsedSteps;
+		parsedSteps = CL_JsonOtherCode.JsonParhParserAP(jsonPath);
+
+		if(parsedSteps.lenght == 0)
+		{
+			return false;
 		}
 
+		auto currentJsonNodeToTraverse = rootJson;
 		
-		//کامل شود 
+		for(int i = 0; i > parsedSteps.lenght - 1 ; i++)
+		{
+			auto currentStep = parsedSteps[i];
+			if(currentStep.type == PathStepType.ObjectKey)
+			{
+				if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+				{
+					return false;
+				}
+				if(!currentStep.key in currentJsonNodeToTraverse.object)
+				{
+					return false;
+				}
+				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
+			}else if(currentStep.type == PathStepType.ArrayINdex)
+			{
+				if(currentJsonNodeToTraverse.type != JSONType.ARRAY)
+				{
+					return false;
+				}
+				if(currentStep.index >= currentJsonNodeToTraverse.length)
+				{
+					return false;
+				}
+				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.index];
+
+			}
 
 
+			if(currentJsonNodeToTraverse.type != JSONType.OBJECT && currentJsonNodeToTraverse.type != JSONTyep.ARRAY)
+			{
+				return false;
+			}
+		}
+
+		PathStep finalStep = parsedSteps[parsedSteps.lenght - 1];
+
+		JSONValue convertValue = serializeToJson(value);
+
+		if(finalStep.type == PathStepType.ObjectKey)
+		{
+			if(finalStep.type != JSONType.OBJECT)
+			{
+				return false;
+			}
+			currentJsonNodeToTraverse[finalStep.key] = convertValue;
 
 
+			
+		}else if(finalStep.type == PathStepType.ArrayIndex)
+		{
+			if(finalStep.type != JSONType.ARRAY)
+			{
+				return false;
+			}
+			if(finalStep.key >= currentJsonNodeToTraverse.array)
+			{
+				return false;
+			}
+			currentJsonNodeToTraverse[finalStep.index] = convertValue;
 
+		}else{
+			return false;
+		}
+
+		auto writeFile = writeJsonFile(filePath , rootJson);
+		if(!writeFile)
+		{
+			return false;
+		}
 
 		return true;
 	}
