@@ -12,6 +12,10 @@ public class FileOperationExceptionAP : Exception{
         super(msg, file, line, next);
         this.filePath = filePath;
     }
+
+    string getFilePath() const{
+        return filePath;
+	}
 }
 
 public class JSONExceptionAP : Exception {
