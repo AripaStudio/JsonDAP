@@ -274,7 +274,7 @@ public static class CL_FileAP_Edit
 
 
 
-		auto readFile = readJsonArray!JSONValue(filePath);
+		auto readFile = readJsonFile!JSONValue(filePath);
 		if(!readFile.isSet)
 		{
 			return false;
@@ -283,10 +283,7 @@ public static class CL_FileAP_Edit
 		JSONValue rootJson = readFile.get;		
 
 
-		if(rootJson.type != JSONType.ARRAY)
-		{
-			return false;
-		}
+
 		PathStep[] parsedSteps;
 		parsedSteps = CL_JsonOtherCode.JsonPathParserAP(jsonPath);
 
@@ -476,7 +473,113 @@ public static class CL_FileAP_Edit
 	}
 
 	public static bool addJsonItemARRAY(T)(string filePath , string jsonPath , T item){
-		return false;
+		string[] checkStrIsNull = [filePath , jsonPath];
+
+		if(CL_PublicCodeOtherCode.checkStringIsNull_array(checkStrIsNull))
+		{
+			return false;
+		}
+
+		if(!existsFile(filePath))
+		{
+			return false;
+		}
+
+
+		auto readFile = readJsonFile!JSONValue(filePath);
+		if(!readFile.isSet)
+		{
+			return false;
+		}
+
+		JSONValue rootJson = readFile.get;
+
+		PathStep[] parsedSteps;
+		parsedSteps = CL_JsonOtherCode.JsonPathParserAP(jsonPath);
+
+		if(parsedSteps.length == 0)
+		{
+			return false;
+		}
+	
+		auto currentJsonNodeToTraverse = rootJson;
+		for(int i = 0 ; i < parsedSteps.length - 1; i++)
+		{
+			auto currentStep = parsedSteps[i];
+			if(currentStep.type == PathStepType.ObjectKey)
+			{
+				if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+				{
+					return false;
+				}
+				if(!currentStep.key in currentJsonNodeToTraverse.Object)
+				{
+					return false;
+				}
+				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
+			}else if(currentStep.type == PathStepType.ArrayIndex)
+			{
+				if(currentJsonNodeToTraverse.type != JSONType.ARRAY)
+				{
+					return false;
+				}
+				if(!currentStep.index >= currentJsonNodeToTraverse.length)
+				{
+					return false;
+				}
+				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.index];
+			}else
+			{
+				return false;
+			}
+
+			if(currentJsonNodeToTraverse.type != JSONType.ARRAY && currentJsonNodeToTraverse.type != JSONType.OBJECT)
+			{
+				return false;
+			}
+		}
+
+		PathStep finalStep = parsedSteps[parsedSteps.length - 1];
+
+
+		JSONValue convertValue = serializeToJson(value);
+		
+		if(finalStep.type == PathStepType.ObjectKey)
+		{
+			if(finalStep.key in currentJsonNodeToTraverse.Object)
+			{
+				return false;
+			}
+			if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+			{
+				return false;
+			}
+			currentJsonNodeToTraverse = currentJsonNodeToTraverse[finalStep.key] = convertValue;
+		}else if(finalStep.type == PathStepType.ArrayIndex)
+		{
+			if(currentJsonNodeToTraverse.type != JSONType.ARRAY)
+			{
+				return false;
+			}
+			if(!currentStep.index >= currentJsonNodeToTraverse.length)
+			{
+				return false;
+			}
+
+			currentJsonNodeToTraverse[finalStep.key].array ~= convertValue;
+		}else
+		{
+			return false;
+		}
+
+		auto writeFile = writeJsonFile(filePath , rootJson);
+		if(!writeFile)
+		{
+			return false;
+		}
+
+		return true;
+		
 	}
 
 	public static bool removeJsonItemOBJECT(string filePath, string jsonPath)

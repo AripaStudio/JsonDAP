@@ -139,11 +139,6 @@ public class JsonAP
         return CL_FileAP_Edit.removeJsonItemOBJECT(filePath , jsonPath);
 	}
 
-    export static bool APremoveJsonItem(string filePath, string jsonPath)
-	{
-        return CL_FileAP_Edit.removeJsonItem(filePath , jsonPath);
-	}
-
     export static bool APmergeJson(string filePath, string jsonContentToMerge, bool overwriteExisting = true)
 	{
         return CL_FileAP_Edit.mergeJson(filePath , jsonContentToMerge , overwriteExisting);
