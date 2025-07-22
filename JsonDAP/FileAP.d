@@ -209,7 +209,7 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				if(!currentStep.key in currentJsonNodeToTraverse.object)
+				if(!currentStep.key in currentJsonNodeToTraverse.Object)
 				{
 					return false;
 				}
@@ -306,7 +306,7 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				if(!currentStep.key in currentJsonNodeToTraverse.object)
+				if(!currentStep.key in currentJsonNodeToTraverse.Object)
 				{
 					return false;
 				}
@@ -373,7 +373,106 @@ public static class CL_FileAP_Edit
 
 	public static bool addJsonItemOBJECT(T)(string filePath , string jsonPath , T item)
 	{
-		return false;
+		//Example : a.d.NewKey 
+		// NewKey : T item
+		string[] checkStrIsNull = [filePath , jsonPath];
+		if(CL_PublicCodeOtherCode.checkStringIsNull_array(checkStrIsNull))
+		{
+			return false;
+		}
+
+		if(!existsFile(filePath))
+		{
+			return false;
+		}    
+
+		auto readFile = readJsonFile!JSONValue(filePath);
+		if(!readFile.isSet)
+		{
+			return false;
+		}
+
+		JSONValue rootJson = readFile.get;
+
+		if(rootJson.type != JSONType.OBJECT)
+		{
+			return false;
+		}
+
+		PathStep[] parsedSteps;
+		parsedSteps = CL_JsonOtherCode.JsonPathParserAP(jsonPath);
+
+		if(parsedSteps.length == 0)
+		{
+			return false;
+		}
+
+
+		JSONValue currentJsonNodeToTraverse = rootJson;
+		
+		for(int i = 0; i < parsedSteps.length - 1 ; i++)
+		{
+			auto currentStep = parsedSteps[i];
+			if(currentStep.type == PathStepType.ObjectKey)
+			{
+				if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+				{
+					return false;
+				}
+
+				if(!currentStep.key in currentJsonNodeToTraverse.Object)
+				{
+					return false;
+				}
+
+				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
+			}else if(currentStep.type == PathStepType.ArrayIndex)
+			{
+				return false;
+			}else 
+			{
+				return false;
+			}
+
+			if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+			{
+				return false;
+			}
+			
+
+
+
+		}
+
+		PathStep finalStep = parsedSteps[parsedSteps.length - 1];
+
+			
+		JSONValue convertedValue = serializeToJson(item);
+
+		if(finalStep.type != PathStepType.ObjectKey)
+		{
+			return false;
+		}
+		if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+		{
+			return false;
+		}
+
+		if(finalStep.key in currentJsonNodeToTraverse.Object)
+		{
+			return false;
+		}
+
+		currentJsonNodeToTraverse[finalStep.key] = convertValue;
+
+		if(!writeJsonFile(filePath,  rootJson))
+		{
+			return false;
+		}
+
+		return true;
+
+
 	}
 
 	public static bool addJsonItemARRAY(T)(string filePath , string jsonPath , T item){
