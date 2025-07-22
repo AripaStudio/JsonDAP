@@ -523,7 +523,7 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				if(!currentStep.index >= currentJsonNodeToTraverse.length)
+				if(currentStep.index >= currentJsonNodeToTraverse.length)
 				{
 					return false;
 				}
@@ -561,7 +561,7 @@ public static class CL_FileAP_Edit
 			{
 				return false;
 			}
-			if(!currentStep.index >= currentJsonNodeToTraverse.length)
+			if(currentStep.index >= currentJsonNodeToTraverse.length)
 			{
 				return false;
 			}
