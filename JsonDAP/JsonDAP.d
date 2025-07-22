@@ -85,7 +85,7 @@ public class JsonAP
     // هنوز کامل نشدن 
 
     //CL_JsonOtherCode
-    export static CL_JsonOtherCode.PathStep[] APJsonPathParser(string input ){
+    export static PathStep[] APJsonPathParser(string input ){
         return CL_JsonOtherCode.JsonPathParserAP(input);
     }
 
@@ -119,9 +119,24 @@ public class JsonAP
         return CL_FileAP_Edit.updateJsonValueARRAY(filePath , jsonPath , value);
 	}
 
-    export static bool APaddJsonItem(T)(string filePath , string jsonPath , T item)
+    export static bool APaddJsonItemOBJECT(T)(string filePath , string jsonPath , T item)
 	{
-        return CL_FileAP_Edit.addJsonItem(filePath , jsonPath , item);
+        return CL_FileAP_Edit.addJsonItemOBJECT(filePath , jsonPath , item);
+	}
+
+    export static bool APaddJsonItemARRAY(T)(string filePath , string jsonPath , T item)
+	{
+        return CL_FileAP_Edit.addJsonItemARRAY(filePath , jsonPath , item);
+	}
+
+    export static bool APremoveJsonItemARRAY(string filePath , string jsonPath)
+	{
+        return CL_FileAP_Edit.removeJsonItemARRAY(filePath , jsonPath);
+	}
+
+    export static bool  APremoveJsonItemOBJECT(string filePath  , string jsonPath)
+	{
+        return CL_FileAP_Edit.removeJsonItemOBJECT(filePath , jsonPath);
 	}
 
     export static bool APremoveJsonItem(string filePath, string jsonPath)

@@ -371,12 +371,21 @@ public static class CL_FileAP_Edit
 		return true;
 	}
 
-	public static bool addJsonItem(T)(string filePath , string jsonPath , T item)
+	public static bool addJsonItemOBJECT(T)(string filePath , string jsonPath , T item)
 	{
 		return false;
 	}
 
-	public static bool removeJsonItem(string filePath, string jsonPath)
+	public static bool addJsonItemARRAY(T)(string filePath , string jsonPath , T item){
+		return false;
+	}
+
+	public static bool removeJsonItemOBJECT(string filePath, string jsonPath)
+	{
+		return false;
+	}
+
+	public static bool removeJsonItemARRAY(string filePath , string jsonPath)
 	{
 		return false;
 	}
