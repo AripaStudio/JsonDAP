@@ -7,7 +7,7 @@ import std.conv;
 
 public class BaseExceptionAP : Exception {
       string correlationId; 
-    this(string msg , string file = __FILE__ , size_t line = __LINE__ , Throwable next = null)
+    this(string msg , string file = __FILE__ , size_t line = __LINE__ , Throwable next = null)pure
 	{
         super(msg,file,line,next);
 	}
@@ -38,7 +38,7 @@ public class ParameterRelatedExceptionAP : BaseExceptionAP {
 
 	this(string msg, string parameterName, string invalidValue,
          string file = __FILE__, size_t line = __LINE__, Throwable next = null) pure {
-			super(msg, file, line, next);
+			super(msg , file, line, next);
 			this.parameterName = parameterName;
 			this.invalidValue = invalidValue;
 		 }
@@ -62,8 +62,8 @@ public class JSONExceptionAP : ParameterRelatedExceptionAP {
         this.jsonSnippet = jsonSnippet;
 	}
 
-    string getJsonPath() const {return jsonPath}
-    string getJsonSnippet() const {return jsonSnippet}
+    string getJsonPath() const {return jsonPath;}
+    string getJsonSnippet() const {return jsonSnippet;}
 
     override string toString(){
         string baseStr = super.toString();
