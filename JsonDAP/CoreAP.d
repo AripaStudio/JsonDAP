@@ -32,7 +32,7 @@ public class CL_CoreAP
 			return true;
 		}catch(JSONException e)
 		{			
-			throw new JsonOperationExceptionAP("Failed to parse JSON: " ~ e.msg, __FILE__, __LINE__, e);			
+			throw new JsonOperationExceptionAP("Failed to parse JSON: " ~ e.msg, "jsonContent : " ~ jsonContent , __LINE__, e);			
 		}catch(Exception e)
 		{
 			throw new JsonOperationExceptionAP("An unexpected error occurred during JSON parsing: " ~ e.msg, __FILE__, __LINE__, e);			
