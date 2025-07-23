@@ -17,6 +17,8 @@ alias Optional = Nullable;
 
 public static class CL_FileAP
 {
+	//fix Error Exception in FileAP
+	//FileAP 
 
 	public static Optional!T readJsonFile(T)(string filePath){
 		try{			
