@@ -4,7 +4,7 @@ import std.string;
 import std.conv;
 
 
-
+// throw new BaseExceptionAP("A base system error occurred.", __FILE__, __LINE__);
 public class BaseExceptionAP : Exception {
       string correlationId; 
     this(string msg , string file = __FILE__ , size_t line = __LINE__ , Throwable next = null)pure
@@ -31,7 +31,7 @@ public class BaseExceptionAP : Exception {
     }
 }
 
-
+// throw new ParameterRelatedExceptionAP("Invalid input parameter.", "username", "", __FILE__, __LINE__);
 public class ParameterRelatedExceptionAP : BaseExceptionAP {
     string parameterName;
     string invalidValue;
@@ -53,11 +53,12 @@ public class ParameterRelatedExceptionAP : BaseExceptionAP {
     }
 }
 
-public class JSONExceptionAP : ParameterRelatedExceptionAP {    
+// throw new JSONExceptionAP("Invalid JSON structure.", "$.root.data", "{'badJson':");
+public class JSONExceptionAP : BaseExceptionAP {    
     string jsonPath ;
     string jsonSnippet;
-   	this(string msg, string jsonPath = null, string jsonSnippet = null, string parameterName , string invalidValue, string file = __FILE__ , size_t line = __LINE__ , Throwable next = null) pure{
-		super(msg, parameterName , invalidValue ,file,line,next);
+   	this(string msg, string jsonPath = null, string jsonSnippet = null, string file = __FILE__ , size_t line = __LINE__ , Throwable next = null) pure{
+		super(msg ,file,line,next);
         this.jsonPath = jsonPath;
         this.jsonSnippet = jsonSnippet;
 	}
@@ -80,17 +81,16 @@ public class JSONExceptionAP : ParameterRelatedExceptionAP {
 
 }
 
-
+// throw new JsonOperationExceptionAP("Failed to parse JSON content.", "$.data", "{'invalid_json':}");
 public class JsonOperationExceptionAP : JSONExceptionAP{
-
-	this(string msg, string jsonPath = null , string jsonSnippet, string parameterName , string invalidValue, string file = __FILE__ , size_t line = __LINE__ , Throwable next = null) pure{
-		super(msg , jsonPath , jsonSnippet , parameterName , invalidValue ,file,line,next);
-	}
-
+	this(string msg, string jsonPath = null , string jsonSnippet = null,
+         string file = __FILE__ , size_t line = __LINE__ , Throwable next = null) pure{			
+			super(msg , jsonPath , jsonSnippet , file,line,next);		
+		 }
 }
 
 
-
+// throw new ConvertExceptionAP("Failed to convert value.", "ageString", "twenty", "string", "int", "toInt", "Value is not numeric.");
 public class ConvertExceptionAP : ParameterRelatedExceptionAP{
     string inputType;
     string outputType;
@@ -133,6 +133,7 @@ public class ConvertExceptionAP : ParameterRelatedExceptionAP{
 
 }
 
+// throw new FileOperationExceptionAP("Failed to write to file.", "/path/to/file.txt", "write", 5);
 public class FileOperationExceptionAP : BaseExceptionAP{
 	string filePath;
     string operationType;
@@ -158,7 +159,7 @@ public class FileOperationExceptionAP : BaseExceptionAP{
     }
 }
 
-
+// throw new JSONConvertExceptionAP("JSON field conversion failed.", "user_id", "abc", "string", "int", "Invalid char in ID.");
 public class JSONConvertExceptionAP : ConvertExceptionAP
 {
     string jsonSpecificError;
@@ -183,6 +184,7 @@ public class JSONConvertExceptionAP : ConvertExceptionAP
 	}
 }
 
+// throw new InvalidArgumentExceptionAP("Input is out of range.", "quantity", "150", "1-100");
 public class InvalidArgumentExceptionAP : ParameterRelatedExceptionAP {
 	string expectedFormatOrRange;
 
@@ -202,6 +204,7 @@ public class InvalidArgumentExceptionAP : ParameterRelatedExceptionAP {
     }
 }
 
+// throw new UnknownErrorexceptionAP("An unhandled system error occurred.");
 public class UnknownErrorexceptionAP : Exception{
 	this(string msg , string file = __FILE__ , size_t line = __LINE__ , Throwable next = null ) pure
 	{

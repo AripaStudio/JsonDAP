@@ -32,10 +32,10 @@ public class CL_CoreAP
 			return true;
 		}catch(JSONException e)
 		{			
-			throw new JsonOperationExceptionAP("Failed to parse JSON: " ~ e.msg, "jsonContent : " ~ jsonContent , __LINE__, e);			
+			throw new JsonOperationExceptionAP("Failed to parse JSON content.", "$", jsonContent, __FILE__, __LINE__, e);			
 		}catch(Exception e)
 		{
-			throw new JsonOperationExceptionAP("An unexpected error occurred during JSON parsing: " ~ e.msg, __FILE__, __LINE__, e);			
+			throw new UnknownErrorexceptionAP("An unexpected error occurred during JSON parsing.", __FILE__, __LINE__, e);			
 		}
 	}
 
@@ -79,10 +79,10 @@ public class CL_CoreAP
 			return val.type == JSONType.INTEGER || val.type == JSONType.FLOAT;
 		}catch(JSONException e)
 		{
-			throw new JsonOperationExceptionAP("Error Message(JSONException) :" ~ e.msg, __FILE__, __LINE__, e);						
+			throw new JsonOperationExceptionAP("Error checking if JSON is a number.", "$", jsonContent, __FILE__, __LINE__, e);						
 		}catch(Exception e)
 		{
-			throw new JsonOperationExceptionAP("Error Message(Exception) :" ~ e.msg, __FILE__, __LINE__, e);						
+			throw new UnknownErrorexceptionAP("An unexpected error occurred while checking JSON number type.", __FILE__, __LINE__, e);						
 		}
 	}
 
@@ -97,9 +97,9 @@ public class CL_CoreAP
             JSONValue val = parseJSON(jsonContent);
             return val.type == JSONType.STRING;
         } catch (JSONException e) {
-			throw new JsonOperationExceptionAP("Error Message(JSONException) :" ~ e.msg, __FILE__, __LINE__, e);			            
+			throw new JsonOperationExceptionAP("Error checking if JSON is a string.", "$", jsonContent, __FILE__, __LINE__, e);
         } catch (Exception e) {
-			throw new JsonOperationExceptionAP("Error Message(Exception) :" ~ e.msg, __FILE__, __LINE__, e);		            
+			throw new UnknownErrorexceptionAP("An unexpected error occurred while checking JSON string type.", __FILE__, __LINE__, e);	
         }
 	}
 
@@ -114,9 +114,9 @@ public class CL_CoreAP
 			JSONValue val = parseJSON(jsonContent);
 			return Optional!string(val.toPrettyString());
 		}catch (JSONException e) {
-			throw new JsonOperationExceptionAP("Error Message(JSONException) :" ~ e.msg, __FILE__, __LINE__, e);			            
+			throw new JsonOperationExceptionAP("Failed to pretty print JSON content.", "$", jsonContent, __FILE__, __LINE__, e);
         } catch (Exception e) {
-			throw new JsonOperationExceptionAP("Error Message(Exception) :" ~ e.msg, __FILE__, __LINE__, e);		            
+			throw new UnknownErrorexceptionAP("An unexpected error occurred during JSON pretty printing.", __FILE__, __LINE__, e);
         }
 	}
 
@@ -140,7 +140,7 @@ public class CL_CoreAP
 						current = current.object[segment];
 					}else
 					{
-						return Optional!V.init;
+						throw new JSONExceptionAP("JSON path invalid: segment '" ~ segment ~ "' not found.", path, jsonContent, __FILE__, __LINE__); 
 					}
 				}else if(current.type == JSON_TYPE.ARRAY && CL_PublicCodeOtherCode.isInteger(segment))
 				{
@@ -151,11 +151,11 @@ public class CL_CoreAP
 
 					}else
 					{
-						return Optional!V.init;
+						throw new InvalidArgumentExceptionAP("JSON array index out of bounds.", "index", segment, "0-" ~ to!string(current.array.length - 1), __FILE__, __LINE__); 
 					}
 				}else
 				{
-					return Optional!V.init;
+					throw new JSONExceptionAP("JSON type unsuitable for path traversal.", path, jsonContent, __FILE__, __LINE__); 
 				}
 			}
 
@@ -165,13 +165,13 @@ public class CL_CoreAP
                 else static if (is(V == long) || is(V == int)) return Optional!V(current.integer.to!V());
                 else static if (is(V == double) || is(V == float)) return Optional!V(current.floating.to!V());
                 else static if (is(V == bool)) return Optional!V(current.boolean);                
-                else return Optional!V.init; 
+                else  throw new ConvertExceptionAP("JSON type conversion not supported.", "current.type", to!string(current.type), to!string(current.type), to!string(V.stringof), "getJsonValue", "Requested type is not supported.", __FILE__, __LINE__); 
 			});
 
 		}catch (JSONException e) {            
-			throw new JsonOperationException("Error parsing JSON :" ~ e.msg, __FILE__, __LINE__, e);						            
+			throw new JsonOperationExceptionAP("Error parsing JSON while getting value.", "$", jsonContent, __FILE__, __LINE__, e);
         } catch (Exception e) {            
-            throw new JsonOperationException("General error :" ~ e.msg, __FILE__, __LINE__, e);						            
+            throw new UnknownErrorexceptionAP("A general error occurred while getting JSON value.", __FILE__, __LINE__, e);			            
         }
 
 	}
@@ -213,9 +213,6 @@ public class CL_CoreAP
 			return false; 
 		}
 	}
-
-
-	//اضافه شود :
 
 	public static JSONType getJsonValueType(JSONValue jsonValue)
 	{		
