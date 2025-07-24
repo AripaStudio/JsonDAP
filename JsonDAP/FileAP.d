@@ -97,7 +97,7 @@ public static class CL_FileAP
 			{
 				throw new InvalidArgumentExceptionAP("Input file path cannot be empty or null.", "filePath", filePath, "Non-empty string expected", null, 0);
 			}
-			enforce(existsFile(filePath)) , throw new FileOperationExceptionAP("File not found for reading array.", filePath, "read array", 0, null, 0));
+			enforce(existsFile(filePath)) , throw new FileOperationExceptionAP("File not found for reading array.", filePath, "read array", 0, null, 0);
 			string jsonContent = readText(filePath);
 			return deserializeJsonArray!T[](jsonContent);
 		}catch(FileException  e)
@@ -603,8 +603,7 @@ public static class CL_FileAP_Edit
 
 public static class CL_File_JSON
 {
-	public static Optional!(T[]) deserializeJsonArray(T)(string jsonContent)
-	{
+	public static Optional!(T[]) deserializeJsonArray(T)(string jsonContent){
 		try{
 			JSONValue val = parseJsonString(jsonContent);
 			if(val.type == JSONType.ARRAY)
@@ -618,20 +617,20 @@ public static class CL_File_JSON
 						{
 							arr ~= convertedItemOptional.get;
 						}else{
-							throw new JSONConvertExceptionAP("Failed to convert array element from JSON to type " ~ T.stringof , __FILE__ , __LINE__);
+							throw new JSONConvertExceptionAP("Failed to convert array element from JSON.", T.ToString(), item.ToString(), item.GetType().Name, T.ToString(), "ElementConversionFailed", "Could not convert JSON array element to " ~ T.ToString(), null, 0, null);
 						}
 					}
 					return Optional!(T[])(arr);
 			}else
 			{
-                throw new JSONConvertExceptionAP("Expected a JSON array, but got type: " ~ val.type.to!string , __FILE__ , __LINE__);
+               throw new JSONConvertExceptionAP("Expected a JSON array, but got an unexpected type.", T.ToString(), val.ToString(), val.GetType().Name, T.ToString(), "TypeMismatch", "JSON content is not an array.", null, 0, null);
 			}
 		}catch(JSONException e)
 		{
-			throw new JSONExceptionAP("Failed to deseralize JSON Array : " ~ e.msg);
+			throw new JsonOperationExceptionAP("Failed to deserialize JSON array.", null, jsonContent, null, 0, e);
 		}catch(Exception e)
 		{
-			throw new JSONExceptionAP("Error during JSON array element conversion: " ~ e.msg);
+			throw new UnknownErrorexceptionAP("An unexpected error occurred during JSON array element conversion.", null, 0, e);
 		}
 		return Optional!(T[]).init;
 	}
@@ -649,16 +648,19 @@ public static class CL_File_JSON
 					obj ~= convertedItemOptional.get;
 				}else
 				{
-					throw new JSONConvertExceptionAP("Failed to convert  element from JSON to type " ~ T.stringof , __FILE__ , __LINE__);
+					throw new JSONConvertExceptionAP("Failed to convert element from JSON.", T.ToString(), val.ToString(), val.GetType().Name, T.ToString(), "ObjectConversionFailed", "Could not convert JSON object to  |__|  Error in ( auto convertedItemOptional = convertJsonValueToT!T(val); ) " ~ T.ToString(), null, 0, null);
 				}
 				return Optional!(T)(obj);
+			}else
+			{
+				throw new JSONConvertExceptionAP("Failed to convert element from JSON.", T.ToString(), val.ToString(), val.GetType().Name, T.ToString(), "ObjectConversionFailed", "Could not convert JSON object to " ~ T.ToString(), null, 0, null);
 			}
 		}catch(JSONException e)
 		{
-			throw new JSONExceptionAP("Failed to deseralize JSON  : " ~ e.msg);
+			throw new JsonOperationExceptionAP("Failed to deserialize JSON.", null, jsonContent, null, 0, e);
 		}catch(Exception e)
 		{
-			throw new JSONExceptionAP("Error during JSON  element conversion: " ~ e.msg);
+			throw new UnknownErrorexceptionAP("An unexpected error occurred during JSON element conversion.", null, 0, e);
 		}
 		return Optional!(T).init;
 	}
@@ -670,7 +672,7 @@ public static class CL_File_JSON
 			JSONValue jsonVal = serializeTToJsonValue!T(obj);
 			return jsonVal.toString();
 		}catch (Exception e) {
-            throw new JsonOperationExceptionAP("Failed to serialize object to JSON string: " ~ e.msg, __FILE__, __LINE__, e);
+           throw new JsonOperationExceptionAP("Failed to serialize object to JSON string.", null, obj.ToString(), null, 0, e);
         }
 	}
 
@@ -680,7 +682,7 @@ public static class CL_File_JSON
 			JSONValue jsonVal = serializeTToJsonValue!T(obj);
 			return jsonVal.toPrettyString();
 		}catch (Exception e) {
-            throw new JsonOperationExceptionAP("Failed to serialize object to pretty JSON string: " ~ e.msg, __FILE__, __LINE__, e);
+            throw new JsonOperationExceptionAP("Failed to serialize object to JSON array string.", null, data.ToString(), null, 0, e);
         }
 	}
 
