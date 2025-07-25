@@ -60,7 +60,7 @@ public static class CL_FileAP
 			}
 			enforce(existsFile(filePath), throw new FileOperationExceptionAP("Target file not found for writing.", filePath, "write", 0, null, 0));
 			string jsonContent = CL_File_JSON.serializeToJson(data);
-			write(filePath , jsonContent);
+			std.file.write(filePath , jsonContent);
 			return true;
 		}catch(FileException  e)
 		{
@@ -671,7 +671,7 @@ public static class CL_FileAP_Edit
 		}		
 
 
-		auto writeFile = CL_FileAP.writeJsonFile(filePath , rootJson);
+		bool writeFile = CL_FileAP.writeJsonFile(filePath , rootJson);
 		if(!writeFile)
 		{
 			return false;
@@ -708,7 +708,7 @@ public class CL_File_JSON
 					T[] arr;
 					foreach(item; val.array)
 					{
-						auto convertedItemOptional = convertJsonValueToT!T(item);
+						auto convertedItemOptional = CL_CoreAP_Conv.convertJsonValueToT!T(item);
 							
 						if(convertedItemOptional.isSet)
 						{
@@ -767,7 +767,7 @@ public class CL_File_JSON
 	public static JSONValue serializeToJson(T)(T obj)
 	{
 		try{
-			JSONValue jsonVal = serializeTToJsonValue!T(obj);
+			JSONValue jsonVal = CL_CoreAP_Conv.serializeTToJsonValue!T(obj);
 			return jsonVal.toString();
 		}catch (Exception e) {
            throw new JsonOperationExceptionAP("Failed to serialize object to JSON string.", null, obj.ToString(), null, 0, e);
@@ -777,7 +777,7 @@ public class CL_File_JSON
 	public static  JSONValue[] serializeToJsonArray(T)(T data)
 	{
 		try{
-			JSONValue jsonVal = serializeTToJsonValue!T(obj);
+			JSONValue jsonVal = CL_CoreAP_Conv.serializeTToJsonValue!T(obj);
 			return jsonVal.toPrettyString();
 		}catch (Exception e) {
             throw new JsonOperationExceptionAP("Failed to serialize object to JSON array string.", null, data.ToString(), null, 0, e);
