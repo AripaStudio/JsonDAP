@@ -208,7 +208,7 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				if(!currentStep.key in currentJsonNodeToTraverse.Object)
+				if(!currentStep.key in currentJsonNodeToTraverse.object)
 				{
 					return false;
 				}
@@ -302,7 +302,7 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				if(!currentStep.key in currentJsonNodeToTraverse.Object)
+				if(!currentStep.key in currentJsonNodeToTraverse.object)
 				{
 					return false;
 				}
@@ -416,7 +416,7 @@ public static class CL_FileAP_Edit
 					return false;
 				}
 
-				if(!currentStep.key in currentJsonNodeToTraverse.Object)
+				if(!currentStep.key in currentJsonNodeToTraverse.object)
 				{
 					return false;
 				}
@@ -454,7 +454,7 @@ public static class CL_FileAP_Edit
 			return false;
 		}
 
-		if(finalStep.key in currentJsonNodeToTraverse.Object)
+		if(finalStep.key in currentJsonNodeToTraverse.object)
 		{
 			return false;
 		}
@@ -511,7 +511,7 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				if(!currentStep.key in currentJsonNodeToTraverse.Object)
+				if(!currentStep.key in currentJsonNodeToTraverse.object)
 				{
 					return false;
 				}
@@ -545,7 +545,7 @@ public static class CL_FileAP_Edit
 		
 		if(finalStep.type == PathStepType.ObjectKey)
 		{
-			if(finalStep.key in currentJsonNodeToTraverse.Object)
+			if(finalStep.key in currentJsonNodeToTraverse.object)
 			{
 				return false;
 			}
