@@ -233,7 +233,7 @@ public static class  CL_CoreAP_Conv
 	    auto typeJsonValue = CL_CoreAP.getJsonValueType(jsonValue);
 		
 
-	    static if (isIntegral!T || isFloating!T || isBoolean!T || is(T == string)) {
+	    static if (std.traits.isIntegral!T || std.traits.isFloating!T || std.traits.isBoolean!T || is(T == string)) {
 
 				switch(typeJsonValue) {
 
@@ -314,7 +314,8 @@ public static class  CL_CoreAP_Conv
 					throw new JSONConvertExceptionAP("Expected object JSON type for target type " ~ T.stringof ~ ", but got " ~ typeJsonValue.to!string , T.stringof, typeJsonValue.to!string, typeJsonValue.to!string, T.stringof, "TypeMismatch", "JSON is not an object for struct/class conversion.", __FILE__ , __LINE__);
 				}
 	    } else {
-	        static assert(0, "Unsupported type " ~ T.stringof ~ " for JSON conversion.");
+	        static assert(0, "Unsupported type " ~ T.stringof ~ " for JSON conversion.");			
+			//throw new UnknownErrorexceptionAP("Unsuppoted type : "~ T.type.toString() ~ "for Json Conversion." );
 	    }
 	}
 

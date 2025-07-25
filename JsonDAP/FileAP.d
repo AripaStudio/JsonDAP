@@ -19,7 +19,7 @@ public static class CL_FileAP
 {
 
 	public static Optional!T readJsonFile(T)(string filePath){
-		try{			
+		try{						
 			string errorTextStrIsNull;
 			bool CheckStrIsNull;
 			
@@ -28,9 +28,17 @@ public static class CL_FileAP
 			{
 				throw new InvalidArgumentExceptionAP("Input file path cannot be empty or null.", "filePath", filePath, "Non-empty string expected", null, 0);
 			}
+
+			
 			enforce(existsFile(filePath),throw new FileOperationExceptionAP("File not found for reading.", filePath, "read", 0, null, 0));
-			string jsonContent = readText(filePath);
-            return CL_File_JSON.deserializeJson!T(jsonContent);
+			auto jsonContent = readText(filePath);
+			static if(is(T == JSONValue))
+			{
+				return Optional!T(parseJSON(jsonContent));
+			}else
+			{				
+				return CL_File_JSON.deserializeJson!T(jsonContent);
+			}		
 		}catch(FileException  e)
 		{
 			throw new FileOperationExceptionAP("File I/O error reading file.", filePath, "read", 0, null, 0, e);
@@ -608,7 +616,7 @@ public static class CL_FileAP_Edit
 		}
 
 		PathStep[] parsedSteps;
-		parsedStep = CL_JsonOtherCode.JsonPathParserAP(jsonPath);
+		parsedSteps = CL_JsonOtherCode.JsonPathParserAP(jsonPath);
 		
 		if(parsedSteps.length <= 1)
 		{
@@ -617,7 +625,7 @@ public static class CL_FileAP_Edit
 
 		JSONValue currentJsonNodeToTraverse = rootJson;
 
-		for (i = 0; i < parsedSteps.length - 1; i++)
+		for (int i = 0; i < parsedSteps.length - 1; i++)
 		{
 			PathStep currentStep = parsedSteps[i];
 			if(currentStep.type == PathStepType.ObjectKey)
@@ -626,7 +634,7 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				if(!currentStep.key in currentJsonNodeToTraverse.Object)
+				if(currentStep.key !in currentJsonNodeToTraverse.object)
 				{
 					return false;
 				}
@@ -731,15 +739,16 @@ public class CL_File_JSON
 			if(val.type == JSONType.OBJECT)
 			{
 				T obj;
-				auto convertedItemOptional = CL_CoreAP_Conv.convertJsonValueToT!T(val);
-				if(convertedItemOptional.isSet)
-				{
-					obj ~= convertedItemOptional.get;
-				}else
-				{
-					throw new JSONConvertExceptionAP("Failed to convert element from JSON.", T.toString(), val.toString(), val.type, T.toString(), "ObjectConversionFailed", "Could not convert JSON object to  |__|  Error in ( auto convertedItemOptional = convertJsonValueToT!T(val); ) " ~ T.ToString(), null, 0, null);
-				}
-				return Optional!(T)(obj);
+					auto convertedItemOptional = CL_CoreAP_Conv.convertJsonValueToT!T(val);
+					if(convertedItemOptional.isSet)
+					{
+						obj = convertedItemOptional.get;
+					}else
+					{
+						throw new JSONConvertExceptionAP("Failed to convert element from JSON.", T.toString(), val.toString(), val.type, T.toString(), "ObjectConversionFailed", "Could not convert JSON object to  |__|  Error in ( auto convertedItemOptional = convertJsonValueToT!T(val); ) " ~ T.ToString(), null, 0, null);
+					}
+					return Optional!(T)(obj);
+							
 			}else
 			{
 				throw new JSONConvertExceptionAP("Failed to convert element from JSON.", T.toString(), val.toString(), val.type , T.toString(), "ObjectConversionFailed", "Could not convert JSON object to " ~ T.toString(), null, 0, null);
