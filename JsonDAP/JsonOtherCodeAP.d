@@ -110,7 +110,7 @@ public class CL_JsonOtherCode{
 				}
 
 
-				if (dotIndex != -1 && (dotIndex < nextSeparatorIndex))
+				if (dotIndex != -1 && (dotIndex < nextSeparatorIndex)) 
 				{
 					nextSeparatorIndex = dotIndex;
 				}

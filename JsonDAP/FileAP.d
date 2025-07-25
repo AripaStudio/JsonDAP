@@ -30,7 +30,7 @@ public static class CL_FileAP
 			}
 			enforce(existsFile(filePath),throw new FileOperationExceptionAP("File not found for reading.", filePath, "read", 0, null, 0));
 			string jsonContent = readText(filePath);
-			return deserializeJson!T(jsonContent);
+            return CL_File_JSON.deserializeJson!T(jsonContent);
 		}catch(FileException  e)
 		{
 			throw new FileOperationExceptionAP("File I/O error reading file.", filePath, "read", 0, null, 0, e);
@@ -51,7 +51,7 @@ public static class CL_FileAP
 				throw new InvalidArgumentExceptionAP("Output file path cannot be empty.", "filePath", filePath, "Non-empty string expected", null, 0);
 			}
 			enforce(existsFile(filePath), throw new FileOperationExceptionAP("Target file not found for writing.", filePath, "write", 0, null, 0));
-			string jsonContent = serializeToJson(data);
+			string jsonContent = CL_File_JSON.serializeToJson(data);
 			write(filePath , jsonContent);
 			return true;
 		}catch(FileException  e)
@@ -87,8 +87,7 @@ public static class CL_FileAP
 		}
 	}
 
-	public static Optional!(T[]) readJsonArray(T)(string filepath)
-	{
+	public static Optional!(T[]) readJsonArray(T)(string filepath){
 		try{
 			string errorTextStrIsNull;
 			bool CheckStrIsNull;			
@@ -168,7 +167,7 @@ public static class CL_FileAP_Edit
 			return false;
 		}
 
-		if(!existsFile(filePath))
+		if(!CL_FileAP.existsFile(filePath))
 		{
 			return false;
 		}		
@@ -264,7 +263,7 @@ public static class CL_FileAP_Edit
 			return false;
 		}
 
-		if(!existsFile(filePath))
+		if(!CL_FileAP.existsFile(filePath))
 		{
 			return false;
 		}
@@ -378,7 +377,7 @@ public static class CL_FileAP_Edit
 			return false;
 		}
 
-		if(!existsFile(filePath))
+		if(!CL_FileAP.existsFile(filePath))
 		{
 			return false;
 		}    
@@ -480,7 +479,7 @@ public static class CL_FileAP_Edit
 			return false;
 		}
 
-		if(!existsFile(filePath))
+		if(!CL_FileAP.existsFile(filePath))
 		{
 			return false;
 		}
@@ -584,7 +583,97 @@ public static class CL_FileAP_Edit
 
 	public static bool removeJsonItemOBJECT(string filePath, string jsonPath)
 	{
+		string[] checkStrIsNull = [filePath , jsonPath];
+
+		if(CL_PublicCodeOtherCode.checkStringIsNull_array(checkStrIsNull))
+		{
+			return false;
+		}
+
+		if(!CL_FileAP.existsFile(filePath))
+		{
+			return false;
+		}
+
+		auto readFile = CL_FileAP.readJsonFile!JSONValue(filePath);
+		if(!readFile.isSet){
+			return false;
+		}
+
+		JSONValue rootJson = readFile.get;
+
+		if(rootJson.type != JSONType.OBJECT)
+		{
+			return false;
+		}
+
+		PathStep[] parsedSteps;
+		parsedStep = CL_JsonOtherCode.JsonPathParserAP(jsonPath);
+		
+		if(parsedSteps.length <= 1)
+		{
+			return false;
+		}
+
+		JSONValue currentJsonNodeToTraverse = rootJson;
+
+		for (i = 0; i < parsedSteps.length - 1; i++)
+		{
+			PathStep currentStep = parsedSteps[i];
+			if(currentStep.type == PathStepType.ObjectKey)
+			{
+				if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+				{
+					return false;
+				}
+				if(!currentStep.key in currentJsonNodeToTraverse.Object)
+				{
+					return false;
+				}
+				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
+
+			}else if(currentStep.type == PathStepType.ArrayIndex)
+			{
+				return false;
+			}else
+			{
+				return false;
+			}
+
+			if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+			{
+				return false;
+			}
+		}
+
+		PathStep finalStep = parsedSteps[parsedSteps.length - 1];
+
+		if(finalStep.type != PathStepType.ObjectKey)
+		{
+			return false;
+		}
+		if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+		{
+			return false;
+		}
+		bool returnBool = false;
+		if(finalStep.key in currentJsonNodeToTraverse.object){
+			returnBool = true;
+			currentJsonNodeToTraverse.object.remove(finalStep.key);
+		}		
+
+
+		auto writeFile = CL_FileAP.writeJsonFile(filePath , rootJson);
+		if(!writeFile)
+		{
+			return false;
+		}
+		if(returnBool)
+		{
+			return true;
+		}
 		return false;
+
 	}
 
 	public static bool removeJsonItemARRAY(string filePath , string jsonPath)
@@ -601,11 +690,11 @@ public static class CL_FileAP_Edit
 
 //اضافه شود :
 
-public static class CL_File_JSON
+public class CL_File_JSON
 {
 	public static Optional!(T[]) deserializeJsonArray(T)(string jsonContent){
 		try{
-			JSONValue val = parseJsonString(jsonContent);
+			JSONValue val = parseJSON(jsonContent);
 			if(val.type == JSONType.ARRAY)
 			{
 					T[] arr;
@@ -638,22 +727,22 @@ public static class CL_File_JSON
 	public static Optional!(T) deserializeJson(T)(string jsonContent)
 	{
 		try{		
-			JSONValue val = parseJsonString(jsonContent);
+			JSONValue val = parseJSON(jsonContent);			
 			if(val.type == JSONType.OBJECT)
 			{
 				T obj;
-				auto convertedItemOptional = convertJsonValueToT!T(val);
+				auto convertedItemOptional = CL_CoreAP_Conv.convertJsonValueToT!T(val);
 				if(convertedItemOptional.isSet)
 				{
 					obj ~= convertedItemOptional.get;
 				}else
 				{
-					throw new JSONConvertExceptionAP("Failed to convert element from JSON.", T.ToString(), val.ToString(), val.GetType().Name, T.ToString(), "ObjectConversionFailed", "Could not convert JSON object to  |__|  Error in ( auto convertedItemOptional = convertJsonValueToT!T(val); ) " ~ T.ToString(), null, 0, null);
+					throw new JSONConvertExceptionAP("Failed to convert element from JSON.", T.toString(), val.toString(), val.type, T.toString(), "ObjectConversionFailed", "Could not convert JSON object to  |__|  Error in ( auto convertedItemOptional = convertJsonValueToT!T(val); ) " ~ T.ToString(), null, 0, null);
 				}
 				return Optional!(T)(obj);
 			}else
 			{
-				throw new JSONConvertExceptionAP("Failed to convert element from JSON.", T.ToString(), val.ToString(), val.GetType().Name, T.ToString(), "ObjectConversionFailed", "Could not convert JSON object to " ~ T.ToString(), null, 0, null);
+				throw new JSONConvertExceptionAP("Failed to convert element from JSON.", T.toString(), val.toString(), val.type , T.toString(), "ObjectConversionFailed", "Could not convert JSON object to " ~ T.toString(), null, 0, null);
 			}
 		}catch(JSONException e)
 		{

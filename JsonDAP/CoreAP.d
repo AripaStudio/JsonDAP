@@ -230,7 +230,7 @@ public class CL_CoreAP
 public static class  CL_CoreAP_Conv
 {
 	public static Optional!T convertJsonValueToT(T)(JSONValue jsonValue) {
-	    auto typeJsonValue = getJsonValueType(jsonValue);
+	    auto typeJsonValue = CL_CoreAP.getJsonValueType(jsonValue);
 		
 
 	    static if (isIntegral!T || isFloating!T || isBoolean!T || is(T == string)) {
