@@ -505,6 +505,7 @@
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep;*.tlog</filesToClean>
  </Config>
  <Folder name="JsonDAP">
+  <File path="CheckVariablesAP.d" />
   <File path="CoreAP.d" />
   <File path="dub.json" />
   <File path="ExceptionAP.d" />

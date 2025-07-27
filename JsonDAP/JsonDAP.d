@@ -15,6 +15,8 @@ alias Optional = Nullable;
 export import jsonOtherCodeAP;
 //Exceptions : 
 export import ExceptionAP;
+//CheckVariablesAP :
+export import CheckVariablesAP;
 
 public class JsonAP
 {
