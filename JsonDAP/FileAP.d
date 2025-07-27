@@ -182,7 +182,7 @@ public static class CL_FileAP_Edit
 		
 
 		auto readFile = readJsonFile!JSONValue(filePath);
-		if(!readFile.isSet)
+		if(readFile.isNull)
 		{
 			return false;
 		}		
@@ -282,7 +282,7 @@ public static class CL_FileAP_Edit
 
 
 		auto readFile = readJsonFile!JSONValue(filePath);
-		if(!readFile.isSet)
+		if(readFile.isNull)
 		{
 			return false;
 		}		
@@ -391,7 +391,7 @@ public static class CL_FileAP_Edit
 		}    
 
 		auto readFile = readJsonFile!JSONValue(filePath);
-		if(!readFile.isSet)
+		if(readFile.isNull)
 		{
 			return false;
 		}
@@ -494,7 +494,7 @@ public static class CL_FileAP_Edit
 
 
 		auto readFile = readJsonFile!JSONValue(filePath);
-		if(!readFile.isSet)
+		if(readFile.isNull)
 		{
 			return false;
 		}
@@ -604,9 +604,10 @@ public static class CL_FileAP_Edit
 		}
 
 		auto readFile = CL_FileAP.readJsonFile!JSONValue(filePath);
-		if(!readFile.isSet){
+		if(readFile.isNull){//isSet
 			return false;
 		}
+
 
 		JSONValue rootJson = readFile.get;
 
@@ -710,7 +711,7 @@ public class CL_File_JSON
 					{
 						auto convertedItemOptional = CL_CoreAP_Conv.convertJsonValueToT!T(item);
 							
-						if(convertedItemOptional.isSet)
+						if(!convertedItemOptional.isNull)
 						{
 							arr ~= convertedItemOptional.get;
 						}else{
@@ -740,7 +741,7 @@ public class CL_File_JSON
 			{
 				T obj;
 					auto convertedItemOptional = CL_CoreAP_Conv.convertJsonValueToT!T(val);
-					if(convertedItemOptional.isSet)
+					if(!convertedItemOptional.isNull)
 					{
 						obj = convertedItemOptional.get;
 					}else
