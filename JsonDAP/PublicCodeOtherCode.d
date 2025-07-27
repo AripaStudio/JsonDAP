@@ -12,7 +12,7 @@ import ExceptionAP;
 
 alias Optional = Nullable;
 
-public static class CL_PublicCodeOtherCode
+public  class CL_PublicCodeOtherCode
 {
 	public static isDigitAP(dchar c)
 	{
@@ -98,4 +98,53 @@ public static class CL_PublicCodeOtherCode
 
 
 }
+
+/*
+	انجام شود و اضافه شود به متد های اصلی و از این متد ها استفاده شود در 
+	serializeTToJsonValue
+	
+*/
+public  class CL_CheckVariables
+{
+	public static bool isIntAP(T)(T input)
+	{
+
+	}
+
+	public static bool isFloatAP(T)(T input)
+	{
+
+	}
+
+	public static bool isBoolAP(T)(T input){
+
+	}
+
+	public static bool isNumberAP(T)(T input)
+	{
+
+	}
+
+	public static bool isStringAP(T)(T input)
+	{
+
+	}
+
+	public static bool isArrayAP(T)(T input)
+	{
+
+	}
+
+	public static bool isClassAP(T)(T input)
+	{
+
+	}
+
+	public static bool isStructAP(T)(T input)
+	{
+
+	}
+
+}
+
 
