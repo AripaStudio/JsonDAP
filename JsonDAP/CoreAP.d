@@ -231,10 +231,11 @@ public class CL_CoreAP
 public static class  CL_CoreAP_Conv
 {
 	public static Optional!T convertJsonValueToT(T)(JSONValue jsonValue) {
+		static assert(!is(T == JSONValue), "Converting JSONValue to JSONValue is redundant. Please ensure T is not JSONValue.");
 		try {			
 			auto jsonValueType = CL_CoreAP.getJsonValueType(jsonValue);
 
-			static if (CheckVariablesAP.IsNumberAP!T.value || CheckVariablesAP.isBoolAP!T.value || CheckVariablesAP.isStringAP!T.value) {
+			static if (CheckVariablesAP.IsNumberAP!T.value || CheckVariablesAP.IsBoolAP!T.value || CheckVariablesAP.IsStringAP!T.value) {
 
 				switch(jsonValueType) {
 
@@ -345,8 +346,9 @@ public static class  CL_CoreAP_Conv
 
 
 	public static JSONValue serializeTToJsonValue(T)(T obj){
+		static assert(!is(T == JSONValue), "Serializing JSONValue to JSONValue is redundant. Please ensure T is not JSONValue.");
 		try{			
-			static if(CheckVariablesAP.IsNumberAP!T.value || CheckVariablesAP.isBoolAP!T.value)
+			static if(CheckVariablesAP.IsNumberAP!T.value || CheckVariablesAP.IsBoolAP!T.value)
 			{
 				return JSONValue(obj);
 			}else static if(CheckVariablesAP.IsStringAP!T.value)
