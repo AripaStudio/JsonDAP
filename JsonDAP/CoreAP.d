@@ -13,10 +13,11 @@ import std.exception;
 import std.typecons;
 import PublicCodeOtherCode;
 import ExceptionAP;
+import CheckVariablesAP;
 
 
 alias Optional = Nullable;
-
+//isSet
 
 public class CL_CoreAP
 {
@@ -233,7 +234,7 @@ public static class  CL_CoreAP_Conv
 	    auto typeJsonValue = CL_CoreAP.getJsonValueType(jsonValue);
 		
 
-	    static if (std.traits.isIntegral!T || std.traits.isFloating!T || std.traits.isBoolean!T || is(T == string)) {
+	    static if (CheckVariablesAP.IsNumberAP!T.value || CheckVariablesAP.isBoolAP!T.value || CheckVariablesAP.isStringAP!T.value) {
 
 				switch(typeJsonValue) {
 
@@ -259,7 +260,7 @@ public static class  CL_CoreAP_Conv
 					default:
 					   throw new JSONConvertExceptionAP("Unsupported JSON type for primitive conversion.", T.stringof, typeJsonValue.to!string, typeJsonValue.to!string, T.stringof, "UnsupportedType", "Cannot convert " ~ typeJsonValue.to!string ~ " to " ~ T.stringof, __FILE__ , __LINE__);
 				}
-	    } else static if (isArray!T) {
+	    } else static if (CheckVariablesAP.IsArrayAP!T.value) {
 
 
 				alias ElementType = ElementType!T;
@@ -268,7 +269,7 @@ public static class  CL_CoreAP_Conv
 					T result;
 					foreach (itemJson; jsonValue.array) {
 						auto convertedItem = convertJsonValueToT!ElementType(itemJson);
-						if (convertedItem.isSet) {
+						if (!convertedItem.isNull) {
 							result ~= convertedItem.get;
 						} else {
 							static if (!is(ElementType : Optional!U, U)) {
@@ -282,7 +283,7 @@ public static class  CL_CoreAP_Conv
 				}
 
 
-	    } else static if (isStruct!T || isClass!T) {
+	    } else static if (CheckVariablesAP.IsStructAP!T.value || CheckVariablesAP.IsClassAP!T.value) {
 				if (typeJsonValue == JSONType.OBJECT) {
 					T obj = T.init;
 
@@ -295,7 +296,7 @@ public static class  CL_CoreAP_Conv
 								auto memberJsonValue = jsonValue.object[fieldName];
 								auto convertedMember = convertJsonValueToT!FieldType(memberJsonValue);
 
-								if (convertedMember.isSet) {
+								if (!convertedMember.isNull) {
 									mixin("obj." ~ fieldName ~ " = convertedMember.get;");
 								} else {
 									static if (!is(FieldType : Optional!U, U)) {
@@ -322,22 +323,22 @@ public static class  CL_CoreAP_Conv
 
 	public static JSONValue serializeTToJsonValue(T)(T obj){
 		try{			
-			static if(isIntegral!T || isFloating!T || isBoolean!T)
+			static if(CheckVariablesAP.IsNumberAP!T.value || CheckVariablesAP.isBoolAP!T.value)
 			{
 				return JSONValue(obj);
-			}else static if(is(T == string))
+			}else static if(CheckVariablesAP.IsStringAP!T.value)
 			{
 				return JSONvalue(obj);
 			}else static if(is(T : Optional!U , U))
 			{
-				if(obj.isSet)
+				if(obj.isNull)
 				{
-					return serializeTToJsonValue!U(obj.get);
+					return JSONValue.init;					
 				}else
 				{
-					return JSONValue.init;
+					return serializeTToJsonValue!U(obj.get);
 				}
-			}else static if (isArray!T)
+			}else static if (CheckVariablesAP.IsArrayAP!T.value)
 			{
 				alias ElementType = ElementType!T;
 				JSONValue[] jsonArray;
@@ -346,19 +347,28 @@ public static class  CL_CoreAP_Conv
 					jsonArray ~= serializeTToJsonValue!ElementType(o);
 				}
 				return JSONValue(jsonArray);
-			}else static if(isClass!T || isStruct!T)
+			}else static if(CheckVariablesAP.IsStructAP!T.value || CheckVariablesAP.IsClassAP!T.value)
 			{
-			    JSONValue jsonobject;
-				jsonobject.object = new JSONValue.Object;
+				JSONValue jsonObject;
+				jsonObject.object = new JSONValue.Object;			
 
-				foreach(memeber; __traits(allMembers , T))
+				static foreach(i , memberName; FieldNameTuple!T)
 				{
-					string fieldName = member;
-					auto fieldValue = __traits(getField , obj , member);
+					alias Field = FieldNameTuple!T[i];
+					
+					auto fieldValue = mixin("obj." ~ memberName);
 
-					JSONValue memeberJsonValue = serializeTToJsonValue!(typeof(fieldValue)(fieldValue));
+					JSONValue memberJsonValue = serializeTToJsonValue!Fields(fieldValue);
 
-					jsonobject[fieldName] = memeberJsonValue;
+					jsonobject[memberName] = memberJsonValue;
+				}
+			}else static if(CheckVariablesAP.IsEnumAP!T.value)
+			{
+				static if(is(typeof(T.init) : int))
+				{
+					return JSONValue(cast(int)obj);
+				}else{
+					return JSONValue(obj.toString());
 				}
 			}
 			else

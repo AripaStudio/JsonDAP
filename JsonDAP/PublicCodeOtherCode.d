@@ -12,6 +12,8 @@ import ExceptionAP;
 
 alias Optional = Nullable;
 
+
+
 public  class CL_PublicCodeOtherCode
 {
 	public static isDigitAP(dchar c)
