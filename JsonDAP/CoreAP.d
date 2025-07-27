@@ -231,12 +231,12 @@ public class CL_CoreAP
 public static class  CL_CoreAP_Conv
 {
 	public static Optional!T convertJsonValueToT(T)(JSONValue jsonValue) {
-	    auto typeJsonValue = CL_CoreAP.getJsonValueType(jsonValue);
-		
+		try {			
+			auto jsonValueType = CL_CoreAP.getJsonValueType(jsonValue);
 
-	    static if (CheckVariablesAP.IsNumberAP!T.value || CheckVariablesAP.isBoolAP!T.value || CheckVariablesAP.isStringAP!T.value) {
+			static if (CheckVariablesAP.IsNumberAP!T.value || CheckVariablesAP.isBoolAP!T.value || CheckVariablesAP.isStringAP!T.value) {
 
-				switch(typeJsonValue) {
+				switch(jsonValueType) {
 
 					case JSONType.INTEGER:
 						return Optional!T(jsonValue.integer.to!T());
@@ -246,26 +246,25 @@ public static class  CL_CoreAP_Conv
 						static if (is(T == string)) {
 							return Optional!T(jsonValue.stringValue);
 						} else {
-						  throw new JSONConvertExceptionAP("Expected numeric or boolean JSON type, but got string.", T.stringof, jsonValue.stringValue, JSONType.STRING.to!string, T.stringof, "TypeMismatch", "Cannot convert string to " ~ T.stringof, __FILE__ , __LINE__);
+							throw new JSONConvertExceptionAP("Cannot convert JSON string to target type.", T.stringof, jsonValue.stringValue, JSONType.STRING.to!string, T.stringof, "TypeMismatch", null, "Cannot convert string to " ~ T.stringof, __FILE__ , __LINE__);
 						}
 					case JSONType.TRUE:
 					case JSONType.FALSE:
 						static if (is(T == bool)) {
 							return Optional!T(jsonValue.boolean);
 						} else {
-						   throw new JSONConvertExceptionAP("Expected numeric or string JSON type, but got boolean.", T.stringof, jsonValue.boolean.to!string, typeJsonValue.to!string, T.stringof, "TypeMismatch", "Cannot convert boolean to " ~ T.stringof, __FILE__ , __LINE__);
+							throw new JSONConvertExceptionAP("Cannot convert JSON boolean to target type.", T.stringof, jsonValue.boolean.to!string, jsonValueType.to!string, T.stringof, "TypeMismatch", null, "Cannot convert boolean to " ~ T.stringof, __FILE__ , __LINE__);
 						}
 					case JSONType.NULL:
 						return Optional!T.init;
 					default:
-					   throw new JSONConvertExceptionAP("Unsupported JSON type for primitive conversion.", T.stringof, typeJsonValue.to!string, typeJsonValue.to!string, T.stringof, "UnsupportedType", "Cannot convert " ~ typeJsonValue.to!string ~ " to " ~ T.stringof, __FILE__ , __LINE__);
+						throw new JSONConvertExceptionAP("Unsupported JSON type for primitive conversion.", T.stringof, jsonValue.to!string, jsonValueType.to!string, T.stringof, "UnsupportedType", null, "Cannot convert " ~ jsonValueType.to!string ~ " to " ~ T.stringof, __FILE__ , __LINE__);
 				}
-	    } else static if (CheckVariablesAP.IsArrayAP!T.value) {
-
+			} else static if (CheckVariablesAP.IsArrayAP!T.value) {
 
 				alias ElementType = ElementType!T;
 
-				if (typeJsonValue == JSONType.ARRAY) {
+				if (jsonValueType == JSONType.ARRAY) {
 					T result;
 					foreach (itemJson; jsonValue.array) {
 						auto convertedItem = convertJsonValueToT!ElementType(itemJson);
@@ -273,52 +272,76 @@ public static class  CL_CoreAP_Conv
 							result ~= convertedItem.get;
 						} else {
 							static if (!is(ElementType : Optional!U, U)) {
-								throw new JSONConvertExceptionAP("Failed to convert array element.", ElementType.stringof, itemJson.to!string, itemJson.type.to!string, ElementType.stringof, "ElementConversionFailed", "Could not convert JSON array element to " ~ ElementType.stringof, __FILE__ , __LINE__);
+								throw new JSONConvertExceptionAP("Failed to convert array element.", ElementType.stringof, itemJson.to!string, itemJson.type.to!string, ElementType.stringof, "ElementConversionFailed", null, "Could not convert JSON array element to " ~ ElementType.stringof, __FILE__ , __LINE__);
 							}
 						}
 					}
 					return Optional!T(result);
 				} else {
-					throw new JSONConvertExceptionAP("Expected array JSON type for target type " ~ T.stringof ~ ", but got " ~ typeJsonValue.to!string , T.stringof, typeJsonValue.to!string, typeJsonValue.to!string, T.stringof, "TypeMismatch", "JSON is not an array for array conversion.", __FILE__ , __LINE__);
+					throw new JSONConvertExceptionAP("Expected array JSON type for target type.", T.stringof, jsonValue.type.to!string, jsonValue.type.to!string, T.stringof, "TypeMismatch", null, "JSON is not an array for array conversion.", __FILE__ , __LINE__);
 				}
 
-
-	    } else static if (CheckVariablesAP.IsStructAP!T.value || CheckVariablesAP.IsClassAP!T.value) {
-				if (typeJsonValue == JSONType.OBJECT) {
+			} else static if (CheckVariablesAP.IsStructAP!T.value || CheckVariablesAP.IsClassAP!T.value) {
+				if (jsonValueType == JSONType.OBJECT) {
 					T obj = T.init;
 
-					foreach (memberName; __traits(allMembers, T)) {
-						static if (__traits(isField, T, memberName)) {
-							string fieldName = memberName;
-							alias FieldType = typeof(__traits(getField, obj, memberName));
+					foreach (memberName; Fields!T) {
+						string fieldName = memberName;							
+						alias FieldType = FieldType!T.memberName;
 
-							if (fieldName in jsonValue.object) {
-								auto memberJsonValue = jsonValue.object[fieldName];
-								auto convertedMember = convertJsonValueToT!FieldType(memberJsonValue);
+						if (fieldName in jsonValue.object) {
+							auto memberJsonValue = jsonValue.object[fieldName];
+							auto convertedMember = convertJsonValueToT!FieldType(memberJsonValue);
 
-								if (!convertedMember.isNull) {
-									mixin("obj." ~ fieldName ~ " = convertedMember.get;");
-								} else {
-									static if (!is(FieldType : Optional!U, U)) {
-										throw new JSONConvertExceptionAP("Failed to convert field '" ~ fieldName ~ "' to " ~ FieldType.stringof , fieldName, memberJsonValue.to!string, memberJsonValue.type.to!string, FieldType.stringof, "FieldConversionFailed", "Could not convert JSON field to " ~ FieldType.stringof, __FILE__ , __LINE__);
-									}
-								}
+							if (!convertedMember.isNull) {
+								mixin("obj." ~ fieldName ~ " = convertedMember.get;");
 							} else {
 								static if (!is(FieldType : Optional!U, U)) {
-									throw new JSONConvertExceptionAP("Required field '" ~ fieldName ~ "' not found in JSON object.", fieldName, "Not Found", "N/A", FieldType.stringof, "MissingField", "Mandatory field missing for object conversion.", __FILE__ , __LINE__);
+									throw new JSONConvertExceptionAP("Failed to convert field '" ~ fieldName ~ "'.", fieldName, memberJsonValue.to!string, memberJsonValue.type.to!string, FieldType.stringof, "FieldConversionFailed", null, "Could not convert JSON field to " ~ FieldType.stringof, __FILE__ , __LINE__);
 								}
+							}
+						} else {
+							static if (!is(FieldType : Optional!U, U)) {
+								throw new JSONConvertExceptionAP("Required field '" ~ fieldName ~ "' not found in JSON object.", fieldName, "Not Found", "N/A", FieldType.stringof, "MissingField", null, "Mandatory field missing for object conversion.", __FILE__ , __LINE__);
 							}
 						}
 					}
 					return Optional!T(obj);
 				} else {
-					throw new JSONConvertExceptionAP("Expected object JSON type for target type " ~ T.stringof ~ ", but got " ~ typeJsonValue.to!string , T.stringof, typeJsonValue.to!string, typeJsonValue.to!string, T.stringof, "TypeMismatch", "JSON is not an object for struct/class conversion.", __FILE__ , __LINE__);
+					throw new JSONConvertExceptionAP("Expected object JSON type for target type.", T.stringof, jsonValue.type.to!string, jsonValue.type.to!string, T.stringof, "TypeMismatch", null, "JSON is not an object for struct/class conversion.", __FILE__ , __LINE__);
 				}
-	    } else {
-	        static assert(0, "Unsupported type " ~ T.stringof ~ " for JSON conversion.");			
-			//throw new UnknownErrorexceptionAP("Unsuppoted type : "~ T.type.toString() ~ "for Json Conversion." );
-	    }
+			} else static if(CheckVariablesAP.IsEnumAP!T.value) {
+				if (jsonValueType == JSONType.STRING) {
+					bool found = false;
+					foreach (enumMember;EnumMembers!T) {
+						if (jsonValue.stringValue == enumMember.to!string()) {
+							return Optional!T(enumMember);
+						}
+					}
+					if (!found) {
+						throw new JSONConvertExceptionAP("String value is not a valid enum member.", T.stringof, jsonValue.stringValue, JSONType.STRING.to!string, T.stringof, "EnumValueMismatch", null, "String is not a valid enum for " ~ T.stringof ~ ".", __FILE__ , __LINE__);
+					}
+				} else if (jsonValueType == JSONType.INTEGER) {
+					static if(is(typeof(T.init) : int)) {
+						return Optional!T(cast(T) jsonValue.integer);
+					} else {
+						throw new JSONConvertExceptionAP("Expected string value for enum, but got integer.", T.stringof, jsonValue.integer.to!string, JSONType.INTEGER.to!string, T.stringof, "TypeMismatch", null, "Cannot convert integer to string-based enum.", __FILE__ , __LINE__);
+					}
+				} else {
+					throw new JSONConvertExceptionAP("Unsupported JSON type for enum conversion.", T.stringof, jsonValue.to!string, jsonValueType.to!string, T.stringof, "UnsupportedType", null, "Cannot convert " ~ jsonValueType.to!string ~ " to enum " ~ T.stringof ~ ".", __FILE__ , __LINE__);
+				}
+			}
+			else {
+				static assert(0, "Unsupported type " ~ T.stringof ~ " for JSON conversion.");			
+			}
+
+		}catch(JSONException e) {	
+			throw new JsonOperationExceptionAP("Error during JSON conversion.", null, jsonValue.to!string, __FILE__, __LINE__, e);
+		}catch(Exception e) {
+			throw new UnknownErrorexceptionAP("An unexpected error occurred during JSON to object conversion.", __FILE__, __LINE__, e);
+		}
 	}
+
 
 
 	public static JSONValue serializeTToJsonValue(T)(T obj){
