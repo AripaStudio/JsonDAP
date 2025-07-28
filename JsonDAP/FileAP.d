@@ -768,8 +768,14 @@ public class CL_File_JSON
 	public static JSONValue serializeToJson(T)(T obj)
 	{
 		try{
-			JSONValue jsonVal = CL_CoreAP_Conv.serializeTToJsonValue!T(obj);
-			return jsonVal.toString();
+			
+			static if(is(T == JSONValue))
+			{				
+				return obj.toString();
+			}else{
+				auto jsonVal = CL_CoreAP_Conv.serializeTToJsonValue!T(obj);
+				return jsonVal.toString();
+			}		
 		}catch (Exception e) {
            throw new JsonOperationExceptionAP("Failed to serialize object to JSON string.", null, obj.ToString(), null, 0, e);
         }
