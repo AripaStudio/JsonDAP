@@ -59,8 +59,8 @@ public static class CL_FileAP
 				throw new InvalidArgumentExceptionAP("Output file path cannot be empty.", "filePath", filePath, "Non-empty string expected", null, 0);
 			}
 			enforce(existsFile(filePath), throw new FileOperationExceptionAP("Target file not found for writing.", filePath, "write", 0, null, 0));
-			string jsonContent = CL_File_JSON.serializeToJson(data);
-			std.file.write(filePath , jsonContent);
+			auto jsonContent = CL_File_JSON.serializeToJson(data);
+			std.file.write(filePath , jsonContent.toString());
 			return true;
 		}catch(FileException  e)
 		{
@@ -771,23 +771,34 @@ public class CL_File_JSON
 			
 			static if(is(T == JSONValue))
 			{				
-				return obj.toString();
+				return obj;
 			}else{
 				auto jsonVal = CL_CoreAP_Conv.serializeTToJsonValue!T(obj);
-				return jsonVal.toString();
+				return jsonVal;
 			}		
 		}catch (Exception e) {
-           throw new JsonOperationExceptionAP("Failed to serialize object to JSON string.", null, obj.ToString(), null, 0, e);
+           throw new JsonOperationExceptionAP("Failed to serialize object to JSON string.", null, obj.toString(), null, 0, e);
         }
 	}
 
 	public static  JSONValue[] serializeToJsonArray(T)(T data)
 	{
 		try{
-			JSONValue jsonVal = CL_CoreAP_Conv.serializeTToJsonValue!T(obj);
-			return jsonVal.toPrettyString();
+			static if(is(T == JSONValue[]))
+			{
+				return data;
+			}else static if(is (T == JSONValue))
+			{
+				JSONValue[] output = [data];
+				return output;
+
+			}else
+			{
+				JSONValue jsonVal = CL_CoreAP_Conv.serializeTToJsonValue!T(obj);
+				return jsonVal;
+			}			
 		}catch (Exception e) {
-            throw new JsonOperationExceptionAP("Failed to serialize object to JSON array string.", null, data.ToString(), null, 0, e);
+            throw new JsonOperationExceptionAP("Failed to serialize object to JSON array string.", null, data.toString(), null, 0, e);
         }
 	}
 
