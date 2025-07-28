@@ -98,7 +98,7 @@ public class JsonAP
         return CL_PublicCodeOtherCode.StrIsNUll(input , paramName ,  outputBool ,  ErrorText);
 	}
 
-    export static bool checkStringIsNull_array(string[] inputs) {
+    export static bool APCheckStringIsNullArray(string[] inputs) {
         return CL_PublicCodeOtherCode.checkStringIsNull_array(inputs);
 	}
 
