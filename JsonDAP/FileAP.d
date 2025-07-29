@@ -205,7 +205,7 @@ public static class CL_FileAP_Edit
 
 		//For example for jsonPath: main.name.khashayar		
 
-		JSONValue currentJsonNodeToTraverse = rootJson;
+		JSONValue* currentJsonNodeToTraverse = &rootJson;
 			
 		for(int i = 0 ; i < parsedSteps.length - 1; i++ )
 		{
@@ -216,11 +216,11 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				if(!currentStep.key in currentJsonNodeToTraverse.object)
+				if(currentStep.key !in (*currentJsonNodeToTraverse).object)
 				{
 					return false;
 				}
-				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
+				currentJsonNodeToTraverse =  &(*currentJsonNodeToTraverse).object[currentStep.key];
 
 			}else if(currentStep.type == PathStepType.ArrayIndex)
 			{
@@ -246,7 +246,7 @@ public static class CL_FileAP_Edit
 			{
 				return false;
 			}
-			currentJsonNodeToTraverse[finalStep.key] = convertValue;
+			(*currentJsonNodeToTraverse).object[finalStep.key] = convertValue;
 		}else {
 			return false;
 		}
@@ -299,7 +299,7 @@ public static class CL_FileAP_Edit
 			return false;
 		}
 
-		auto currentJsonNodeToTraverse = rootJson;
+		JSONValue* currentJsonNodeToTraverse = &rootJson;
 		
 		for(int i = 0; i < parsedSteps.length  - 1 ; i++)
 		{
@@ -310,11 +310,11 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				if(!currentStep.key in currentJsonNodeToTraverse.object)
+				if(currentStep.key !in (*currentJsonNodeToTraverse).object)
 				{
 					return false;
 				}
-				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
+				currentJsonNodeToTraverse =  &(*currentJsonNodeToTraverse).object[currentStep.key];
 			}else if(currentStep.type == PathStepType.ArrayIndex)
 			{
 				if(currentJsonNodeToTraverse.type != JSONType.ARRAY)
@@ -325,7 +325,7 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.index];
+				currentJsonNodeToTraverse = &(*currentJsonNodeToTraverse).array[currentStep.index];
 
 			}
 
@@ -346,7 +346,7 @@ public static class CL_FileAP_Edit
 			{
 				return false;
 			}
-			currentJsonNodeToTraverse[finalStep.key] = convertValue;
+			(*currentJsonNodeToTraverse).object[finalStep.key] = convertValue;
 
 
 			
@@ -360,7 +360,7 @@ public static class CL_FileAP_Edit
 			{
 				return false;
 			}
-			currentJsonNodeToTraverse[finalStep.index] = convertValue;
+			(*currentJsonNodeToTraverse).array[finalStep.index] = convertValue;
 
 		}else{
 			return false;
@@ -412,24 +412,22 @@ public static class CL_FileAP_Edit
 		}
 
 
-		JSONValue currentJsonNodeToTraverse = rootJson;
+		JSONValue* currentJsonNodeToTraverse = &rootJson;
 		
 		for(int i = 0; i < parsedSteps.length - 1 ; i++)
 		{
 			auto currentStep = parsedSteps[i];
 			if(currentStep.type == PathStepType.ObjectKey)
-			{
-				if(currentJsonNodeToTraverse.type != JSONType.OBJECT)
+			{				
+				
+				if(currentJsonNodeToTraverse.type != JSONType.OBJECT) return false;
+
+				if(currentStep.key !in (*currentJsonNodeToTraverse).object)
 				{
-					return false;
+					(*currentJsonNodeToTraverse).object[currentStep.key] = JSONValue.init;
 				}
 
-				if(!currentStep.key in currentJsonNodeToTraverse.object)
-				{
-					return false;
-				}
-
-				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
+				currentJsonNodeToTraverse =  &(*currentJsonNodeToTraverse).object[currentStep.key];
 			}else if(currentStep.type == PathStepType.ArrayIndex)
 			{
 				return false;
@@ -462,12 +460,12 @@ public static class CL_FileAP_Edit
 			return false;
 		}
 
-		if(finalStep.key in currentJsonNodeToTraverse.object)
+		if(finalStep.key in (*currentJsonNodeToTraverse).object)
 		{
 			return false;
 		}
 
-		currentJsonNodeToTraverse[finalStep.key] = convertValue;
+		(*currentJsonNodeToTraverse).object[finalStep.key] = convertValue;
 
 		if(!writeJsonFile(filePath,  rootJson))
 		{
@@ -509,7 +507,7 @@ public static class CL_FileAP_Edit
 			return false;
 		}
 	
-		auto currentJsonNodeToTraverse = rootJson;
+		JSONValue* currentJsonNodeToTraverse = &rootJson;
 		for(int i = 0 ; i < parsedSteps.length - 1; i++)
 		{
 			auto currentStep = parsedSteps[i];
@@ -519,11 +517,11 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				if(!currentStep.key in currentJsonNodeToTraverse.object)
+				if(currentStep.key !in (*currentJsonNodeToTraverse).object)
 				{
-					return false;
+					(*currentJsonNodeToTraverse).object[currentStep.key] = JSONValue.initObject;
 				}
-				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
+				currentJsonNodeToTraverse = &(*currentJsonNodeToTraverse).object[currentStep.key];
 			}else if(currentStep.type == PathStepType.ArrayIndex)
 			{
 				if(currentJsonNodeToTraverse.type != JSONType.ARRAY)
@@ -534,7 +532,7 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.index];
+				currentJsonNodeToTraverse = &(*currentJsonNodeToTraverse).array[currentStep.index];
 			}else
 			{
 				return false;
@@ -561,7 +559,7 @@ public static class CL_FileAP_Edit
 			{
 				return false;
 			}
-			currentJsonNodeToTraverse = currentJsonNodeToTraverse[finalStep.key] = convertValue;
+			(*currentJsonNodeToTraverse).object[finalStep.key] = convertValue;
 		}else if(finalStep.type == PathStepType.ArrayIndex)
 		{
 			if(currentJsonNodeToTraverse.type != JSONType.ARRAY)
@@ -573,7 +571,7 @@ public static class CL_FileAP_Edit
 				return false;
 			}
 
-			currentJsonNodeToTraverse[finalStep.key].array ~= convertValue;
+			(*currentJsonNodeToTraverse).array ~= convertValue;
 		}else
 		{
 			return false;
@@ -624,7 +622,7 @@ public static class CL_FileAP_Edit
 			return false;
 		}
 
-		JSONValue currentJsonNodeToTraverse = rootJson;
+		JSONValue* currentJsonNodeToTraverse = &rootJson;
 
 		for (int i = 0; i < parsedSteps.length - 1; i++)
 		{
@@ -635,11 +633,11 @@ public static class CL_FileAP_Edit
 				{
 					return false;
 				}
-				if(currentStep.key !in currentJsonNodeToTraverse.object)
+				if(currentStep.key !in (*currentJsonNodeToTraverse).object)
 				{
 					return false;
 				}
-				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
+				currentJsonNodeToTraverse = &(*currentJsonNodeToTraverse).object[currentStep.key];
 
 			}else if(currentStep.type == PathStepType.ArrayIndex)
 			{
@@ -710,12 +708,12 @@ public static class CL_FileAP_Edit
 		PathStep[] parsedSteps;
 		parsedSteps = CL_JsonOtherCode.JsonPathParserAP(jsonPath);
 
-		if(parsedSteps.length <= 1)
+		if(parsedSteps.length == 0)
 		{
 			return false;
 		}
 
-		JSONValue currentJsonNodeToTraverse = rootJson;
+		JSONValue* currentJsonNodeToTraverse = &rootJson;
 
 		for(int i = 0; i < parsedSteps.length - 1; i++ )
 		{
@@ -726,12 +724,12 @@ public static class CL_FileAP_Edit
 				{
 					 return false;
 				}
-				if(currentStep.key !in currentJsonNodeToTraverse[currentStep.key])
+				if(currentStep.key !in (*currentJsonNodeToTraverse).object)
 				{
 					return false;
 				}
 
-				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.key];
+				currentJsonNodeToTraverse = &(*currentJsonNodeToTraverse).object[currentStep.key];
 
 			}else if(currentStep.type == PathStepType.ArrayIndex)
 			{
@@ -740,12 +738,12 @@ public static class CL_FileAP_Edit
 					return false;
 				}		
 
-				if(currentStep.index >= currentJsonNodeToTraverse.length )
+				if(currentStep.index < 0 || currentStep.index >= currentJsonNodeToTraverse.array.length )
 				{
 					return false;
 				}
 
-				currentJsonNodeToTraverse = currentJsonNodeToTraverse[currentStep.index];
+				currentJsonNodeToTraverse = &currentJsonNodeToTraverse.array[currentStep.index];
 			}else{
 				return false;
 			}
@@ -761,7 +759,7 @@ public static class CL_FileAP_Edit
 
 		if(finalStep.type == PathStepType.ObjectKey)
 		{
-			if(finalStep.key in currentJsonNodeToTraverse.object)
+			if(finalStep.key !in currentJsonNodeToTraverse.object)
 			{
 				return false;
 			}
@@ -784,20 +782,21 @@ public static class CL_FileAP_Edit
 			{
 				return false;
 			}
-			if(finalStep.index >= currentJsonNodeToTraverse.length)
+			if(finalStep.index < 0 || finalStep.index >= currentJsonNodeToTraverse.array.length)
 			{
 				return false;
 			}
 
-			currentJsonNodeToTraverse[finalStep.key].array = //error//
-			
+			*currentJsonNodeToTraverse = JSONValue(
+												  currentJsonNodeToTraverse.array[0 .. finalStep.index] ~
+												  currentJsonNodeToTraverse.array[finalStep.index + 1 .. $]
+												  );
 
 		}else
 		{
 			return false;
-		}
-
-
+		}		
+		
 
 		bool writeFile = CL_FileAP.writeJsonFile(filePath , rootJson);
 		if(!writeFile)
