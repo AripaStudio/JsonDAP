@@ -155,7 +155,7 @@ public class CL_JsonOtherCode{
 		{
 			if(overwrite)
 			{
-				message = "target is not valid and empty for this : target = source";
+				message = "Target is uninitialized, overwriting with source.";
 				*target = *source;
 				return true;
 			}else
@@ -163,14 +163,14 @@ public class CL_JsonOtherCode{
 				return false;
 			}
 		}
-		
+
 		if((*source).type == JSONType.TRUE || (*source).type == JSONType.FALSE ||
 		   (*source).type == JSONType.INTEGER || (*source).type == JSONType.STRING ||
 		   (*source).type == JSONType.NULL)
 		{
 			if(overwrite)
 			{
-				message = "source type is a Bool , string , int , ... for this : target = source";
+				message = "Source is a primitive type, overwriting target.";
 				*target = *source;
 				return true;
 			}else
@@ -181,7 +181,7 @@ public class CL_JsonOtherCode{
 
 		if((*source).type == JSONType.OBJECT && (*target).type == JSONType.OBJECT)
 		{
-			foreach(key , value; source.object)
+			foreach(key , value; (*source).object)
 			{
 				if(key in (*target).object)
 				{
@@ -200,7 +200,7 @@ public class CL_JsonOtherCode{
 				return true;
 			}else
 			{
-				message = "target and source is Array but mergeArrays is False ... for this : target = source";
+				message = "Target and source are arrays, but array merging is disabled. Overwriting target.";
 				*target = *source;
 				return true;
 			}
@@ -209,7 +209,7 @@ public class CL_JsonOtherCode{
 		{
 			if(overwrite)
 			{
-				message = "source type is not found for this : target = source";
+				message = "Target is an array, source is not. Overwriting target with source.";
 				*target = *source;
 				return true;
 			}else
@@ -220,7 +220,7 @@ public class CL_JsonOtherCode{
 		{
 			if(overwrite)
 			{
-				message = "Target and source have incompatible types for recursive merge. Target is overwritten by source.";
+				message = "Target and source types are incompatible. Overwriting target with source.";
 				*target = *source;
 				return true;
 			}else
@@ -228,8 +228,5 @@ public class CL_JsonOtherCode{
 				return false;
 			}
 		}
-
-
-
 	}
 }
