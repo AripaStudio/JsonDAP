@@ -8,6 +8,8 @@ import std.array;
 import PublicCodeOtherCode;
 import std.conv;
 import std.exception;
+import std.json;
+import CheckVariablesAP;
 
 public static enum PathStepType{
 	ObjectKey,
@@ -23,7 +25,6 @@ public static struct PathStep{
 }
 
 
-//اضافه شود 
 public class CL_JsonOtherCode{
 	
 	public static PathStep[] JsonPathParserAP(string input ){
@@ -141,5 +142,94 @@ public class CL_JsonOtherCode{
 		}
 
 		return pathSteps;
+	}
+
+	//اضافه شود : 
+	public static bool recursiveMerge(JSONValue* target , JSONValue* source , bool overwrite , bool mergeArrays , string message = "")
+	{
+		if(*source == JSONValue.init)
+		{
+			return false;
+		}
+		if(*target == JSONValue.init)
+		{
+			if(overwrite)
+			{
+				message = "target is not valid and empty for this : target = source";
+				*target = *source;
+				return true;
+			}else
+			{
+				return false;
+			}
+		}
+		
+		if((*source).type == JSONType.TRUE || (*source).type == JSONType.FALSE ||
+		   (*source).type == JSONType.INTEGER || (*source).type == JSONType.STRING ||
+		   (*source).type == JSONType.NULL)
+		{
+			if(overwrite)
+			{
+				message = "source type is a Bool , string , int , ... for this : target = source";
+				*target = *source;
+				return true;
+			}else
+			{
+				return false;
+			}
+		}
+
+		if((*source).type == JSONType.OBJECT && (*target).type == JSONType.OBJECT)
+		{
+			foreach(key , value; source.object)
+			{
+				if(key in (*target).object)
+				{
+					recursiveMerge(&(*target).object[key], &value, overwrite, mergeArrays);
+				}else
+				{
+					(*target).object[key] = value;
+				}
+			}
+			return true;
+		}else if((*source).type == JSONType.ARRAY && (*target).type == JSONType.ARRAY)
+		{
+			if(mergeArrays)	
+			{
+				(*target).array ~= (*source).array;
+				return true;
+			}else
+			{
+				message = "target and source is Array but mergeArrays is False ... for this : target = source";
+				*target = *source;
+				return true;
+			}
+
+		}else if((*target).type == JSONType.ARRAY && (*source).type != JSONType.ARRAY)
+		{
+			if(overwrite)
+			{
+				message = "source type is not found for this : target = source";
+				*target = *source;
+				return true;
+			}else
+			{
+				return false;
+			}
+		}else
+		{
+			if(overwrite)
+			{
+				message = "Target and source have incompatible types for recursive merge. Target is overwritten by source.";
+				*target = *source;
+				return true;
+			}else
+			{
+				return false;
+			}
+		}
+
+
+
 	}
 }
