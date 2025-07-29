@@ -91,6 +91,11 @@ public class JsonAP
         return CL_JsonOtherCode.JsonPathParserAP(input);
     }
 
+    export static bool APrecursiveMerge(JSONValue* target , JSONValue* source , bool overwrite , bool mergeArrays , string message = "")
+	{
+           return CL_JsonOtherCode.recursiveMerge(target , source , overwrite , mergeArrays , message);
+	}
+
     
     //CL_PublicCodeOtherCode:
     export static void APStrIsNUll(string input, string paramName = "input" , out bool outputBool , out string ErrorText) 
@@ -141,9 +146,9 @@ public class JsonAP
         return CL_FileAP_Edit.removeJsonItemOBJECT(filePath , jsonPath);
 	}
 
-    export static bool APmergeJson(string filePath, string jsonContentToMerge, bool overwriteExisting = true)
+    export static bool APmergeJson(string filePath, JSONValue jsonContentToMerge, bool overwriteExisting = true , bool mergeArrays)
 	{
-        return CL_FileAP_Edit.mergeJson(filePath , jsonContentToMerge , overwriteExisting);
+        return CL_FileAP_Edit.mergeJson(filePath , jsonContentToMerge , overwriteExisting , mergeArrays);
 	}
 
 

@@ -808,11 +808,11 @@ public static class CL_FileAP_Edit
 
 	}
 
-	public static bool mergeJson(string filePath, JSONValue jsonContentToMerge, bool overwriteExisting = true)
+	public static bool mergeJson(string filePath, JSONValue jsonContentToMerge, bool overwriteExisting = true , bool mergeArrays = false)
 	{
 		string errorCheck;
 		bool outputBoolCheck;
-		CL_PublicCodeOtherCode.StrIsNUll(filePath , outputBoolCheck , errorCheck);
+		CL_PublicCodeOtherCode.StrIsNUll(filePath , "input" ,  outputBoolCheck , errorCheck);
 		if(outputBoolCheck)
 		{
 			throw new InvalidArgumentExceptionAP("FilePath is Emtpy, error : " ~ errorCheck , "||Empty||" , "Null or" , "Empty");
@@ -836,6 +836,21 @@ public static class CL_FileAP_Edit
 
 		JSONValue rootJson = ReadFile.get;
 		
+
+		string mergeMessage;
+		bool mergeResult = CL_JsonOtherCode.recursiveMerge(&rootJson , &jsonContentToMerge , overwriteExisting , mergeArrays, mergeMessage );
+		if(!mergeResult)
+		{
+			return false;
+		}
+
+		auto writeFile = CL_FileAP.writeJsonFile(filePath , rootJson);
+		if(!writeFile)
+		{
+			return false;
+		}
+		
+		return true;
 
 
 		//کامل شود
