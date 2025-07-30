@@ -75,16 +75,15 @@ public class JsonAP
     export static bool APisInteger(string s){
         return CL_PublicCodeOtherCode.isInteger(s);
     }
-    
+
     export static bool APexistsFile(string filePath)
 	{
-     
+
 	    return CL_FileAP.existsFile(filePath);
 	}
 
 
-    //متد های اضافه شده 
-    // هنوز کامل نشدن 
+    //متد های اضافه شده     
 
     //CL_JsonOtherCode
     export static PathStep[] APJsonPathParser(string input ){
@@ -93,10 +92,10 @@ public class JsonAP
 
     export static bool APrecursiveMerge(JSONValue* target , JSONValue* source , bool overwrite , bool mergeArrays , string message = "")
 	{
-           return CL_JsonOtherCode.recursiveMerge(target , source , overwrite , mergeArrays , message);
+		return CL_JsonOtherCode.recursiveMerge(target , source , overwrite , mergeArrays , message);
 	}
 
-    
+
     //CL_PublicCodeOtherCode:
     export static void APStrIsNUll(string input, string paramName = "input" , out bool outputBool , out string ErrorText) 
 	{
@@ -177,14 +176,14 @@ public class JsonAP
 
 
     //CL_CoreAP:
-    
+
     export static JSONType APgetJsonValueType(JSONValue jsonValue)
 	{
         return CL_CoreAP.getJsonValueType(jsonValue);
 	}
 
     //CL_CoreAP_Conv
-    
+
     export static Optional!T APconvertJsonValueToT(T)(JSONValue jsonValue)
 	{
         return CL_CoreAP_Conv.convertJsonValueToT!T(jsonValue);
