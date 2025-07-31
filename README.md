@@ -34,6 +34,8 @@ All methods are static, accessible via the `JsonAP` class, and prefixed with `AP
 
 ### File Operations
 
+###import JsonDAP and JsonAP.APreadJsonFile!T
+
 - `APreadJsonFile<T>(string filePath) -> Optional!T`: Reads and deserializes a JSON file into type `T`.
 - `APwriteJsonFile<T>(string filePath, T data) -> bool`: Serializes data of type `T` to a JSON file.
 - `APgetJsonFileSize(string filePath) -> Optional!long`: Returns the size of a JSON file in bytes.
