@@ -29,8 +29,7 @@ public static class CL_FileAP
 				throw new InvalidArgumentExceptionAP("Input file path cannot be empty or null.", "filePath", filePath, "Non-empty string expected", null, 0);
 			}
 
-			
-			enforce(existsFile(filePath),throw new FileOperationExceptionAP("File not found for reading.", filePath, "read", 0, null, 0));
+			enforce(existsFile(filePath),throw new FileOperationExceptionAP("File not found for reading.", filePath, "read", 0, null, 0));			
 			auto jsonContent = readText(filePath);
 			static if(is(T == JSONValue))
 			{
