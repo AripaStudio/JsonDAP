@@ -20,7 +20,7 @@ public struct IsStringAP(T){
 }
 
 public struct IsArrayAP(T){
-enum bool value = __traits(isArray , T) || __traits(isDynamicArray, T) || __traits(isStaticArray, T);
+enum bool value = std.traits.isArray!T || std.traits.isDynamicArray!T || std.traits.isStaticArray!T ;
 }
 
 public struct IsClassAP(T){
