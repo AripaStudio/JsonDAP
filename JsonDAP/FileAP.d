@@ -70,8 +70,17 @@ public static class CL_FileAP
                 throw new InvalidArgumentExceptionAP("Output file path cannot be empty.",
                         "filePath", filePath, "Non-empty string expected", null, 0);
             }
-            enforce(existsFile(filePath), throw new FileOperationExceptionAP(
-                    "Target file not found for writing.", filePath, "write", 0, null, 0));
+			//enforce(existsFile(filePath), throw new FileOperationExceptionAP(
+			//        "Target file not found for writing.", filePath, "write", 0, null, 0));
+
+            import std.path : dirName;
+			string dir = dirName(filePath);
+			if (!dir.empty && !exists(dir))
+			{
+				mkdirRecurse(dir); 
+			}
+
+
             auto jsonContent = CL_File_JSON.serializeToJson(data);
             std.file.write(filePath, jsonContent.toString());
             return true;
@@ -888,96 +897,103 @@ public static class CL_FileAP_Edit
 public class CL_File_JSON
 {
     public static Optional!(T[]) deserializeJsonArray(T)(string jsonContent)
-    {
-        try
-        {
-            JSONValue val = parseJSON(jsonContent);
-            if (val.type == JSONType.ARRAY)
-            {
-                T[] arr;
-                foreach (item; val.array)
-                {
-                    auto convertedItemOptional = CL_CoreAP_Conv.convertJsonValueToT!T(item);
+	{
+		try
+		{
+			JSONValue val = parseJSON(jsonContent);
+			if (val.type == JSONType.ARRAY)
+			{
+				T[] arr;
+				foreach (item; val.array)
+				{
+					auto convertedItemOptional = CL_CoreAP_Conv.convertJsonValueToT!T(item);
 
-                    if (!convertedItemOptional.isNull)
-                    {
-                        arr ~= convertedItemOptional.get;
-                    }
-                    else
-                    {
-                        throw new JSONConvertExceptionAP("Failed to convert array element from JSON.",
-                                T.ToString(), item.ToString(), item.GetType().Name,
-                                T.ToString(), "ElementConversionFailed",
-                                "Could not convert JSON array element to " ~ T.ToString(),
-                                null, 0, null);
-                    }
-                }
-                return Optional!(T[])(arr);
-            }
-            else
-            {
-                throw new JSONConvertExceptionAP("Expected a JSON array, but got an unexpected type.",
-                        T.ToString(), val.ToString(),
-                        val.GetType().Name, T.ToString(), "TypeMismatch",
-                        "JSON content is not an array.", null, 0, null);
-            }
-        }
-        catch (JSONException e)
-        {
-            throw new JsonOperationExceptionAP("Failed to deserialize JSON array.",
-                    null, jsonContent, null, 0, e);
-        }
-        catch (Exception e)
-        {
-            throw new UnknownErrorexceptionAP(
-                    "An unexpected error occurred during JSON array element conversion.",
-                    null, 0, e);
-        }
-        return Optional!(T[]).init;
-    }
+					if (!convertedItemOptional.isNull)
+					{
+						arr ~= convertedItemOptional.get;
+					}
+					else
+					{
+						throw new JSONConvertExceptionAP("Failed to convert array element from JSON.",
+														 T.stringof, item.to!string, item.type.to!string,
+														 T.stringof, "ElementConversionFailed",
+														 "ArrayConversion",
+														 "Could not convert JSON array element to " ~ T.stringof,
+														 __FILE__, __LINE__); 
+					}
+				}
+				return Optional!(T[])(arr);
+			}
+			else
+			{
+				throw new JSONConvertExceptionAP("Expected a JSON array, but got an unexpected type.",
+												 T.stringof, val.to!string,
+												 val.type.to!string, T.stringof, "TypeMismatch",
+												 "ArrayConversion",
+												 "JSON content is not an array.", 
+												 __FILE__, __LINE__); 
+			}
+		}
+		catch (JSONException e)
+		{
+			throw new JsonOperationExceptionAP("Failed to deserialize JSON array.",
+											   null, jsonContent, null, 0, e);
+		}
+		catch (Exception e)
+		{
+			throw new UnknownErrorexceptionAP(
+											  "An unexpected error occurred during JSON array element conversion.",
+											  null, 0, e);
+		}
+		return Optional!(T[]).init;
+	}
 
-    public static Optional!(T) deserializeJson(T)(string jsonContent)
-    {
-        try
-        {
-            JSONValue val = parseJSON(jsonContent);
-            if (val.type == JSONType.OBJECT)
-            {
-                T obj;
-                auto convertedItemOptional = CL_CoreAP_Conv.convertJsonValueToT!T(val);
-                if (!convertedItemOptional.isNull)
-                {
-                    obj = convertedItemOptional.get;
-                }
-                else
-                {
-                    throw new JSONConvertExceptionAP("Failed to convert element from JSON.", T.toString(), val.toString(),
-                            val.type, T.toString(), "ObjectConversionFailed", "Could not convert JSON object to  |__|  Error in ( auto convertedItemOptional = convertJsonValueToT!T(val); ) " ~ T
-                                .ToString(), null, 0, null);
-                }
-                return Optional!(T)(obj);
-
-            }
-            else
-            {
-                throw new JSONConvertExceptionAP("Failed to convert element from JSON.",
-                        T.toString(), val.toString(), val.type,
-                        T.toString(), "ObjectConversionFailed",
-                        "Could not convert JSON object to " ~ T.toString(), null, 0, null);
-            }
-        }
-        catch (JSONException e)
-        {
-            throw new JsonOperationExceptionAP("Failed to deserialize JSON.",
-                    null, jsonContent, null, 0, e);
-        }
-        catch (Exception e)
-        {
-            throw new UnknownErrorexceptionAP(
-                    "An unexpected error occurred during JSON element conversion.", null, 0, e);
-        }
-        return Optional!(T).init;
-    }
+	public static Optional!(T) deserializeJson(T)(string jsonContent)
+	{
+		try
+		{
+			JSONValue val = parseJSON(jsonContent);
+			if (val.type == JSONType.OBJECT)
+			{
+				T obj;
+				auto convertedItemOptional = CL_CoreAP_Conv.convertJsonValueToT!T(val);
+				if (!convertedItemOptional.isNull)
+				{
+					obj = convertedItemOptional.get;
+				}
+				else
+				{
+					throw new JSONConvertExceptionAP("Failed to convert element from JSON.", 
+													 T.stringof, val.to!string,
+													 val.type.to!string, T.stringof, "ObjectConversionFailed", 
+													 "ObjectConversion", 
+													 "Could not convert JSON object to  |__|  Error in convertJsonValueToT!T(val)", 
+													 __FILE__, __LINE__); 
+				}
+				return Optional!(T)(obj);
+			}
+			else
+			{
+				throw new JSONConvertExceptionAP("Failed to convert element from JSON.",
+												 T.stringof, val.to!string, val.type.to!string,
+												 T.stringof, "ObjectConversionFailed",
+												 "ObjectConversion",
+												 "Could not convert JSON object to " ~ T.stringof, 
+												 __FILE__, __LINE__); 
+			}
+		}
+		catch (JSONException e)
+		{
+			throw new JsonOperationExceptionAP("Failed to deserialize JSON.",
+											   null, jsonContent, null, 0, e);
+		}
+		catch (Exception e)
+		{
+			throw new UnknownErrorexceptionAP(
+											  "An unexpected error occurred during JSON element conversion.", null, 0, e);
+		}
+		return Optional!(T).init;
+	}
 
     public static JSONValue serializeToJson(T)(T obj)
     {

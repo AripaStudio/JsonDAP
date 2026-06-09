@@ -31,8 +31,7 @@ public class CL_CoreAP
         }
         catch (JSONException e)
         {
-            throw new JsonOperationExceptionAP("Failed to parse JSON content.",
-                    "$", jsonContent, __FILE__, __LINE__, e);
+           return false;
         }
         catch (Exception e)
         {
@@ -285,16 +284,16 @@ public static class CL_CoreAP_Conv
                 case JSONType.INTEGER:
                     return Optional!T(jsonValue.integer.to!T());
                 case JSONType.FLOAT:
-                    return Optional!T(jsonValue.floatValue.to!T());
+                    return Optional!T(jsonValue.floating.to!T());
                 case JSONType.STRING:
                     static if (is(T == string))
                     {
-                        return Optional!T(jsonValue.stringValue);
+                        return Optional!T(jsonValue.str);
                     }
                     else
                     {
                         throw new JSONConvertExceptionAP("Cannot convert JSON string to target type.",
-                                T.stringof, jsonValue.stringValue,
+                                T.stringof, jsonValue.str,
                                 JSONType.STRING.to!string,
                                 T.stringof, "TypeMismatch", null,
                                 "Cannot convert string to " ~ T.stringof, __FILE__, __LINE__);
@@ -370,45 +369,47 @@ public static class CL_CoreAP_Conv
                 {
                     T obj = T.init;
 
-                    static foreach (memberName; Fields!T)
+                    static foreach (memberName; FieldNameTuple!T)
                     {
-                        alias FieldType = typeof(__traits(getMember, T, memberName));
+						{
+							alias FieldType = typeof(__traits(getMember, T, memberName));
 
-                        if (memberName in jsonValue.object)
-                        {
-                            auto memberJsonValue = jsonValue.object[memberName];
-                            auto convertedMember = convertJsonValueToT!FieldType(memberJsonValue);
+							if (memberName in jsonValue.object)
+							{
+								auto memberJsonValue = jsonValue.object[memberName];
+								auto convertedMember = convertJsonValueToT!FieldType(memberJsonValue);
 
-                            if (!convertedMember.isNull)
-                            {
-                                mixin("obj." ~ memberName ~ " = convertedMember.get;");
-                            }
-                            else
-                            {
-                                static if (!is(FieldType : Optional!U, U))
-                                {
-                                    throw new JSONConvertExceptionAP("Failed to convert field '" ~ memberName ~ "'.",
-                                            memberName, memberJsonValue.to!string,
-                                            memberJsonValue.type.to!string,
-                                            FieldType.stringof,
-                                            "FieldConversionFailed", null,
-                                            "Could not convert JSON field to " ~ FieldType.stringof,
-                                            __FILE__, __LINE__);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            static if (!is(FieldType : Optional!U, U))
-                            {
-                                throw new JSONConvertExceptionAP(
-                                        "Required field '" ~ fieldName ~ "' not found in JSON object.",
-                                        fieldName, "Not Found", "N/A",
-                                        FieldType.stringof, "MissingField", null,
-                                        "Mandatory field missing for object conversion.",
-                                        __FILE__, __LINE__);
-                            }
-                        }
+								if (!convertedMember.isNull)
+								{
+									mixin("obj." ~ memberName ~ " = convertedMember.get;");
+								}
+								else
+								{
+									static if (!is(FieldType : Optional!U, U))
+									{
+										throw new JSONConvertExceptionAP("Failed to convert field '" ~ memberName ~ "'.",
+																		 memberName, memberJsonValue.to!string,
+																		 memberJsonValue.type.to!string,
+																		 FieldType.stringof,
+																		 "FieldConversionFailed", null,
+																		 "Could not convert JSON field to " ~ FieldType.stringof,
+																		 __FILE__, __LINE__);
+									}
+								}
+							}
+							else
+							{
+								static if (!is(FieldType : Optional!U, U))
+								{
+									throw new JSONConvertExceptionAP(
+																	 "Required field '" ~ memberName ~ "' not found in JSON object.",
+																	 memberName, "Not Found", "N/A",
+																	 FieldType.stringof, "MissingField", null,
+																	 "Mandatory field missing for object conversion.",
+																	 __FILE__, __LINE__);
+								}
+							}
+						}
                     }
                     return Optional!T(obj);
                 }
@@ -491,7 +492,7 @@ public static class CL_CoreAP_Conv
         return serializeInternal(obj, visited);
     }
 
-    private JSONValue serializeInternal(T)(T obj, ref bool[void* ] visited)
+    private static JSONValue serializeInternal(T)(T obj, ref bool[void* ] visited)
     {
         static assert(!is(T == JSONValue),
                 "Serializing JSONValue to JSONValue is redundant. Please ensure T is not JSONValue.");
@@ -503,7 +504,7 @@ public static class CL_CoreAP_Conv
             }
             else static if (CheckVariablesAP.IsStringAP!T.value)
             {
-                return JSONvalue(obj);
+                return JSONValue(obj);
             }
             else static if (is(T : Optional!U, U))
             {
@@ -513,7 +514,7 @@ public static class CL_CoreAP_Conv
                 }
                 else
                 {
-                    return serializeInternal!U(obj.get);
+                    return serializeInternal!U(obj.get , visited);
                 }
             }
             else static if (CheckVariablesAP.IsArrayAP!T.value)
@@ -522,12 +523,12 @@ public static class CL_CoreAP_Conv
                 JSONValue[] jsonArray;
                 foreach (o; obj)
                 {
-                    jsonArray ~= serializeInternal!ElementType(o);
+                    jsonArray ~= serializeInternal!ElementType(o , visited);
                 }
                 return JSONValue(jsonArray);
             }
             else static if (CheckVariablesAP.IsClassAP!T.value
-                    || CheckVariablesAP.IsClassAP!T.value)
+                    || CheckVariablesAP.IsStructAP!T.value)
             {
                 static if (CheckVariablesAP.IsClassAP!T.value)
                 {
@@ -541,7 +542,7 @@ public static class CL_CoreAP_Conv
                 }
 
                 JSONValue jsonObject;
-                jsonObject.object = new JSONValue.Object;
+                jsonObject.object = null;
                 static foreach (i, memberName; FieldNameTuple!T)
                 {
                     {
@@ -549,7 +550,7 @@ public static class CL_CoreAP_Conv
 
                         auto fieldValue = mixin("obj." ~ memberName);
 
-                        JSONValue memberJsonValue = serializeInternal!TargetType(fieldValue);
+                        JSONValue memberJsonValue = serializeInternal!TargetType(fieldValue , visited);
 
                         jsonObject[memberName] = memberJsonValue;
                     }
