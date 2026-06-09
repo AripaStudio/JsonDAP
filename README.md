@@ -1,6 +1,6 @@
 # JsonDAP: A Powerful JSON Library for D by Aripa Pars Studio
 
-JsonDAP is a robust D language library developed by **Aripa Pars Studio** to streamline JSON operations, including file handling, parsing, serialization, validation, and manipulation. It leverages D's generics (`T`, `V`) and `Nullable` (aliased as `Optional`) for safe, flexible, and efficient JSON processing. The library is under active development, with a dedicated **GitHub Pages** site in progress to showcase its capabilities and provide learning resources. The latest version is **2.1.6**.
+JsonDAP is a robust D language library developed by **Aripa Pars Studio** to streamline JSON operations, including file handling, parsing, serialization, validation, and manipulation. It leverages D's generics (`T`, `V`) and `Nullable` (aliased as `Optional`) for safe, flexible, and efficient JSON processing. The library is under active development, with a dedicated **GitHub Pages** site in progress to showcase its capabilities and provide learning resources. The latest version is **2.1.7**.
 
 ---
 
