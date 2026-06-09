@@ -5,6 +5,7 @@
   "homepage": "https://github.com/AripaStudio/JsonDAP",
   "authors": [ "Aripa pars Studio , khashayar" ],
   "license": "MIT",
+  "importPaths": [ "." ],
   "targetType": "dynamicLibrary",
   "targetName": "JsonDAP",
   "sourceFiles": [ "JsonDAP.d", "CoreAP.d", "PublicCodeOtherCode.d", "FileAP.d", "ExceptionAP.d", "jsonOtherCodeAP.d", "CheckVariablesAP.d" ],
@@ -12,13 +13,13 @@
   "buildTypes": {
     "release": {
       "buildOptions": [ "releaseMode", "optimize", "inline" ],
-      "dflags": [ "-mscrt" ],
+      "dflags": [],
       "targetType": "dynamicLibrary",
       "targetPath": "bin/release"
     },
     "debug": {
       "buildOptions": [ "debugMode" ],
-      "dflags": [ "-boundscheck=off", "-mscrt" ],
+      "dflags": [ "-boundscheck=off" ],
       "targetType": "dynamicLibrary",
       "targetPath": "bin/debug"
     }
