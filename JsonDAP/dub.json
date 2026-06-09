@@ -20,7 +20,7 @@
       "buildOptions": [ "debugMode" ],
       "dflags": [ "-boundscheck=off", "-mscrt" ],
       "targetType": "dynamicLibrary",
-      "targetPath": "bin/version"
+      "targetPath": "bin/debug"
     }
   }
 }

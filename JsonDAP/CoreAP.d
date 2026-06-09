@@ -370,26 +370,25 @@ public static class CL_CoreAP_Conv
                 {
                     T obj = T.init;
 
-                    foreach (memberName; Fields!T)
+                    static foreach (memberName; Fields!T)
                     {
-                        string fieldName = memberName;
-                        alias FieldType = FieldType!T.memberName;
+                        alias FieldType = typeof(__traits(getMember, T, memberName));
 
-                        if (fieldName in jsonValue.object)
+                        if (memberName in jsonValue.object)
                         {
-                            auto memberJsonValue = jsonValue.object[fieldName];
+                            auto memberJsonValue = jsonValue.object[memberName];
                             auto convertedMember = convertJsonValueToT!FieldType(memberJsonValue);
 
                             if (!convertedMember.isNull)
                             {
-                                mixin("obj." ~ fieldName ~ " = convertedMember.get;");
+                                mixin("obj." ~ memberName ~ " = convertedMember.get;");
                             }
                             else
                             {
                                 static if (!is(FieldType : Optional!U, U))
                                 {
-                                    throw new JSONConvertExceptionAP("Failed to convert field '" ~ fieldName ~ "'.",
-                                            fieldName, memberJsonValue.to!string,
+                                    throw new JSONConvertExceptionAP("Failed to convert field '" ~ memberName ~ "'.",
+                                            memberName, memberJsonValue.to!string,
                                             memberJsonValue.type.to!string,
                                             FieldType.stringof,
                                             "FieldConversionFailed", null,
@@ -527,32 +526,41 @@ public static class CL_CoreAP_Conv
                 }
                 return JSONValue(jsonArray);
             }
-            else static if (CheckVariablesAP.IsStructAP!T.value
+            else static if (CheckVariablesAP.IsClassAP!T.value
                     || CheckVariablesAP.IsClassAP!T.value)
             {
-                void* addr = cast(void*) obj;
-                if (addr in visited)
+                static if (CheckVariablesAP.IsClassAP!T.value)
                 {
-                    throw new Exception("Circular reference detected!");
-                }
+                    void* addr = cast(void*) obj;
+                    if (addr in visited)
+                    {
+                        throw new Exception("Circular reference detected!");
+                    }
 
-                visited[addr] = true;
-                scope (exit)
-                    visited.remove(addr);
+                    visited[addr] = true;
+                }
 
                 JSONValue jsonObject;
                 jsonObject.object = new JSONValue.Object;
-
                 static foreach (i, memberName; FieldNameTuple!T)
                 {
-                    alias Field = FieldNameTuple!T[i];
+                    {
+                        alias TargetType = typeof(__traits(getMember, T, memberName));
 
-                    auto fieldValue = mixin("obj." ~ memberName);
+                        auto fieldValue = mixin("obj." ~ memberName);
 
-                    JSONValue memberJsonValue = serializeInternal!Field(fieldValue);
+                        JSONValue memberJsonValue = serializeInternal!TargetType(fieldValue);
 
-                    jsonObject[memberName] = memberJsonValue;
+                        jsonObject[memberName] = memberJsonValue;
+                    }
                 }
+
+                static if (CheckVariablesAP.IsClassAP!T.value)
+                {
+                    visited.remove(cast(void*) obj);
+                }
+
+                return jsonObject;
             }
             else static if (CheckVariablesAP.IsEnumAP!T.value)
             {

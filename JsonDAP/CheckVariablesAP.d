@@ -2,6 +2,7 @@ module CheckVariablesAP;
 
 import std.traits;
 
+
 public struct IsIntAP(T)
 {
     enum bool value = is(T == int) || is(T == long) || is(T == byte)
@@ -31,21 +32,17 @@ public struct IsArrayAP(T)
 
 public struct IsClassAP(T)
 {
-    enum bool value = is(T : Object) && !is(T == typeof(null));
+    enum bool value = is(T == class);
 }
 
 public struct IsEnumAP(T)
 {
-    enum bool value = std.traits.isEnum!T;
+    enum bool value = is(T == enum);
 }
 
 public struct IsStructAP(T)
 {
-    enum bool value = !IsClassAP!T.value && !IsIntAP!T.value
-        && !IsFloatAP!T.value && !IsBoolAP!T.value && !IsStringAP!T.value
-        && !IsArrayAP!T.value && !IsEnumAP!T.value && !is(T == void)
-        && !is(T == typeof(null)) && !__traits(isPointer, T)
-        && !__traits(isFunction, T) && !__traits(isDelegate, T);
+    enum bool value = is(T == struct);
 }
 
 public struct IsNumberAP(T)

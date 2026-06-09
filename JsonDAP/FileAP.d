@@ -996,8 +996,9 @@ public class CL_File_JSON
         }
         catch (Exception e)
         {
+            
             throw new JsonOperationExceptionAP("Failed to serialize object to JSON string.",
-                    null, obj.toString(), null, 0, e);
+                    null, to!string(obj),  null, 0, e);
         }
     }
 
