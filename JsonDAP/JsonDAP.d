@@ -19,6 +19,9 @@ export import ExceptionAP;
 //CheckVariablesAP :
 export import CheckVariablesAP;
 
+// add PathStep and PathStep Type: 
+export import jsonOtherCodeAP;
+
 public class JsonAP
 {
     export static Optional!T APreadJsonFile(T)(string filePath)
