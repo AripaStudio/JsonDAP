@@ -1,27 +1,89 @@
 {
   "name": "jsondap",
   "description": "a json Library of Aripa pars Studio",
-  "version": "2.1.7",
-  "homepage": "https://github.com/AripaStudio/JsonDAP",
-  "authors": [ "Aripa pars Studio , khashayar" ],
+  "authors": [
+    "Aripa pars Studio , khashayar"
+  ],
   "license": "MIT",
-  "importPaths": [ "." ],
-  "targetType": "dynamicLibrary",
   "targetName": "JsonDAP",
-  "sourceFiles": [ "JsonDAP.d", "CoreAP.d", "PublicCodeOtherCode.d", "FileAP.d", "ExceptionAP.d", "jsonOtherCodeAP.d", "CheckVariablesAP.d" ],
-  "libs": [ "msvcrt", "legacy_stdio_definitions", "oldnames" ],
+  "targetType": "dynamicLibrary",
+  "sourceFiles": [
+    "JsonDAP.d",
+    "JsonAPMessages.d",
+    "CoreAP.d",
+    "CoreAPConv.d",
+    "CoreAPConvObject.d",
+    "CoreAPPath.d",
+    "CoreAPSerialize.d",
+    "PublicCodeOtherCode.d",
+    "FileAP.d",
+    "FileAPAdd.d",
+    "FileAPJson.d",
+    "FileAPMerge.d",
+    "FileAPRemove.d",
+    "FileAPUpdate.d",
+    "ExceptionAP.d",
+    "ExceptionJsonAP.d",
+    "jsonOtherCodeAP.d",
+    "CheckVariablesAP.d"
+  ],
+  "dependencies": {},
+  "configurations": [
+    {
+      "name": "library",
+      "targetPath": "bin",
+      "targetType": "dynamicLibrary"
+    },
+    {
+      "name": "unittest",
+      "targetPath": "bin/test",
+      "targetType": "staticLibrary",
+      "sourceFiles": [],
+      "sourcePaths": [
+        ".",
+        "test"
+      ],
+      "excludedSourceFiles": [
+        "bin/**"
+      ]
+    },
+    {
+      "name": "debug",
+      "targetPath": "Output/debug"
+    },
+    {
+      "name": "release",
+      "targetPath": "Output/release"
+    }
+  ],
+  "version": "2.2.2",
+  "homepage": "https://github.com/AripaStudio/JsonDAP",
+  "importPaths": [
+    "."
+  ],
+  "libs": [
+    "msvcrt",
+    "legacy_stdio_definitions",
+    "oldnames"
+  ],
   "buildTypes": {
     "release": {
-      "buildOptions": [ "releaseMode", "optimize", "inline" ],
+      "buildOptions": [
+        "releaseMode",
+        "optimize",
+        "inline"
+      ],
       "dflags": [],
-      "targetType": "dynamicLibrary",
-      "targetPath": "bin/release"
+      "targetType": "dynamicLibrary"
     },
     "debug": {
-      "buildOptions": [ "debugMode" ],
-      "dflags": [ "-boundscheck=off" ],
-      "targetType": "dynamicLibrary",
-      "targetPath": "bin/debug"
+      "buildOptions": [
+        "debugMode"
+      ],
+      "dflags": [
+        "-boundscheck=off"
+      ],
+      "targetType": "dynamicLibrary"
     }
   }
 }

@@ -507,10 +507,21 @@
  <Folder name="JsonDAP">
   <File path="CheckVariablesAP.d" />
   <File path="CoreAP.d" />
+  <File path="CoreAPConv.d" />
+  <File path="CoreAPConvObject.d" />
+  <File path="CoreAPPath.d" />
+  <File path="CoreAPSerialize.d" />
   <File path="dub.json" />
   <File path="ExceptionAP.d" />
+  <File path="ExceptionJsonAP.d" />
   <File path="FileAP.d" />
+  <File path="FileAPAdd.d" />
+  <File path="FileAPJson.d" />
+  <File path="FileAPMerge.d" />
+  <File path="FileAPRemove.d" />
+  <File path="FileAPUpdate.d" />
   <File path="JsonDAP.d" />
+  <File path="JsonAPMessages.d" />
   <File path="jsonOtherCodeAP.d" />
   <File path="PublicCodeOtherCode.d" />
  </Folder>
