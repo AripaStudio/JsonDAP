@@ -389,3 +389,16 @@ bin/release/
 jsondap-test-library.exe
 jsondap-test-library.pdb
 *.rsp
+
+# Build outputs left by dub (dll/lib/exp/pdb) and the test runner
+*.exp
+*.pdb
+
+# Test harness folder (tests run from JsonDAP/dub.json) and its runtime file
+/JsonDAP/test
+test_aripa_dap.json
+
+# Agent workspace and agent documentation
+/.freebuff
+/Archive
+/CHANGELOG.md
