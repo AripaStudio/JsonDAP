@@ -25,6 +25,7 @@ export import jsonOtherCodeAP;
 
 //Exceptions : 
 export import ExceptionAP;
+
 export import ExceptionJsonAP;
 
 //CheckVariablesAP :
@@ -96,6 +97,10 @@ public class JsonAP : APEditMessages
     {
         return CL_PublicCodeOtherCode.isDigitAP(c);
     }
+
+    export static string APnormalizeDigitsAP(string s){
+        return CL_PublicCodeOtherCode.normalizeDigitsAP(s);
+	}
 
     export static bool APisInteger(string s)
     {
@@ -175,6 +180,30 @@ public class JsonAP : APEditMessages
     {
         return CL_FileAP_Merge.mergeJson(filePath, jsonContentToMerge,
                 overwriteExisting, mergeArrays);
+    }
+
+    //To keep the output single - if APmergeJsonWithMessage = true = "" otherwise = send message
+    export static string APmergeJsonWithMessage(string filePath,
+            JSONValue jsonContentToMerge, bool overwriteExisting = true, bool mergeArrays = false)
+    {
+        string message;
+        bool merge =  CL_FileAP_Merge.mergeJsonWithMessage(filePath, jsonContentToMerge, overwriteExisting, mergeArrays, message);
+        if (merge)
+		{
+            return "";
+		}else
+		{
+            return message;
+		}
+    }
+
+    //A member of JsonAP hides the inherited member of the same name, so the out-parameter
+    //twin is re-declared here to keep both call shapes working.
+    export static bool APmergeJsonWithMessage(string filePath, JSONValue jsonContentToMerge,
+            bool overwriteExisting, bool mergeArrays, out string message)
+    {
+        return CL_FileAP_Merge.mergeJsonWithMessage(filePath, jsonContentToMerge,
+                overwriteExisting, mergeArrays, message);
     }
 
     //CL_File_JSON:

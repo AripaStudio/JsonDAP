@@ -13,9 +13,27 @@ alias Optional = Nullable;
 
 public class CL_PublicCodeOtherCode
 {
+    public static dchar toAsciiDigit(dchar c) @safe pure nothrow
+	{
+		if (c >= '0' && c <= '9') return c;
+		if (c >= '۰' && c <= '۹') return cast(dchar)('0' + (c - '۰'));   // Persian Unicode 
+		if (c >= '٠' && c <= '٩') return cast(dchar)('0' + (c - '٠'));   // Arabic Unicode 
+		return c;
+	}
+
+    public static string normalizeDigitsAP(string s) @safe pure
+	{
+		import std.array : appender;
+		auto result = appender!string();
+		foreach (dchar c; s)
+			result.put(toAsciiDigit(c));
+		return result.data;
+	}
+
     public static bool isDigitAP(dchar c) @safe pure nothrow
     {
-        return (c >= '0' && c <= '9') || (c >= '۰' && c <= '۹');
+		dchar a = toAsciiDigit(c);
+		return a >= '0' && a <= '9';
     }
 
     public static bool isInteger(string s) @safe pure
