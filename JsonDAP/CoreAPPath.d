@@ -43,10 +43,10 @@ public static class CL_CoreAP_Path
                                 path, jsonContent, __FILE__, __LINE__);
                     }
                 }
-                else if (current.type == JSONType.ARRAY
-                        && CL_PublicCodeOtherCode.isInteger(segment))
+                else if (current.type == JSONType.ARRAY && CL_PublicCodeOtherCode.isInteger(
+                        segment))
                 {
-                    int index = segment.to!int;
+                    int index = CL_PublicCodeOtherCode.normalizeDigitsAP(segment).to!int;
                     if (index >= 0 && index < current.array.length)
                     {
                         current = current.array[index];
@@ -78,9 +78,9 @@ public static class CL_CoreAP_Path
                 }
                 else static if (is(V == long) || is(V == int))
                 {
-                    if (current.type != JSONType.INTEGER && current.type != JSONType.FLOAT)
+                    if (current.type != JSONType.INTEGER)
                     {
-                        throw new ConvertExceptionAP("JSON value is not a number.",
+                        throw new ConvertExceptionAP("JSON value is not an integer.",
                                 "path", path, current.type.to!string, V.stringof, "getJsonValue",
                                 "Requested type does not match the JSON value type.", __FILE__, __LINE__);
                     }
@@ -114,6 +114,10 @@ public static class CL_CoreAP_Path
         {
             throw new JsonOperationExceptionAP("Error parsing JSON while getting value.",
                     "$", jsonContent, __FILE__, __LINE__, e);
+        }
+        catch (BaseExceptionAP e)
+        {
+            throw e;
         }
         catch (Exception e)
         {
