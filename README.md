@@ -1,110 +1,301 @@
-# JsonDAP: A Powerful JSON Library for D by Aripa Pars Studio
+# JsonDAP
 
-JsonDAP is a robust D language library developed by **Aripa Pars Studio** to streamline JSON operations, including file handling, parsing, serialization, validation, and manipulation. It leverages D's generics (`T`, `V`) and `Nullable` (aliased as `Optional`) for safe, flexible, and efficient JSON processing. The library is under active development, with a dedicated **GitHub Pages** site in progress to showcase its capabilities and provide learning resources. The latest version is **2.1.7**.
+**A JSON and file-handling library for the D programming language** — serialization,
+path-based file editing, and one exception tree.
+Built by [Aripa Pars Studio](https://github.com/AripaStudio) · MIT licensed · latest version **2.2.2**.
 
----
+**[English](README.md) · [فارسی](README.fa.md)**
 
-## Overview
-
-JsonDAP simplifies JSON-related tasks with a clean, high-level API. It supports file I/O, JSON parsing, data validation, path-based value extraction, and advanced manipulation while ensuring robust error handling with custom exceptions.
-
----
-
-## Features
-
-- **File I/O**: Read and write JSON files effortlessly.
-- **JSON Parsing & Serialization**: Convert JSON strings to D types and vice versa.
-- **Data Validation**: Validate JSON structures and types.
-- **Path-based Extraction**: Access nested JSON values using dot-separated paths.
-- **Manipulation**: Merge, update, add, or remove JSON items.
-- **Utility Functions**: Pretty-print JSON, count items, and support Persian/ASCII digits.
-- **Error Handling**: Comprehensive custom exceptions for clear error reporting.
+[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ---
 
-## Usage
+## Contents
 
-Import the `JsonAP` module and use its static methods, prefixed with `AP`, directly.
-
----
-
-## API Reference
-
-All methods are static, accessible via the `JsonAP` class, and prefixed with `AP`.
-
-### File Operations
-
-- ` import JsonDAP and JsonAP.APreadJsonFile!T`
-
-- `APreadJsonFile<T>(string filePath) -> Optional!T`: Reads and deserializes a JSON file into type `T`.
-- `APwriteJsonFile<T>(string filePath, T data) -> bool`: Serializes data of type `T` to a JSON file.
-- `APgetJsonFileSize(string filePath) -> Optional!long`: Returns the size of a JSON file in bytes.
-- `APreadJsonArray<T>(string filePath) -> Optional!(T[])`: Reads a JSON array file into an array of type `T`.
-- `APexistsFile(string filePath) -> bool`: Checks if a file exists.
-
-### JSON Validation
-
-- `APisValidJson(string jsonContent) -> bool`: Verifies if a string is valid JSON.
-- `APisJsonObject(string jsonContent) -> bool`: Checks if JSON content is an object.
-- `APisJsonArray(string jsonContent) -> bool`: Checks if JSON content is an array.
-- `APisJsonNumber(string jsonContent) -> bool`: Checks if JSON content is a number.
-- `APisJsonString(string jsonContent) -> bool`: Checks if JSON content is a string.
-- `APgetJsonItemCount(string jsonContent) -> Optional!long`: Counts top-level items in JSON.
-- `APisDigitAP(dchar c) -> bool`: Checks if a character is a digit (ASCII/Persian).
-- `APisInteger(string s) -> bool`: Checks if a string represents an integer (ASCII/Persian digits).
-
-### JSON Manipulation
-
-- `APprettyPrintJson(string jsonContent) -> Optional!string`: Formats JSON for readability.
-- `APgetJsonValue<V>(string jsonContent, string path) -> Optional!V`: Extracts a value by path from JSON.
-- `APJsonPathParser(string jsonContent) -> JsonAP`: Parses JSON for path-based operations.
-- `APrecursiveMerge(JsonAP json1, JsonAP json2) -> JsonAP`: Recursively merges two JSON objects.
-- `APStrIsNUll(string s) -> bool`: Checks if a string is null or empty.
-- `APCheckStringIsNullArray(string[] arr) -> bool`: Checks if a string array contains null/empty strings.
-- `APexists(JsonAP json, string path) -> bool`: Verifies if a JSON path exists.
-- `APupdateJsonValueOBJECT(JsonAP json, string path, JsonAP value) -> bool`: Updates a value in a JSON object.
-- `APupdateJsonValueARRAY(JsonAP json, string path, JsonAP value) -> bool`: Updates a value in a JSON array.
-- `APaddJsonItemOBJECT(JsonAP json, string path, JsonAP value) -> bool`: Adds an item to a JSON object.
-- `APaddJsonItemARRAY(JsonAP json, string path, JsonAP value) -> bool`: Adds an item to a JSON array.
-- `APremoveJsonItemOBJECT(JsonAP json, string path) -> bool`: Removes an item from a JSON object.
-- `APremoveJsonItemARRAY(JsonAP json, string path) -> bool`: Removes an item from a JSON array.
-- `APmergeJson(JsonAP json1, JsonAP json2) -> JsonAP`: Merges two JSON objects (non-recursive).
-- `APdeserializeJsonArray<T>(string jsonContent) -> Optional!(T[])`: Deserializes a JSON array into type `T[]`.
-- `APdeserializeJson<T>(string jsonContent) -> Optional!T`: Deserializes a JSON string into type `T`.
-- `APserializeToJson<T>(T data) -> Optional!string`: Serializes data of type `T` to a JSON string.
-- `APserializeToJsonArray<T>(T[] data) -> Optional!string`: Serializes an array of type `T` to a JSON array.
-- `APgetJsonValueType(string jsonContent) -> string`: Returns the type of a JSON value.
-- `APconvertJsonValueToT<T>(string jsonContent) -> Optional!T`: Converts a JSON value to type `T`.
-- `APserializeTToJsonValue<T>(T data) -> Optional!string`: Serializes data of type `T` to a JSON value.
-
-### Custom Structs for Data Comparison
-
-- `IsIntAP`: Validates if a value is an integer.
-- `IsFloatAP`: Validates if a value is a floating-point number.
-- `IsBoolAP`: Validates if a value is a boolean.
-- `IsStringAP`: Validates if a value is a string.
-- `IsArrayAP`: Validates if a value is an array.
-- `IsClassAP`: Validates if a value is a class.
-- `IsEnumAP`: Validates if a value is an enum.
-- `IsStructAP`: Validates if a value is a struct.
-- `IsNumberAP`: Validates if a value is a number (integer or float).
-
-### Powerful and Robust Custom Exception Classes
-
-- `BaseExceptionAP`: Base class for all JsonDAP exceptions.
-- `ParameterRelatedExceptionAP`: Handles invalid parameter errors.
-- `JSONExceptionAP`: Handles JSON parsing errors.
-- `JsonOperationExceptionAP`: Handles JSON operation failures.
-- `ConvertExceptionAP`: Handles type conversion errors.
-- `FileOperationExceptionAP`: Handles file operation failures.
-- `JSONConvertExceptionAP`: Handles JSON conversion errors.
-- `InvalidArgumentExceptionAP`: Handles invalid argument errors.
-- `UnknownErrorexceptionAP`: Handles unknown errors.
-- `SyntaxErrorExceptionAP` : Handles Syntax errors.
-- `ArgumentNullExceptionAP` : Handles Null errors (It is similar to ArgumentNullExceptionAP in C#.)
+- [Why JsonDAP](#why-jsondap)
+- [Install](#install)
+- [Quick start](#quick-start)
+- [JSON contract](#json-contract)
+- [API reference](#api-reference)
+- [Exceptions](#exceptions)
 
 ---
 
-## Downloads
+## Why JsonDAP
 
-Compiled binaries (DLLs for Windows) are available in the Releases section of the GitHub repository. Download pre-built files for direct integration into your projects.
+`std.json` gives you a parse tree; `toJSON`/`fromJSON` give you automatic mapping but no
+control over the wire format. JsonDAP sits in between:
+
+- **Round-trip your own types** — `struct`, `class`, `enum`, arrays and `Nullable` fields
+  convert in both directions, with an explicit, documented mapping.
+- **Control the field names on the wire** — `@JsonName("msg_id")` and `@JsonIgnore` are
+  honoured in both directions.
+- **Two strictness levels** — strict (every field required, the default) or lenient
+  (`APdeserializeJsonLenient`, missing fields keep their default).
+- **Edit JSON files by path** — `"MainData.items[2].name"` — without reading the whole
+  document into your own code.
+- **One exception tree** — every failure is a `BaseExceptionAP` subclass carrying the file,
+  the line and the JSON path that broke, so a bug report contains evidence instead of a shrug.
+- **No silent repairs** — an unknown `enum` value, a missing field or a broken file is
+  reported, never quietly cast or dropped.
+
+### Requirements
+
+| Item | Version |
+|---|---|
+| D compiler | DMD 2.100+ (tested with DMD 2.113.0, x86_64) |
+| Build tool | dub 1.30+ (tested with dub 1.42.0) |
+| Platform | Windows (DLL build uses the MSVC linker); the D sources are portable |
+
+## Install
+
+**As a dub dependency**
+
+```json
+{
+  "dependencies": {
+    "jsondap": "~>2.2.2"
+  }
+}
+```
+
+**As copied sources (D consumer)**
+
+Copy the `.d` files from `JsonDAP/` into your project (only the files, not `bin/`) and let
+your build compile them — that is where the templates are instantiated:
+
+```json
+{
+  "sourcePaths": [ "vendor/JsonDAP" ]
+}
+```
+
+A D consumer does not link `JsonDAP.dll` at all. The DLL is for callers that cannot compile
+D; a D binary that links only the import library cannot resolve the templated calls, because
+their bodies live in the sources, not in the DLL.
+
+> **Keep sources and DLL from the same build.** Only non-template symbols live in
+> `JsonDAP.dll`; an old `JsonDAP.dll` next to new sources (or the other way round) is not a
+> supported combination.
+
+**Prebuilt binaries** — Windows `JsonDAP.dll` + import library, with matching sources, are
+published in the repository's **Releases** section and kept under `JsonDAP/bin/versionX.Y.Z/`.
+Take the archive whose version matches your `dub.json` and put `JsonDAP.dll` next to the
+executable.
+
+## Quick start
+
+```d
+import std.json : JSONValue;   // JsonDAP does not re-export std.json's JSONValue
+import std.stdio;
+import JsonDAP;
+
+struct User
+{
+    string name;
+    int age;
+}
+
+void main()
+{
+    User user = User("Aripa", 2026);
+
+    // struct -> JSONValue
+    JSONValue json = JsonAP.APserializeToJson!User(user);
+    writeln(json.toString());          // {"age":2026,"name":"Aripa"}
+
+    // JSON text -> struct
+    auto loaded = JsonAP.APdeserializeJson!User(`{"name":"Aripa","age":2026}`);
+    if (!loaded.isNull)
+    {
+        writeln(loaded.get.name);      // Aripa
+    }
+
+    // file round trip
+    JsonAP.APwriteJsonFile!User("user.json", user);
+    auto fromFile = JsonAP.APreadJsonFile!User("user.json");
+}
+```
+
+Every method is `static` on `JsonAP` and prefixed with `AP`. Names that return a value that
+may be absent return `Nullable!T` — always check `.isNull` before `.get`; `bool` methods
+return `false` on a recoverable failure (missing file, wrong node type).
+
+> `JSONValue` and `JSONType` come from `std.json`; `import JsonDAP;` does not re-export them.
+> `JSONValue` is an associative array, so the **key order of the produced text is not stable**
+> (the example above prints `age` before `name`); compare parsed values, never raw text.
+
+## JSON contract
+
+| D type | On the wire |
+|---|---|
+| `struct` / `class` | object |
+| array / `T[]` | array |
+| `enum` | integer — and only a **valid member**, otherwise an error |
+| `Nullable!T` (`Optional!T`) | `null` when empty, the wrapped value otherwise |
+| `class` reference set to `null` | `null` (accepted in both directions) |
+| `std.sumtype.SumType` | `{"tag":"<member name>","value":<payload>}` |
+
+**Field names**
+
+- `@JsonName("msg_id") string messageId;` — the wire name is `msg_id`.
+- `@JsonIgnore int scratch;` — the field never appears on the wire.
+- No attribute — the D field name is used verbatim.
+
+**Strict vs lenient**
+
+| Situation | strict (default) | `lenient = true` / `APdeserializeJsonLenient` |
+|---|---|---|
+| Field missing from JSON | `JSONConvertExceptionAP` (`MissingField`) | field keeps its default value |
+| `Nullable` / `class` field missing | `JSONConvertExceptionAP` | stays empty / `null` |
+| Unknown `enum` value | error | error (never cast) |
+| Unknown SumType tag | error listing the known tags | error listing the known tags |
+
+## API reference
+
+All methods are `static` members of `class JsonAP` (module `JsonDAP`), grouped by what they
+touch. The conversion layer's compile-time type traits are public too — each is a `struct`
+with `enum bool value`: `IsIntAP`, `IsFloatAP`, `IsNumberAP`, `IsBoolAP`, `IsStringAP`,
+`IsArrayAP`, `IsClassAP`, `IsEnumAP`, `IsStructAP`.
+
+**Files**
+
+| Method | Returns | What it does |
+|---|---|---|
+| `APreadJsonFile!T(string filePath)` | `Optional!T` | reads and deserializes a file |
+| `APwriteJsonFile!T(string filePath, T data)` | `bool` | serializes `T` into a file |
+| `APgetJsonFileSize(string filePath)` | `Optional!long` | file size in bytes |
+| `APreadJsonArray!T(string filePath)` | `Optional!(T[])` | reads a JSON array file into `T[]` |
+| `APexistsFile(string filePath)` | `bool` | file exists |
+| `APexists(string filePath)` | `bool` | same check, kept for older code |
+
+**Reading and writing values**
+
+| Method | Returns | What it does |
+|---|---|---|
+| `APserializeToJson!T(T obj)` | `JSONValue` | `T` → JSON value |
+| `APserializeToJsonArray!T(T data)` | `JSONValue[]` | array/range → JSON array |
+| `APserializeTToJsonValue!T(T obj)` | `JSONValue` | low-level `T` → JSON value |
+| `APdeserializeJson!T(string jsonContent)` | `Optional!T` | JSON text → `T` (strict) |
+| `APdeserializeJsonLenient!T(string jsonContent)` | `Optional!T` | JSON text → `T` (missing fields allowed) |
+| `APdeserializeJsonArray!T(string jsonContent)` | `Optional!(T[])` | JSON array text → `T[]` |
+| `APconvertJsonValueToT!T(JSONValue jsonValue, bool lenient = false)` | `Optional!T` | JSON value → `T` |
+| `APgetJsonValue!V(string jsonContent, string path)` | `Optional!V` | reads the value at `path` |
+| `APgetJsonValueType(JSONValue jsonValue)` | `JSONType` | the `std.json` type of a node |
+| `APprettyPrintJson(string jsonContent)` | `Optional!string` | indented, human-readable JSON |
+
+**Validating and inspecting**
+
+| Method | Returns | What it does |
+|---|---|---|
+| `APisValidJson(string jsonContent)` | `bool` | the text parses as JSON |
+| `APisJsonObject(string jsonContent)` | `bool` | top-level node is an object |
+| `APisJsonArray(string jsonContent)` | `bool` | top-level node is an array |
+| `APisJsonNumber(string jsonContent)` | `bool` | top-level node is a number |
+| `APisJsonString(string jsonContent)` | `bool` | top-level node is a string |
+| `APgetJsonItemCount(string jsonContent)` | `Optional!long` | number of top-level items |
+| `APisDigitAP(dchar c)` | `bool` | ASCII **or** Persian digit |
+| `APisInteger(string s)` | `bool` | the whole string is a number |
+| `APJsonPathParser(string input)` | `PathStep[]` | splits `"a.b[2]"` into path steps |
+| `APStrIsNUll(string input, string paramName, out bool, out string)` | `void` | null/empty/blank guard + reason |
+| `APCheckStringIsNullArray(string[] inputs)` | `bool` | guard for a list of strings |
+| `APrecursiveMerge(ref JSONValue target, ref JSONValue source, bool overwrite, bool mergeArrays, out string message)` | `bool` | deep merge with a message on failure |
+
+**Editing a file by path**
+
+Each call reads the file, edits one node, writes the file back, and returns `false` instead
+of throwing when the path or the file is unusable.
+
+| Method | What it does |
+|---|---|
+| `APupdateJsonValueOBJECT!V(string filePath, string jsonPath, V value)` | replaces `path` in an object |
+| `APupdateJsonValueARRAY!V(string filePath, string jsonPath, V value)` | replaces `path` in an array |
+| `APaddJsonItemOBJECT!T(string filePath, string jsonPath, T item)` | adds a new key (fails if it exists) |
+| `APaddJsonItemARRAY!T(string filePath, string jsonPath, T item)` | appends to the array at `path` |
+| `APremoveJsonItemOBJECT(string filePath, string jsonPath)` | removes a key |
+| `APremoveJsonItemARRAY(string filePath, string jsonPath)` | removes an array element |
+| `APmergeJson(string filePath, JSONValue jsonContentToMerge, bool overwriteExisting = true, bool mergeArrays = false)` | merges another document into the file |
+
+Path syntax: `MainData.items[2].name`. A missing intermediate object key is created; a
+missing intermediate array index is **not** created. `APremoveJsonItemOBJECT` removes
+top-level keys as well as nested ones.
+
+Every call above has a twin that answers *why* it returned `false`:
+
+```d
+string reason;
+if (!JsonAP.APupdateJsonValueOBJECTWithMessage!int(file, "settings.retry", 3, reason))
+{
+    writeln("edit rejected: ", reason);
+    // edit rejected: the path 'settings.retry' does not exist: key 'retry' is missing.
+}
+```
+
+| Method | What it adds |
+|---|---|
+| `APupdateJsonValueOBJECTWithMessage!V(filePath, jsonPath, value, out string message)` | the reason for an object-value update |
+| `APupdateJsonValueARRAYWithMessage!V(filePath, jsonPath, value, out string message)` | the reason for an array-value update |
+| `APaddJsonItemOBJECTWithMessage!T(filePath, jsonPath, item, out string message)` | the reason a key was not added |
+| `APaddJsonItemARRAYWithMessage!T(filePath, jsonPath, item, out string message)` | the reason an item was not appended |
+| `APremoveJsonItemOBJECTWithMessage(filePath, jsonPath, out string message)` | the reason a key was not removed |
+| `APremoveJsonItemARRAYWithMessage(filePath, jsonPath, out string message)` | the reason an element was not removed |
+| `APmergeJsonWithMessage(filePath, jsonContentToMerge, overwriteExisting, mergeArrays, out string message)` | the reason a merge did not happen |
+
+`message` is cleared at the start of every call and stays empty on success, so it is safe to
+reuse one variable. These twins never throw: a missing file, a broken document or an
+unusable path all come back as `false` plus a message.
+
+**SumType**
+
+`std.sumtype` has no reflection, so SumType support is an explicit API:
+
+| Method | Returns | What it does |
+|---|---|---|
+| `APserializeSumType!T(T value, string delegate(string) tagOf = null)` | `JSONValue` | writes the `{"tag","value"}` envelope |
+| `APdeserializeSumType!T(JSONValue jsonValue, bool lenient = false, string delegate(string) tagOf = null)` | `Optional!T` | rebuilds the member the tag names |
+| `APdeserializeSumTypeFromString!T(string jsonContent, bool lenient = false, string delegate(string) tagOf = null)` | `Optional!T` | same, from JSON text |
+| `APserializeSumTypeWithHandlers!T(T value, string delegate(T) tagOf, JSONValue delegate(T) payloadOf)` | `JSONValue` | caller decides tag **and** payload |
+| `APdeserializeSumTypeWithHandlers!T(JSONValue jsonValue, T delegate(string tag, JSONValue payload) resolver)` | `Optional!T` | caller resolves tag and payload |
+
+```d
+alias Payload = SumType!(int, string);
+
+JSONValue wire = JsonAP.APserializeSumType!Payload(Payload(42));
+// {"tag":"int","value":42}
+
+auto back = JsonAP.APdeserializeSumType!Payload(wire);
+assert(back.get == Payload(42));
+```
+
+An unknown tag is an error that lists the tags that do exist — not a silent fallback.
+
+## Exceptions
+
+All of them derive from `BaseExceptionAP`, which carries a `correlationId`, the source file
+and the line where the failure was raised.
+
+```
+BaseExceptionAP
+├── ParameterRelatedExceptionAP
+│   ├── ConvertExceptionAP
+│   │   └── JSONConvertExceptionAP   (jsonPath + jsonSnippet + specific reason)
+│   ├── InvalidArgumentExceptionAP
+│   └── ArgumentNullExceptionAP
+├── JSONExceptionAP
+│   └── JsonOperationExceptionAP     (jsonPath + jsonSnippet)
+├── FileOperationExceptionAP         (systemErrorCode)
+├── SyntaxErrorExceptionAP
+└── UnknownErrorexceptionAP
+```
+
+```d
+try
+{
+    auto user = JsonAP.APdeserializeJson!User(jsonText).get;
+}
+catch (JSONConvertExceptionAP e)
+{
+    // e.jsonPath names the field, e.jsonSnippet the offending input
+    writeln(e.toString());
+}
+```
