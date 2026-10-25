@@ -82,7 +82,15 @@ public class CL_JsonOtherCode
 
                     PathStep indexStep;
                     indexStep.type = PathStepType.ArrayIndex;
-                    indexStep.index = to!int(indexStr);
+                    try
+                    {
+                        indexStep.index = to!int(CL_PublicCodeOtherCode.normalizeDigitsAP(indexStr));
+                    }
+                    catch (Exception e)
+                    {
+                        throw new ConvertExceptionAP("Failed to convert index.", "indexStr", indexStr,
+                                "string", "int", "to!int", e.msg, __FILE__, __LINE__, e);
+                    }
                     pathSteps ~= indexStep;
 
                     remaining = remaining[closing + 1 .. $];
@@ -90,111 +98,6 @@ public class CL_JsonOtherCode
             }
         }
 
-        /*
-		while(currentIndex < input.length)
-		{
-			if(input[currentIndex] == '.')
-			{
-				currentIndex++;				
-				continue;
-			}
-
-			if(input[currentIndex] == '[')
-			{		
-				currentIndex++;
-				auto startIndex = currentIndex;
-				auto closingBracketIndexlong  = input.indexOf(']' , startIndex);
-				int closingBracketIndex;
-				try{
-					closingBracketIndex = to!int(closingBracketIndexlong);
-				}catch(Exception e)
-				{
-					throw new UnknownErrorexceptionAP("Convert Error: Convert Not Complete (in JsonPathParserAP). |____|  " , __FILE__ , __LINE__);
-				}
-
-				if(closingBracketIndex == -1)
-				{
-					throw new UnknownErrorexceptionAP("Syntax Error: Missing closing bracket in JSON path. |____|  " , __FILE__ , __LINE__);
-				}
-
-				string indexString = input[startIndex .. closingBracketIndex];
-				if(indexString.empty)
-				{
-					throw new UnknownErrorexceptionAP("Syntax Error: Empty array index in JSON path. |____|  " , __FILE__ , __LINE__);
-				}
-
-				int IndexValue;
-				try{
-					IndexValue = to!int(indexString);
-				}catch(Exception e)
-				{
-					throw new UnknownErrorexceptionAP("Convert Error: Convert Not Complete (in JsonPathParserAP). |____|  " , __FILE__ , __LINE__);
-				}
-
-				PathStep newStep;
-				newStep.type = PathStepType.ArrayIndex;
-				newStep.index = IndexValue;
-
-				pathSteps ~= newStep;
-
-				currentIndex = closingBracketIndex + 1;
-				continue;
-			}
-			else
-			{
-				auto startIndex = currentIndex;
-				ulong nextSeparatorIndexlong = input.length;
-				int nextSeparatorIndex ;
-				try{
-					nextSeparatorIndex = to!int(nextSeparatorIndexlong);
-				}catch(Exception e)
-				{
-					throw new UnknownErrorexceptionAP("Convert Error: Convert Not Complete (in JsonPathParserAP). |____|  " , __FILE__ , __LINE__);
-				}
-
-				long dotIndexlong = input.indexOf('.' , startIndex);
-				long bracketIndexlong = input.indexOf('[' , startIndex);
-				int bracketIndex;
-				int dotIndex;
-				try{
-					dotIndex = to!int(dotIndexlong);
-					bracketIndex = to!int(bracketIndexlong);
-				}catch(Exception e)
-				{
-					throw new UnknownErrorexceptionAP("Convert Error: Convert Not Complete (in JsonPathParserAP). |____|  " , __FILE__ , __LINE__);
-				}
-
-
-				if (dotIndex != -1 && (dotIndex < nextSeparatorIndex)) 
-				{
-					nextSeparatorIndex = dotIndex;
-				}
-
-				if (bracketIndex != -1 && (bracketIndex < nextSeparatorIndex))
-				{
-					nextSeparatorIndex = bracketIndex;
-				}
-
-				string keyString = input[startIndex .. nextSeparatorIndex];
-
-				if(keyString.empty)
-				{
-					throw new UnknownErrorexceptionAP("Syntax Error: Empty object key in JSON path. |____|  " , __FILE__ , __LINE__);
-				}
-
-				PathStep newStep;
-
-				newStep.type = PathStepType.ObjectKey;
-				newStep.key = keyString;
-
-				pathSteps ~= newStep;
-				currentIndex = nextSeparatorIndex;
-			}
-
-
-
-		}
-		*/
         return pathSteps;
     }
 
