@@ -1,0 +1,46 @@
+{
+  "name": "textdap",
+  "description": "TextDAP - a console text editor built on JsonDAP",
+  "authors": [
+    "Aripa Studio"
+  ],
+  "license": "MIT",
+  "targetName": "TextDAP",
+  "targetType": "executable",
+  "sourcePaths": [
+    ".",
+    "../JsonDAP"
+  ],
+  "dependencies": {},
+  "configurations": [
+    {
+      "name": "default",
+      "dflags": [],
+      "lflags": [],
+      "versions": [],
+      "buildOptions": []
+    },
+    {
+      "name": "debug",
+      "targetPath": "Output/debug",
+      "dflags": [],
+      "lflags": [],
+      "versions": [],
+      "buildOptions": []
+    },
+    {
+      "name": "release",
+      "targetPath": "Output/release",
+      "dflags": [],
+      "lflags": [],
+      "versions": [],
+      "buildOptions": []
+    }
+  ],
+  "targetPath": "Output",
+  "excludedSourceFiles": [
+    "../JsonDAP/bin/**",
+    "../JsonDAP/test/**",
+    "../JsonDAP/x64/**"
+  ]
+}

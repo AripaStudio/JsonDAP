@@ -1,0 +1,68 @@
+<DProject>
+ <ProjectGuid>aeb21ec6-d9a2-44bc-af3e-f00e46f12b4e</ProjectGuid>
+ <Config platform="Win32" name="Debug">
+  <isX86_64>0</isX86_64>
+  <compiler>0</compiler>
+  <runCv2pdb>1</runCv2pdb>
+  <symdebug>1</symdebug>
+  <release>0</release>
+  <mscoff>1</mscoff>
+  <lib>0</lib>
+  <subsystem>1</subsystem>
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+ </Config>
+ <Config platform="Win32" name="Release">
+  <isX86_64>0</isX86_64>
+  <compiler>0</compiler>
+  <runCv2pdb>0</runCv2pdb>
+  <release>1</release>
+  <optimize>1</optimize>
+  <useInline>1</useInline>
+  <mscoff>1</mscoff>
+  <lib>0</lib>
+  <subsystem>1</subsystem>
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+ </Config>
+ <Config platform="x64" name="Debug">
+  <isX86_64>1</isX86_64>
+  <compiler>0</compiler>
+  <runCv2pdb>1</runCv2pdb>
+  <symdebug>1</symdebug>
+  <release>0</release>
+  <lib>0</lib>
+  <subsystem>1</subsystem>
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+ </Config>
+ <Config platform="x64" name="Release">
+  <isX86_64>1</isX86_64>
+  <compiler>0</compiler>
+  <runCv2pdb>0</runCv2pdb>
+  <release>1</release>
+  <optimize>1</optimize>
+  <useInline>1</useInline>
+  <lib>0</lib>
+  <subsystem>1</subsystem>
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+ </Config>
+ <Folder name="JsonDAPtest">
+  <File path="dub.json" />
+  <File path="TextDAP.d" />
+  <File path="TextDAPConsole.d" />
+  <File path="TextDAPConvert.d" />
+  <File path="TextDAPCursorActions.d" />
+  <File path="TextDAPDocActions.d" />
+  <File path="TextDAPDocument.d" />
+  <File path="TextDAPFileStore.d" />
+  <File path="TextDAPFrame.d" />
+  <File path="TextDAPHistory.d" />
+  <File path="TextDAPJsonActions.d" />
+  <File path="TextDAPJsonEdit.d" />
+  <File path="TextDAPJsonTools.d" />
+  <File path="TextDAPModel.d" />
+  <File path="TextDAPScalar.d" />
+  <File path="TextDAPSession.d" />
+  <File path="TextDAPSetActions.d" />
+  <File path="TextDAPState.d" />
+  <File path="TextDAPStats.d" />
+ </Folder>
+</DProject>
