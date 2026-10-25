@@ -3,7 +3,17 @@ module JsonDAP;
 import std.json;
 import std.stdio;
 import CoreAP;
+public import CoreAP : JsonName, JsonIgnore;
 import FileAP;
+import FileAPAdd;
+import FileAPJson;
+import FileAPRemove;
+import FileAPMerge;
+import FileAPUpdate;
+import CoreAPConv;
+import CoreAPPath;
+import CoreAPSerialize;
+import JsonAPMessages;
 import PublicCodeOtherCode;
 
 import std.typecons;
@@ -15,14 +25,12 @@ export import jsonOtherCodeAP;
 
 //Exceptions : 
 export import ExceptionAP;
+export import ExceptionJsonAP;
 
 //CheckVariablesAP :
 export import CheckVariablesAP;
 
-// add PathStep and PathStep Type: 
-export import jsonOtherCodeAP;
-
-public class JsonAP
+public class JsonAP : APEditMessages
 {
     export static Optional!T APreadJsonFile(T)(string filePath)
     {
@@ -71,7 +79,7 @@ public class JsonAP
 
     export static Optional!V APgetJsonValue(V)(string jsonContent, string path)
     {
-        return CL_CoreAP.getJsonValue!V(jsonContent, path);
+        return CL_CoreAP_Path.getJsonValue!V(jsonContent, path);
     }
 
     export static bool APisJsonObject(string jsonContent)
@@ -134,38 +142,38 @@ public class JsonAP
 
     export static bool APupdateJsonValueOBJECT(V)(string filePath, string jsonPath, V value)
     {
-        return CL_FileAP_Edit.updateJsonValueOBJECT(filePath, jsonPath, value);
+        return CL_FileAP_Update.updateJsonValueOBJECT(filePath, jsonPath, value);
     }
 
     export static bool APupdateJsonValueARRAY(V)(string filePath, string jsonPath, V value)
     {
-        return CL_FileAP_Edit.updateJsonValueARRAY(filePath, jsonPath, value);
+        return CL_FileAP_Update.updateJsonValueARRAY(filePath, jsonPath, value);
     }
 
     export static bool APaddJsonItemOBJECT(T)(string filePath, string jsonPath, T item)
     {
-        return CL_FileAP_Edit.addJsonItemOBJECT(filePath, jsonPath, item);
+        return CL_FileAP_Add.addJsonItemOBJECT(filePath, jsonPath, item);
     }
 
     export static bool APaddJsonItemARRAY(T)(string filePath, string jsonPath, T item)
     {
-        return CL_FileAP_Edit.addJsonItemARRAY(filePath, jsonPath, item);
+        return CL_FileAP_Add.addJsonItemARRAY(filePath, jsonPath, item);
     }
 
     export static bool APremoveJsonItemARRAY(string filePath, string jsonPath)
     {
-        return CL_FileAP_Edit.removeJsonItemARRAY(filePath, jsonPath);
+        return CL_FileAP_Remove.removeJsonItemARRAY(filePath, jsonPath);
     }
 
     export static bool APremoveJsonItemOBJECT(string filePath, string jsonPath)
     {
-        return CL_FileAP_Edit.removeJsonItemOBJECT(filePath, jsonPath);
+        return CL_FileAP_Remove.removeJsonItemOBJECT(filePath, jsonPath);
     }
 
     export static bool APmergeJson(string filePath, JSONValue jsonContentToMerge,
-            bool overwriteExisting = true, bool mergeArrays)
+            bool overwriteExisting = true, bool mergeArrays = false)
     {
-        return CL_FileAP_Edit.mergeJson(filePath, jsonContentToMerge,
+        return CL_FileAP_Merge.mergeJson(filePath, jsonContentToMerge,
                 overwriteExisting, mergeArrays);
     }
 
@@ -173,12 +181,22 @@ public class JsonAP
 
     export static Optional!(T[]) APdeserializeJsonArray(T)(string jsonContent)
     {
-        return CL_File_JSON.deserializeJsonArray!T[](jsonContent);
+        return CL_File_JSON.deserializeJsonArray!T(jsonContent);
     }
 
     export static Optional!(T) APdeserializeJson(T)(string jsonContent)
     {
         return CL_File_JSON.deserializeJson!T(jsonContent);
+    }
+
+    /**
+     * Deserializes a JSON object into T, tolerating fields that are absent from
+     * the JSON. Missing fields keep the default value of their type instead of
+     * raising an error, which is what schema evolution needs.
+     */
+    export static Optional!(T) APdeserializeJsonLenient(T)(string jsonContent)
+    {
+        return CL_File_JSON.deserializeJson!T(jsonContent, true);
     }
 
     export static JSONValue APserializeToJson(T)(T obj)
@@ -200,108 +218,63 @@ public class JsonAP
 
     //CL_CoreAP_Conv
 
-    export static Optional!T APconvertJsonValueToT(T)(JSONValue jsonValue)
+    export static Optional!T APconvertJsonValueToT(T)(JSONValue jsonValue, bool lenient = false)
     {
-        return CL_CoreAP_Conv.convertJsonValueToT!T(jsonValue);
+        return CL_CoreAP_Conv.convertJsonValueToT!T(jsonValue, lenient);
     }
 
     export static JSONValue APserializeTToJsonValue(T)(T obj)
     {
-        return CL_CoreAP_Conv.serializeTToJsonValue!T(obj);
+        return CL_CoreAP_Serialize.serializeTToJsonValue!T(obj);
     }
 
-}
-
-unittest
-{
-    import std.stdio;
-    import std.file : exists, remove;
-    import std.json : JSONValue;
-
-    writeln("==================================================");
-    writeln("STARTING JSONDAP CORE OPERATIONAL TESTS");
-    writeln("==================================================");
-
-    // -------------------------------------------------------------------------
-    // TEST STRUCTURE DEFINITION
-    // -------------------------------------------------------------------------
-    static struct TestUser
+    /**
+     * Serializes a std.sumtype.SumType value into a tagged envelope:
+     * {"tag": "<member name>", "value": <payload>}. The tag is the short name
+     * of the active member type; pass tagOf to rename the tags on the wire.
+     */
+    export static JSONValue APserializeSumType(T)(T value,
+            string delegate(string memberName) tagOf = null)
     {
-        string name;
-        int age;
-        string role;
+        return CL_CoreAP_Serialize.serializeSumType(value, tagOf);
     }
 
-    TestUser originalUser = TestUser("Aripa Studio", 2026, "Developer");
-    string testFilePath = "test_aripa_dap.json";
-
-    if (exists(testFilePath))
+    /**
+     * Reads a tagged envelope produced by APserializeSumType and rebuilds the
+     * member type that the tag names.
+     */
+    export static Optional!T APdeserializeSumType(T)(JSONValue jsonValue,
+            bool lenient = false, string delegate(string memberName) tagOf = null)
     {
-        remove(testFilePath);
+        return CL_CoreAP_Serialize.deserializeSumType!T(jsonValue, lenient, tagOf);
     }
 
-    // -------------------------------------------------------------------------
-    // PRIORITY 1: FILE I/O TESTS (APwriteJsonFile & APreadJsonFile)
-    // -------------------------------------------------------------------------
-    writeln("Running Priority 1: File I/O Tests...");
-
-    bool writeSuccess = JsonAP.APwriteJsonFile!TestUser(testFilePath, originalUser);
-    assert(writeSuccess == true, "Failed to write JSON object to file.");
-    assert(exists(testFilePath), "Test file was not actually created on disk.");
-
-    auto readResult = JsonAP.APreadJsonFile!TestUser(testFilePath);
-    assert(!readResult.isNull, "Failed to read JSON object from file (Returned Nullable.null).");
-
-    TestUser loadedUser = readResult.get();
-    assert(loadedUser.name == originalUser.name, "Mismatch in loaded data: name");
-    assert(loadedUser.age == originalUser.age, "Mismatch in loaded data: age");
-    assert(loadedUser.role == originalUser.role, "Mismatch in loaded data: role");
-
-    writeln("-> Priority 1 Passed successfully.");
-
-    // -------------------------------------------------------------------------
-    // PRIORITY 2: SERIALIZATION & DESERIALIZATION TESTS
-    // -------------------------------------------------------------------------
-    writeln("Running Priority 2: Serialization & Deserialization Tests...");
-
-    JSONValue serializedValue = JsonAP.APserializeToJson!TestUser(originalUser);
-    string jsonString = serializedValue.toString();
-
-    auto deserializeResult = JsonAP.APdeserializeJson!TestUser(jsonString);
-    assert(!deserializeResult.isNull, "Deserialization returned Nullable.null.");
-
-    TestUser deserializedUser = deserializeResult.get();
-    assert(deserializedUser.name == originalUser.name, "Serialization round-trip mismatch: name");
-    assert(deserializedUser.age == originalUser.age, "Serialization round-trip mismatch: age");
-    assert(deserializedUser.role == originalUser.role, "Serialization round-trip mismatch: role");
-
-    writeln("-> Priority 2 Passed successfully.");
-
-    // -------------------------------------------------------------------------
-    // PRIORITY 3: VALIDATION TOOLS TESTS (APisValidJson)
-    // -------------------------------------------------------------------------
-    writeln("Running Priority 3: Validation Tests...");
-
-    string validJsonStr = `{"project": "JsonDAP", "status": "active", "items": [1, 2, 3]}`;
-    string invalidJsonStr = `{"project": "JsonDAP", "status": "active", "items": [1, 2, 3`; // Missing closing bracket
-
-    bool isValid = JsonAP.APisValidJson(validJsonStr);
-    bool isInvalid = JsonAP.APisValidJson(invalidJsonStr);
-
-    assert(isValid == true, "Valid JSON string was falsely reported as invalid.");
-    assert(isInvalid == false, "Malformed JSON string was falsely reported as valid.");
-
-    writeln("-> Priority 3 Passed successfully.");
-
-    // -------------------------------------------------------------------------
-    // CLEANUP
-    // -------------------------------------------------------------------------
-    if (exists(testFilePath))
+    /**
+     * Same as APdeserializeSumType, but takes the JSON document as text.
+     */
+    export static Optional!T APdeserializeSumTypeFromString(T)(string jsonContent,
+            bool lenient = false, string delegate(string memberName) tagOf = null)
     {
-        remove(testFilePath);
+        return CL_CoreAP_Serialize.deserializeSumType!T(parseJSON(jsonContent), lenient, tagOf);
     }
 
-    writeln("==================================================");
-    writeln("ALL CORE JSONDAP TESTS PASSED SUCCESSFULLY!");
-    writeln("==================================================");
+    /**
+     * Same wire format as APserializeSumType, but the tag and the payload of
+     * every member are decided by the caller, usually with match!.
+     */
+    export static JSONValue APserializeSumTypeWithHandlers(T)(T value,
+            string delegate(T) tagOf, JSONValue delegate(T) payloadOf)
+    {
+        return CL_CoreAP_Serialize.serializeSumTypeWithHandlers(value, tagOf, payloadOf);
+    }
+
+    /**
+     * Reads an envelope whose tag and payload are interpreted by the caller;
+     * the resolver throws for a tag it does not know.
+     */
+    export static Optional!T APdeserializeSumTypeWithHandlers(T)(JSONValue jsonValue,
+            T delegate(string tag, JSONValue payload) resolver)
+    {
+        return CL_CoreAP_Serialize.deserializeSumTypeWithHandlers!T(jsonValue, resolver);
+    }
 }
