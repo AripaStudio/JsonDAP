@@ -1,7 +1,7 @@
 # JsonDAP
 
 **کتابخانه‌ی JSON برای زبان D — سریالایز/دیسریالایز، کار با فایل، ویرایش مسیری و یک درخت استثنای یکپارچه.**
-ساخته‌ی [Aripa Pars Studio](https://github.com/AripaStudio) · مجوز MIT · آخرین نسخه **2.2.2** است.
+ساخته‌ی [Aripa Pars Studio](https://github.com/AripaStudio) · مجوز MIT · آخرین نسخه **2.3.0** است.
 
 **[English](README.md) · فارسی**
 
@@ -53,7 +53,7 @@
 ```json
 {
   "dependencies": {
-    "jsondap": "~>2.2.2"
+    "jsondap": "~>2.3.0"
   }
 }
 ```
@@ -193,7 +193,8 @@ void main()
 | `APisJsonNumber(string jsonContent)` | `bool` | گره‌ی سطح‌اول عدد است |
 | `APisJsonString(string jsonContent)` | `bool` | گره‌ی سطح‌اول رشته است |
 | `APgetJsonItemCount(string jsonContent)` | `Optional!long` | شمار آیتم‌های سطح‌اول |
-| `APisDigitAP(dchar c)` | `bool` | رقم ASCII **یا** فارسی |
+| `APisDigitAP(dchar c)` | `bool` | رقم ASCII، **یا** فارسی، **یا** عربی-هندی |
+| `APnormalizeDigitsAP(string s)` | `string` | ارقام فارسی و عربی-هندی را به ASCII بازنویسی می‌کند؛ هیچ کاراکتر دیگری تغییر نمی‌کند |
 | `APisInteger(string s)` | `bool` | کل رشته عدد است |
 | `APJsonPathParser(string input)` | `PathStep[]` | شکستن `"a.b[2]"` به گام‌های مسیر |
 | `APStrIsNUll(string input, string paramName, out bool, out string)` | `void` | گارد null/خالی/سفید + دلیل |
@@ -215,8 +216,17 @@ void main()
 | `APremoveJsonItemARRAY(string filePath, string jsonPath)` | حذف یک عضو آرایه |
 | `APmergeJson(string filePath, JSONValue jsonContentToMerge, bool overwriteExisting = true, bool mergeArrays = false)` | ادغام سند دیگر در فایل |
 
-شکل مسیر: `MainData.items[2].name`. کلید میانیِ غایب در object ساخته می‌شود؛ ایندکس
-میانیِ غایب در array ساخته **نمی‌شود**. `APremoveJsonItemOBJECT` کلید سطح‌اول را هم حذف می‌کند.
+**دو شکل مسیر، عمداً.** API ویرایش فایل و `APJsonPathParser` شکل `[ ]` را می‌پذیرند:
+`MainData.items[2].name`. اما `APgetJsonValue` مسیر را فقط با `.` می‌شکافد، پس عضو آرایه یک
+بخش مستقل است: `items.1` عنصر دوم را می‌خواند و `items[1]` کلید یافت‌نشده گزارش می‌شود.
+`APJsonPathParser` ارقام ASCII، فارسی و عربی-هندی را داخل براکت می‌پذیرد و پیش از تبدیل به عدد
+آنها را یکسان‌سازی می‌کند. کلید میانیِ غایب در object ساخته می‌شود؛ ایندکس میانیِ غایب در array
+ساخته **نمی‌شود**. `APremoveJsonItemOBJECT` کلید سطح‌اول را هم حذف می‌کند.
+
+**آرایه: add و update متقارن نیستند.** `APaddJsonItemARRAY` مقدار `index == length` را می‌پذیرد و
+در همان‌جا الحاق می‌کند؛ `APupdateJsonValueARRAY` همان ایندکس را رد می‌کند، چون به‌روزرسانی عضوی که
+وجود ندارد جایگزینی نیست. ایندکس خارج از دامنه پیام
+`array index N is out of range (length M)` می‌دهد.
 
 هر متد بالا یک دوقلوی `WithMessage` دارد که می‌گوید **چرا** `false` برگشت:
 
@@ -238,6 +248,21 @@ if (!JsonAP.APupdateJsonValueOBJECTWithMessage!int(file, "settings.retry", 3, re
 | `APremoveJsonItemOBJECTWithMessage(filePath, jsonPath, out string message)` | دلیل حذف نشدن کلید |
 | `APremoveJsonItemARRAYWithMessage(filePath, jsonPath, out string message)` | دلیل حذف نشدن عضو آرایه |
 | `APmergeJsonWithMessage(filePath, jsonContentToMerge, overwriteExisting, mergeArrays, out string message)` | دلیل انجام نشدن ادغام |
+| `APmergeJsonWithMessage(filePath, jsonContentToMerge, overwriteExisting = true, mergeArrays = false)` | همان ادغام با **یک** خروجی از نوع `string` به‌جای `bool` + `out` |
+
+**پاسخ تک‌رشته‌ای ادغام.** شکل کوتاه دلیل شکست را برمی‌گرداند و **رشته‌ی خالی یعنی ادغام موفق بود** —
+`""` همان `true` است و هر متن دیگر `false`:
+
+```d
+string reason = JsonAP.APmergeJsonWithMessage(file, incoming);
+if (reason.length != 0)
+{
+    writeln("merge rejected: ", reason);
+}
+```
+
+این شکل به‌خاطر آن است که یک متد `static` بدون `out` نمی‌تواند دو مقدار بدهد؛ شکل `bool` + `out string`
+بالا هم سر جای خودش است و وقتی پرچم (`bool`) را می‌خواهید همان را به‌کار ببرید.
 
 `message` در ابتدای هر فراخوانی خالی می‌شود و در موفقیت خالی می‌ماند، پس می‌توانید یک
 متغیر را دوباره به‌کار ببرید. این دوقلوها هرگز استثنا نمی‌دهند: فایل غایب، سند خراب یا
@@ -297,3 +322,7 @@ catch (JSONConvertExceptionAP e)
     writeln(e.toString());
 }
 ```
+
+مسیری با ایندکس بی‌استفاده (`items[]`، `items[x]`) یک `ConvertExceptionAP` می‌دهد و مسیری با
+براکتِ بسته‌نشده یک `UnknownErrorexceptionAP` — هر دو داخل همین درخت، پس مصرف‌کننده‌ای که
+`BaseExceptionAP` را می‌گیرد با یک `std.conv.ConvException` خام نمی‌میرد.

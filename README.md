@@ -2,7 +2,7 @@
 
 **A JSON and file-handling library for the D programming language** — serialization,
 path-based file editing, and one exception tree.
-Built by [Aripa Pars Studio](https://github.com/AripaStudio) · MIT licensed · latest version **2.2.2**.
+Built by [Aripa Pars Studio](https://github.com/AripaStudio) · MIT licensed · latest version **2.3.0**.
 
 **[English](README.md) · [فارسی](README.fa.md)**
 
@@ -54,7 +54,7 @@ control over the wire format. JsonDAP sits in between:
 ```json
 {
   "dependencies": {
-    "jsondap": "~>2.2.2"
+    "jsondap": "~>2.3.0"
   }
 }
 ```
@@ -180,7 +180,7 @@ with `enum bool value`: `IsIntAP`, `IsFloatAP`, `IsNumberAP`, `IsBoolAP`, `IsStr
 | `APdeserializeJsonLenient!T(string jsonContent)` | `Optional!T` | JSON text → `T` (missing fields allowed) |
 | `APdeserializeJsonArray!T(string jsonContent)` | `Optional!(T[])` | JSON array text → `T[]` |
 | `APconvertJsonValueToT!T(JSONValue jsonValue, bool lenient = false)` | `Optional!T` | JSON value → `T` |
-| `APgetJsonValue!V(string jsonContent, string path)` | `Optional!V` | reads the value at `path` |
+| `APgetJsonValue!V(string jsonContent, string path)` | `Optional!V` | reads the value at `path`; the node type must match `V` (`long`/`int` need an integer node, `double` accepts either) |
 | `APgetJsonValueType(JSONValue jsonValue)` | `JSONType` | the `std.json` type of a node |
 | `APprettyPrintJson(string jsonContent)` | `Optional!string` | indented, human-readable JSON |
 
@@ -194,7 +194,8 @@ with `enum bool value`: `IsIntAP`, `IsFloatAP`, `IsNumberAP`, `IsBoolAP`, `IsStr
 | `APisJsonNumber(string jsonContent)` | `bool` | top-level node is a number |
 | `APisJsonString(string jsonContent)` | `bool` | top-level node is a string |
 | `APgetJsonItemCount(string jsonContent)` | `Optional!long` | number of top-level items |
-| `APisDigitAP(dchar c)` | `bool` | ASCII **or** Persian digit |
+| `APisDigitAP(dchar c)` | `bool` | an ASCII, Persian **or** Arabic-Indic digit |
+| `APnormalizeDigitsAP(string s)` | `string` | Persian and Arabic-Indic digits rewritten as ASCII digits, every other character untouched |
 | `APisInteger(string s)` | `bool` | the whole string is a number |
 | `APJsonPathParser(string input)` | `PathStep[]` | splits `"a.b[2]"` into path steps |
 | `APStrIsNUll(string input, string paramName, out bool, out string)` | `void` | null/empty/blank guard + reason |
@@ -216,9 +217,18 @@ of throwing when the path or the file is unusable.
 | `APremoveJsonItemARRAY(string filePath, string jsonPath)` | removes an array element |
 | `APmergeJson(string filePath, JSONValue jsonContentToMerge, bool overwriteExisting = true, bool mergeArrays = false)` | merges another document into the file |
 
-Path syntax: `MainData.items[2].name`. A missing intermediate object key is created; a
-missing intermediate array index is **not** created. `APremoveJsonItemOBJECT` removes
-top-level keys as well as nested ones.
+**Two path syntaxes, on purpose.** The file-edit API and `APJsonPathParser` take
+`MainData.items[2].name` with brackets. `APgetJsonValue` splits its path on `.` only, so an
+array element is its own segment: `items.1` reads the second element and `items[1]` is reported
+as a missing key. `APJsonPathParser` accepts ASCII, Persian and Arabic-Indic digits inside the
+brackets; they are normalized before the index is converted. A missing intermediate object key
+is created; a missing intermediate array index is **not** created. `APremoveJsonItemOBJECT`
+removes top-level keys as well as nested ones.
+
+**Arrays: add and update are not symmetric.** `APaddJsonItemARRAY` accepts `index == length` and
+appends there; `APupdateJsonValueARRAY` rejects that same index, because updating an element that
+does not exist is not a replacement. An out-of-range update reports
+`array index N is out of range (length M)`.
 
 Every call above has a twin that answers *why* it returned `false`:
 
@@ -240,6 +250,21 @@ if (!JsonAP.APupdateJsonValueOBJECTWithMessage!int(file, "settings.retry", 3, re
 | `APremoveJsonItemOBJECTWithMessage(filePath, jsonPath, out string message)` | the reason a key was not removed |
 | `APremoveJsonItemARRAYWithMessage(filePath, jsonPath, out string message)` | the reason an element was not removed |
 | `APmergeJsonWithMessage(filePath, jsonContentToMerge, overwriteExisting, mergeArrays, out string message)` | the reason a merge did not happen |
+| `APmergeJsonWithMessage(filePath, jsonContentToMerge, overwriteExisting = true, mergeArrays = false)` | the same merge, answering with one `string` instead of `bool` + `out` |
+
+**The one-string merge answer.** The short form returns the reason for failure, and **an empty
+string means the merge succeeded** — `""` is `true`, anything else is `false`:
+
+```d
+string reason = JsonAP.APmergeJsonWithMessage(file, incoming);
+if (reason.length != 0)
+{
+    writeln("merge rejected: ", reason);
+}
+```
+
+It exists because a `static` method cannot hand back two values without an `out` parameter; the
+`bool` + `out string` form above is still there and is the one to prefer when you need the flag.
 
 `message` is cleared at the start of every call and stays empty on success, so it is safe to
 reuse one variable. These twins never throw: a missing file, a broken document or an
@@ -299,3 +324,7 @@ catch (JSONConvertExceptionAP e)
     writeln(e.toString());
 }
 ```
+
+A JSON path with an unusable index (`items[]`, `items[x]`) is a `ConvertExceptionAP`, and a path
+with a missing `]` is an `UnknownErrorexceptionAP` — both inside this tree, so a consumer that
+catches `BaseExceptionAP` never dies on a stray `std.conv.ConvException`.
