@@ -73,11 +73,11 @@ public class CL_PublicCodeOtherCode
         auto paramNames = appender!string();
         auto errorTexts = appender!string();
         bool foundError = false;
-        foreach (input; inputs)
+        foreach (index, input; inputs)
         {
             string errorText;
             bool isNull;
-            string paramName;
+            string paramName = "input[" ~ to!string(index) ~ "]";
             CL_PublicCodeOtherCode.StrIsNUll(input, paramName, isNull, errorText);
             if (isNull)
             {

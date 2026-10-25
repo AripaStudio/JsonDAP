@@ -56,7 +56,7 @@ public class CL_JsonOtherCode
             {
                 PathStep newStep;
                 newStep.type = PathStepType.ObjectKey;
-                newStep.key = part.idup;
+                newStep.key = part;
                 pathSteps ~= newStep;
             }
             else
@@ -66,7 +66,7 @@ public class CL_JsonOtherCode
                 {
                     PathStep keyStep;
                     keyStep.type = PathStepType.ObjectKey;
-                    keyStep.key = keyPart.idup;
+                    keyStep.key = keyPart;
                     pathSteps ~= keyStep;
                 }
 

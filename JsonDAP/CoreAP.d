@@ -5,16 +5,69 @@ import std.conv;
 import std.json;
 import std.stdio;
 import std.array;
-import std.string;
 import std.traits;
 import std.exception;
 import std.typecons;
 import PublicCodeOtherCode;
 import ExceptionAP;
+import ExceptionJsonAP;
 import CheckVariablesAP;
+import std.sumtype : isSumType, get;
 
 alias Optional = Nullable;
-//isSet
+
+public struct JsonName
+{
+    string name;
+}
+
+public struct JsonIgnore
+{
+}
+
+public alias fieldJsonNames(T, string memberName) = std.traits.getUDAs!(
+        __traits(getMember, T, memberName), JsonName);
+
+public alias fieldJsonIgnores(T, string memberName) = std.traits.getUDAs!(
+        __traits(getMember, T, memberName), JsonIgnore);
+
+public template jsonFieldName(T, string memberName)
+{
+    static if (fieldJsonNames!(T, memberName).length > 0)
+    {
+        enum jsonFieldName = fieldJsonNames!(T, memberName)[0].name;
+    }
+    else
+    {
+        enum jsonFieldName = memberName;
+    }
+}
+
+public template isJsonIgnored(T, string memberName)
+{
+    enum isJsonIgnored = fieldJsonIgnores!(T, memberName).length > 0;
+}
+
+public template jsonFieldNames(T)
+{
+    enum jsonFieldNames = {
+        string[] names;
+        static foreach (memberName; FieldNameTuple!T)
+        {
+            static if (!isJsonIgnored!(T, memberName))
+            {
+                names ~= memberName;
+            }
+        }
+        return names;
+    }();
+}
+
+public string jsonTypeName(string qualifiedName)
+{
+    auto dot = qualifiedName.lastIndexOf('.');
+    return dot == -1 ? qualifiedName : qualifiedName[dot + 1 .. $];
+}
 
 public class CL_CoreAP
 {
@@ -142,77 +195,6 @@ public class CL_CoreAP
         }
     }
 
-    public static Optional!V getJsonValue(V)(string jsonContent, string path)
-    {
-
-        try
-        {
-            if (jsonContent.empty || path.empty)
-            {
-                return false;
-            }
-
-            JSONValue root = parseJSON(jsonContent);
-            JSONValue current = root;
-
-            foreach (segment; path.split('.'))
-            {
-                if (current.type == JSON_TYPE.OBJECT)
-                {
-                    if (segment in current.object)
-                    {
-                        current = current.object[segment];
-                    }
-                    else
-                    {
-                        throw new JSONExceptionAP("JSON path invalid: segment '" ~ segment ~ "' not found.",
-                                path, jsonContent, __FILE__, __LINE__);
-                    }
-                }
-                else if (current.type == JSON_TYPE.ARRAY
-                        && CL_PublicCodeOtherCode.isInteger(segment))
-                {
-                    int index = segment.to!int;
-                    if (index >= 0 && index < current.array.length)
-                    {
-                        current = current.array[index];
-
-                    }
-                    else
-                    {
-                        throw new InvalidArgumentExceptionAP("JSON array index out of bounds.", "index", segment,
-                                "0-" ~ to!string(current.array.length - 1), __FILE__, __LINE__);
-                    }
-                }
-                else
-                {
-                    throw new JSONExceptionAP("JSON type unsuitable for path traversal.",
-                            path, jsonContent, __FILE__, __LINE__);
-                }
-            }
-
-            mixin(q{
-				static if (is(V == string)) return Optional!V(current.str);
-                else static if (is(V == long) || is(V == int)) return Optional!V(current.integer.to!V());
-                else static if (is(V == double) || is(V == float)) return Optional!V(current.floating.to!V());
-                else static if (is(V == bool)) return Optional!V(current.boolean);                
-                else  throw new ConvertExceptionAP("JSON type conversion not supported.", "current.type", to!string(current.type), to!string(current.type), to!string(V.stringof), "getJsonValue", "Requested type is not supported.", __FILE__, __LINE__); 
-			});
-
-        }
-        catch (JSONException e)
-        {
-            throw new JsonOperationExceptionAP("Error parsing JSON while getting value.",
-                    "$", jsonContent, __FILE__, __LINE__, e);
-        }
-        catch (Exception e)
-        {
-            throw new UnknownErrorexceptionAP("A general error occurred while getting JSON value.",
-                    __FILE__, __LINE__, e);
-        }
-
-    }
-
     public static bool isJsonObject(string jsonContent)
     {
         try
@@ -262,333 +244,21 @@ public class CL_CoreAP
         return jsonValue.type;
     }
 
-}
-
-public static class CL_CoreAP_Conv
-{
-    public static Optional!T convertJsonValueToT(T)(JSONValue jsonValue)
+    /**
+     * Lists the printable members of an enum, used in error messages so the caller
+     * can see which values the target enum accepts.
+     */
+    public static string enumMemberNames(T)()
     {
-        static assert(!is(T == JSONValue),
-                "Converting JSONValue to JSONValue is redundant. Please ensure T is not JSONValue.");
-        try
+        string names;
+        foreach (enumMember; EnumMembers!T)
         {
-            auto jsonValueType = CL_CoreAP.getJsonValueType(jsonValue);
-
-            static if (CheckVariablesAP.IsNumberAP!T.value
-                    || CheckVariablesAP.IsBoolAP!T.value || CheckVariablesAP.IsStringAP!T.value)
+            if (!names.empty)
             {
-
-                switch (jsonValueType)
-                {
-
-                case JSONType.INTEGER:
-                    return Optional!T(jsonValue.integer.to!T());
-                case JSONType.FLOAT:
-                    return Optional!T(jsonValue.floating.to!T());
-                case JSONType.STRING:
-                    static if (is(T == string))
-                    {
-                        return Optional!T(jsonValue.str);
-                    }
-                    else
-                    {
-                        throw new JSONConvertExceptionAP("Cannot convert JSON string to target type.",
-                                T.stringof, jsonValue.str,
-                                JSONType.STRING.to!string,
-                                T.stringof, "TypeMismatch", null,
-                                "Cannot convert string to " ~ T.stringof, __FILE__, __LINE__);
-                    }
-                case JSONType.TRUE:
-                case JSONType.FALSE:
-                    static if (is(T == bool))
-                    {
-                        return Optional!T(jsonValue.boolean);
-                    }
-                    else
-                    {
-                        throw new JSONConvertExceptionAP("Cannot convert JSON boolean to target type.",
-                                T.stringof, jsonValue.boolean.to!string,
-                                jsonValueType.to!string, T.stringof, "TypeMismatch", null,
-                                "Cannot convert boolean to " ~ T.stringof, __FILE__, __LINE__);
-                    }
-                case JSONType.NULL:
-                    return Optional!T.init;
-                default:
-                    throw new JSONConvertExceptionAP("Unsupported JSON type for primitive conversion.",
-                            T.stringof, jsonValue.to!string,
-                            jsonValueType.to!string,
-                            T.stringof, "UnsupportedType", null,
-                            "Cannot convert " ~ jsonValueType.to!string ~ " to " ~ T.stringof,
-                            __FILE__, __LINE__);
-                }
+                names ~= ", ";
             }
-            else static if (CheckVariablesAP.IsArrayAP!T.value)
-            {
-
-                alias ElementType = ElementType!T;
-
-                if (jsonValueType == JSONType.ARRAY)
-                {
-                    T result;
-                    foreach (itemJson; jsonValue.array)
-                    {
-                        auto convertedItem = convertJsonValueToT!ElementType(itemJson);
-                        if (!convertedItem.isNull)
-                        {
-                            result ~= convertedItem.get;
-                        }
-                        else
-                        {
-                            static if (!is(ElementType : Optional!U, U))
-                            {
-                                throw new JSONConvertExceptionAP("Failed to convert array element.",
-                                        ElementType.stringof, itemJson.to!string,
-                                        itemJson.type.to!string, ElementType.stringof,
-                                        "ElementConversionFailed",
-                                        null, "Could not convert JSON array element to " ~ ElementType.stringof,
-                                        __FILE__, __LINE__);
-                            }
-                        }
-                    }
-                    return Optional!T(result);
-                }
-                else
-                {
-                    throw new JSONConvertExceptionAP("Expected array JSON type for target type.",
-                            T.stringof, jsonValue.type.to!string,
-                            jsonValue.type.to!string,
-                            T.stringof, "TypeMismatch", null,
-                            "JSON is not an array for array conversion.", __FILE__, __LINE__);
-                }
-
-            }
-            else static if (CheckVariablesAP.IsStructAP!T.value
-                    || CheckVariablesAP.IsClassAP!T.value)
-            {
-                if (jsonValueType == JSONType.OBJECT)
-                {
-                    T obj = T.init;
-
-                    static foreach (memberName; FieldNameTuple!T)
-                    {
-						{
-							alias FieldType = typeof(__traits(getMember, T, memberName));
-
-							if (memberName in jsonValue.object)
-							{
-								auto memberJsonValue = jsonValue.object[memberName];
-								auto convertedMember = convertJsonValueToT!FieldType(memberJsonValue);
-
-								if (!convertedMember.isNull)
-								{
-									mixin("obj." ~ memberName ~ " = convertedMember.get;");
-								}
-								else
-								{
-									static if (!is(FieldType : Optional!U, U))
-									{
-										throw new JSONConvertExceptionAP("Failed to convert field '" ~ memberName ~ "'.",
-																		 memberName, memberJsonValue.to!string,
-																		 memberJsonValue.type.to!string,
-																		 FieldType.stringof,
-																		 "FieldConversionFailed", null,
-																		 "Could not convert JSON field to " ~ FieldType.stringof,
-																		 __FILE__, __LINE__);
-									}
-								}
-							}
-							else
-							{
-								static if (!is(FieldType : Optional!U, U))
-								{
-									throw new JSONConvertExceptionAP(
-																	 "Required field '" ~ memberName ~ "' not found in JSON object.",
-																	 memberName, "Not Found", "N/A",
-																	 FieldType.stringof, "MissingField", null,
-																	 "Mandatory field missing for object conversion.",
-																	 __FILE__, __LINE__);
-								}
-							}
-						}
-                    }
-                    return Optional!T(obj);
-                }
-                else
-                {
-                    throw new JSONConvertExceptionAP("Expected object JSON type for target type.",
-                            T.stringof, jsonValue.type.to!string, jsonValue.type.to!string,
-                            T.stringof, "TypeMismatch", null,
-                            "JSON is not an object for struct/class conversion.",
-                            __FILE__, __LINE__);
-                }
-            }
-            else static if (CheckVariablesAP.IsEnumAP!T.value)
-            {
-                if (jsonValueType == JSONType.STRING)
-                {
-                    bool found = false;
-                    foreach (enumMember; EnumMembers!T)
-                    {
-                        if (jsonValue.stringValue == enumMember.to!string())
-                        {
-                            return Optional!T(enumMember);
-                        }
-                    }
-                    if (!found)
-                    {
-                        throw new JSONConvertExceptionAP("String value is not a valid enum member.",
-                                T.stringof, jsonValue.stringValue, JSONType.STRING.to!string,
-                                T.stringof, "EnumValueMismatch", null,
-                                "String is not a valid enum for " ~ T.stringof ~ ".",
-                                __FILE__, __LINE__);
-                    }
-                }
-                else if (jsonValueType == JSONType.INTEGER)
-                {
-                    static if (is(typeof(T.init) : int))
-                    {
-                        return Optional!T(cast(T) jsonValue.integer);
-                    }
-                    else
-                    {
-                        throw new JSONConvertExceptionAP("Expected string value for enum, but got integer.",
-                                T.stringof, jsonValue.integer.to!string,
-                                JSONType.INTEGER.to!string,
-                                T.stringof, "TypeMismatch", null,
-                                "Cannot convert integer to string-based enum.", __FILE__, __LINE__);
-                    }
-                }
-                else
-                {
-                    throw new JSONConvertExceptionAP("Unsupported JSON type for enum conversion.",
-                            T.stringof, jsonValue.to!string,
-                            jsonValueType.to!string,
-                            T.stringof, "UnsupportedType", null,
-                            "Cannot convert " ~ jsonValueType.to!string ~ " to enum " ~ T.stringof ~ ".",
-                            __FILE__, __LINE__);
-                }
-            }
-            else
-            {
-                static assert(0, "Unsupported type " ~ T.stringof ~ " for JSON conversion.");
-            }
-
+            names ~= enumMember.to!string();
         }
-        catch (JSONException e)
-        {
-            throw new JsonOperationExceptionAP("Error during JSON conversion.",
-                    null, jsonValue.to!string, __FILE__, __LINE__, e);
-        }
-        catch (Exception e)
-        {
-            throw new UnknownErrorexceptionAP("An unexpected error occurred during JSON to object conversion.",
-                    __FILE__, __LINE__, e);
-        }
-    }
-
-    public static JSONValue serializeTToJsonValue(T)(T obj)
-    {
-        bool[void* ] visited;
-        return serializeInternal(obj, visited);
-    }
-
-    private static JSONValue serializeInternal(T)(T obj, ref bool[void* ] visited)
-    {
-        static assert(!is(T == JSONValue),
-                "Serializing JSONValue to JSONValue is redundant. Please ensure T is not JSONValue.");
-        try
-        {
-            static if (CheckVariablesAP.IsNumberAP!T.value || CheckVariablesAP.IsBoolAP!T.value)
-            {
-                return JSONValue(obj);
-            }
-            else static if (CheckVariablesAP.IsStringAP!T.value)
-            {
-                return JSONValue(obj);
-            }
-            else static if (is(T : Optional!U, U))
-            {
-                if (obj.isNull)
-                {
-                    return JSONValue.init;
-                }
-                else
-                {
-                    return serializeInternal!U(obj.get , visited);
-                }
-            }
-            else static if (CheckVariablesAP.IsArrayAP!T.value)
-            {
-                alias ElementType = ElementType!T;
-                JSONValue[] jsonArray;
-                foreach (o; obj)
-                {
-                    jsonArray ~= serializeInternal!ElementType(o , visited);
-                }
-                return JSONValue(jsonArray);
-            }
-            else static if (CheckVariablesAP.IsClassAP!T.value
-                    || CheckVariablesAP.IsStructAP!T.value)
-            {
-                static if (CheckVariablesAP.IsClassAP!T.value)
-                {
-                    void* addr = cast(void*) obj;
-                    if (addr in visited)
-                    {
-                        throw new Exception("Circular reference detected!");
-                    }
-
-                    visited[addr] = true;
-                }
-
-                JSONValue jsonObject;
-                jsonObject.object = null;
-                static foreach (i, memberName; FieldNameTuple!T)
-                {
-                    {
-                        alias TargetType = typeof(__traits(getMember, T, memberName));
-
-                        auto fieldValue = mixin("obj." ~ memberName);
-
-                        JSONValue memberJsonValue = serializeInternal!TargetType(fieldValue , visited);
-
-                        jsonObject[memberName] = memberJsonValue;
-                    }
-                }
-
-                static if (CheckVariablesAP.IsClassAP!T.value)
-                {
-                    visited.remove(cast(void*) obj);
-                }
-
-                return jsonObject;
-            }
-            else static if (CheckVariablesAP.IsEnumAP!T.value)
-            {
-                static if (is(typeof(T.init) : int))
-                {
-                    return JSONValue(cast(int) obj);
-                }
-                else
-                {
-                    return JSONValue(obj.toString());
-                }
-            }
-            else
-            {
-                static assert(0, "Unsupported type " ~ T.stringof ~ " for JSON serialization.");
-            }
-
-        }
-        catch (JSONException e)
-        {
-            throw new JsonOperationExceptionAP("Error during JSON serialization.",
-                    null, obj.to!string, __FILE__, __LINE__, e);
-        }
-        catch (Exception e)
-        {
-            throw new UnknownErrorexceptionAP("An unexpected error occurred during object to JSON conversion.",
-                    __FILE__, __LINE__, e);
-        }
+        return names;
     }
 }
