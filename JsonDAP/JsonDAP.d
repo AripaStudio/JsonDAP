@@ -98,13 +98,24 @@ public class JsonAP : APEditMessages
         return CL_PublicCodeOtherCode.isDigitAP(c);
     }
 
-    export static string APnormalizeDigitsAP(string s){
+    export static string APnormalizeDigitsAP(string s)
+    {
         return CL_PublicCodeOtherCode.normalizeDigitsAP(s);
-	}
+    }
 
     export static bool APisInteger(string s)
     {
         return CL_PublicCodeOtherCode.isInteger(s);
+    }
+
+    export static bool APisSignedInteger(string s)
+    {
+        return CL_PublicCodeOtherCode.isSignedInteger(s);
+    }
+
+    export static bool APisDecimal(string s)
+    {
+        return CL_PublicCodeOtherCode.isDecimal(s);
     }
 
     export static bool APexistsFile(string filePath)
@@ -119,17 +130,37 @@ public class JsonAP : APEditMessages
         return CL_JsonOtherCode.JsonPathParserAP(input);
     }
 
-    export static bool APrecursiveMerge(ref JSONValue target, ref JSONValue source,
+    export static bool APrecursiveMerge(ref JSONValue target, JSONValue source,
             bool overwrite, bool mergeArrays, out string message)
     {
-        return CL_JsonOtherCode.recursiveMerge(target, source, overwrite, mergeArrays, message);
+        JSONValue src = APdeepCopy(source);
+        return CL_JsonOtherCode.recursiveMerge(target, src, overwrite, mergeArrays, message);
+    }
+
+    export static bool APrecursiveMergeCopy(JSONValue target, JSONValue source,
+            bool overwrite, bool mergeArrays, out JSONValue result, out string message)
+    {
+        result = APdeepCopy(target);
+        return APrecursiveMerge(result, source, overwrite, mergeArrays, message);
+    }
+
+    export static JSONValue APdeepCopy(JSONValue v)
+    {
+        return CL_JsonOtherCode.deepCopy(v);
     }
 
     //CL_PublicCodeOtherCode:
-    export static void APStrIsNUll(string input, string paramName = "input",
-            out bool outputBool, out string ErrorText)
+    export static void APstrIsNil(string input, string paramName = "input",
+            out bool outputBool, out string reason)
     {
-        return CL_PublicCodeOtherCode.StrIsNUll(input, paramName, outputBool, ErrorText);
+        CL_PublicCodeOtherCode.strIsNil(input, paramName, outputBool, reason);
+    }
+
+    deprecated("Use APstrIsNil; the old spelling mixed the case of Null and named its message PascalCase.")
+    export static void APStrIsNUll(string input, string paramName = "input",
+            out bool outputBool, out string errorText)
+    {
+        CL_PublicCodeOtherCode.strIsNil(input, paramName, outputBool, errorText);
     }
 
     export static bool APCheckStringIsNullArray(string[] inputs)

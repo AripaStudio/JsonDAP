@@ -38,7 +38,7 @@ public static class CL_CoreAP_Conv
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP("An unexpected error occurred during JSON to object conversion.",
+            throw new UnknownErrorExceptionAP("An unexpected error occurred during JSON to object conversion.",
                     __FILE__, __LINE__, e);
         }
     }

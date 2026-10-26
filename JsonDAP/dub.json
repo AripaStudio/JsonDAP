@@ -6,7 +6,7 @@
   ],
   "license": "MIT",
   "targetName": "JsonDAP",
-  "targetType": "dynamicLibrary",
+  "targetType": "sourceLibrary",
   "sourceFiles": [
     "JsonDAP.d",
     "JsonAPMessages.d",
@@ -31,8 +31,7 @@
   "configurations": [
     {
       "name": "library",
-      "targetPath": "bin",
-      "targetType": "dynamicLibrary"
+      "targetType": "sourceLibrary"
     },
     {
       "name": "unittest",
@@ -56,15 +55,10 @@
       "targetPath": "Output/release"
     }
   ],
-  "version": "2.3.0",
+  "version": "2.4.0",
   "homepage": "https://github.com/AripaStudio/JsonDAP",
   "importPaths": [
     "."
-  ],
-  "libs": [
-    "msvcrt",
-    "legacy_stdio_definitions",
-    "oldnames"
   ],
   "buildTypes": {
     "release": {
@@ -73,8 +67,7 @@
         "optimize",
         "inline"
       ],
-      "dflags": [],
-      "targetType": "dynamicLibrary"
+      "dflags": []
     },
     "debug": {
       "buildOptions": [
@@ -82,8 +75,7 @@
       ],
       "dflags": [
         "-boundscheck=off"
-      ],
-      "targetType": "dynamicLibrary"
+      ]
     }
   }
 }

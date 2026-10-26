@@ -11,6 +11,7 @@ import ExceptionAP;
 import ExceptionJsonAP;
 import CheckVariablesAP;
 import CoreAP;
+import jsonOtherCodeAP;
 
 alias Optional = Nullable;
 
@@ -27,41 +28,34 @@ public static class CL_CoreAP_Path
             }
 
             JSONValue root = parseJSON(jsonContent);
+            auto steps = CL_PublicCodeOtherCode.parsePath(path);
             JSONValue current = root;
 
-            foreach (segment; path.split('.'))
+            foreach (step; steps)
             {
-                if (current.type == JSONType.OBJECT)
+                if (step.type == PathStepType.ObjectKey)
                 {
-                    if (segment in current.object)
+                    if (current.type != JSONType.OBJECT || step.key !in current.object)
                     {
-                        current = current.object[segment];
-                    }
-                    else
-                    {
-                        throw new JSONExceptionAP("JSON path invalid: segment '" ~ segment ~ "' not found.",
+                        throw new JSONExceptionAP("JSON path invalid: key '" ~ step.key ~ "' not found.",
                                 path, jsonContent, __FILE__, __LINE__);
                     }
-                }
-                else if (current.type == JSONType.ARRAY && CL_PublicCodeOtherCode.isInteger(
-                        segment))
-                {
-                    int index = CL_PublicCodeOtherCode.normalizeDigitsAP(segment).to!int;
-                    if (index >= 0 && index < current.array.length)
-                    {
-                        current = current.array[index];
-
-                    }
-                    else
-                    {
-                        throw new InvalidArgumentExceptionAP("JSON array index out of bounds.", "index", segment,
-                                "0-" ~ to!string(current.array.length - 1), __FILE__, __LINE__);
-                    }
+                    current = current.object[step.key];
                 }
                 else
                 {
-                    throw new JSONExceptionAP("JSON type unsuitable for path traversal.",
-                            path, jsonContent, __FILE__, __LINE__);
+                    if (current.type != JSONType.ARRAY)
+                    {
+                        throw new JSONExceptionAP("JSON path invalid: index used on a non-array.",
+                                path, jsonContent, __FILE__, __LINE__);
+                    }
+                    if (step.index < 0 || step.index >= current.array.length)
+                    {
+                        throw new InvalidArgumentExceptionAP("JSON array index out of bounds.", "index",
+                                step.index.to!string, indexHint(current.array.length),
+                                __FILE__, __LINE__);
+                    }
+                    current = current.array[step.index];
                 }
             }
 
@@ -121,9 +115,14 @@ public static class CL_CoreAP_Path
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP("A general error occurred while getting JSON value.",
+            throw new UnknownErrorExceptionAP("A general error occurred while getting JSON value.",
                     __FILE__, __LINE__, e);
         }
 
+    }
+
+    private static string indexHint(size_t length)
+    {
+        return length == 0 ? "the array is empty" : "0-" ~ (length - 1).to!string;
     }
 }

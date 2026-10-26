@@ -201,14 +201,17 @@ public class InvalidArgumentExceptionAP : ParameterRelatedExceptionAP
     }
 }
 
-// throw new UnknownErrorexceptionAP("An unhandled system error occurred.");
-public class UnknownErrorexceptionAP : BaseExceptionAP
+// throw new UnknownErrorExceptionAP("An unhandled system error occurred.");
+public class UnknownErrorExceptionAP : BaseExceptionAP
 {
     this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null) @safe pure
     {
         super(msg, file, line, next);
     }
 }
+
+deprecated("Use UnknownErrorExceptionAP; the old spelling mixed the case of Error and exception.")
+alias UnknownErrorexceptionAP = UnknownErrorExceptionAP;
 
 // throw new SyntaxErrorExceptionAP("Invalid JSON syntax found at line 10.", __FILE__, __LINE__);
 public class SyntaxErrorExceptionAP : BaseExceptionAP

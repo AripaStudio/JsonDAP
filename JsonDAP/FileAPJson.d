@@ -66,7 +66,7 @@ public class CL_File_JSON
 		}
 		catch (Exception e)
 		{
-			throw new UnknownErrorexceptionAP(
+			throw new UnknownErrorExceptionAP(
 											  "An unexpected error occurred during JSON array element conversion.",
 											  null, 0, e);
 		}
@@ -117,7 +117,7 @@ public class CL_File_JSON
 		}
 		catch (Exception e)
 		{
-			throw new UnknownErrorexceptionAP(
+			throw new UnknownErrorExceptionAP(
 											  "An unexpected error occurred during JSON element conversion.", null, 0, e);
 		}
 		return Optional!(T).init;

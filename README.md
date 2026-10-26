@@ -2,7 +2,7 @@
 
 **A JSON and file-handling library for the D programming language** — serialization,
 path-based file editing, and one exception tree.
-Built by [Aripa Pars Studio](https://github.com/AripaStudio) · MIT licensed · latest version **2.3.0**.
+Built by [Aripa Pars Studio](https://github.com/AripaStudio) · MIT licensed · latest version **2.4.0**.
 
 **[English](README.md) · [فارسی](README.fa.md)**
 
@@ -17,6 +17,7 @@ Built by [Aripa Pars Studio](https://github.com/AripaStudio) · MIT licensed · 
 - [Quick start](#quick-start)
 - [JSON contract](#json-contract)
 - [API reference](#api-reference)
+- [Path syntax](#path-syntax)
 - [Exceptions](#exceptions)
 
 ---
@@ -45,43 +46,54 @@ control over the wire format. JsonDAP sits in between:
 |---|---|
 | D compiler | DMD 2.100+ (tested with DMD 2.113.0, x86_64) |
 | Build tool | dub 1.30+ (tested with dub 1.42.0) |
-| Platform | Windows (DLL build uses the MSVC linker); the D sources are portable |
+| Platform | any platform DMD runs on — Windows, Linux, macOS |
 
 ## Install
 
-**As a dub dependency**
+JsonDAP is a **dub source package**: `targetType` is `sourceLibrary`, so there is no
+`JsonDAP.dll`, no import library and no binary to keep in step with the sources. Your build
+compiles the JsonDAP `.d` files together with yours, which is the only way the templated
+methods (`APdeserializeJson!T`, `APgetJsonValue!V`, …) can be instantiated.
+
+**From a local checkout**
 
 ```json
 {
   "dependencies": {
-    "jsondap": "~>2.3.0"
+    "jsondap": { "path": "../JsonDAP" }
   }
 }
 ```
 
-**As copied sources (D consumer)**
-
-Copy the `.d` files from `JsonDAP/` into your project (only the files, not `bin/`) and let
-your build compile them — that is where the templates are instantiated:
+**From the dub registry**
 
 ```json
 {
-  "sourcePaths": [ "vendor/JsonDAP" ]
+  "dependencies": {
+    "jsondap": "~>2.4.0"
+  }
 }
 ```
 
-A D consumer does not link `JsonDAP.dll` at all. The DLL is for callers that cannot compile
-D; a D binary that links only the import library cannot resolve the templated calls, because
-their bodies live in the sources, not in the DLL.
+Then `import JsonDAP;` and use `JsonAP.AP…`. Nothing else to install: the library's sources
+arrive with the package and are compiled into your executable on every platform.
 
-> **Keep sources and DLL from the same build.** Only non-template symbols live in
-> `JsonDAP.dll`; an old `JsonDAP.dll` next to new sources (or the other way round) is not a
-> supported combination.
+```d
+import JsonDAP;
 
-**Prebuilt binaries** — Windows `JsonDAP.dll` + import library, with matching sources, are
-published in the repository's **Releases** section and kept under `JsonDAP/bin/versionX.Y.Z/`.
-Take the archive whose version matches your `dub.json` and put `JsonDAP.dll` next to the
-executable.
+void main()
+{
+    auto loaded = JsonAP.APdeserializeJson!User(`{"name":"Aripa","age":2026}`);
+}
+```
+
+> Because the sources are compiled inside the consumer, a version mismatch cannot happen —
+> and a stale `JsonDAP.dll`, `.lib` or `.exp` left over from an older release does nothing at
+> all. Delete them if you are upgrading from 2.3.0 or earlier.
+
+**Callers that are not D programs** (C#, C, other FFI) have never been the target of this
+library, and 2.4.0 stops shipping a DLL for them. If you need one, build the sources into a
+shared library yourself — the D sources are portable and no Windows-only code is involved.
 
 ## Quick start
 
@@ -180,7 +192,7 @@ with `enum bool value`: `IsIntAP`, `IsFloatAP`, `IsNumberAP`, `IsBoolAP`, `IsStr
 | `APdeserializeJsonLenient!T(string jsonContent)` | `Optional!T` | JSON text → `T` (missing fields allowed) |
 | `APdeserializeJsonArray!T(string jsonContent)` | `Optional!(T[])` | JSON array text → `T[]` |
 | `APconvertJsonValueToT!T(JSONValue jsonValue, bool lenient = false)` | `Optional!T` | JSON value → `T` |
-| `APgetJsonValue!V(string jsonContent, string path)` | `Optional!V` | reads the value at `path`; the node type must match `V` (`long`/`int` need an integer node, `double` accepts either) |
+| `APgetJsonValue!V(string jsonContent, string path)` | `Optional!V` | reads the value at `path` through the [shared parser](#path-syntax); the node type must match `V` (`long`/`int` need an integer node, `double` accepts either). An absent key, a bad index or a type mismatch **throws** — the empty `Optional` means the text or the path was empty, nothing more |
 | `APgetJsonValueType(JSONValue jsonValue)` | `JSONType` | the `std.json` type of a node |
 | `APprettyPrintJson(string jsonContent)` | `Optional!string` | indented, human-readable JSON |
 
@@ -194,13 +206,21 @@ with `enum bool value`: `IsIntAP`, `IsFloatAP`, `IsNumberAP`, `IsBoolAP`, `IsStr
 | `APisJsonNumber(string jsonContent)` | `bool` | top-level node is a number |
 | `APisJsonString(string jsonContent)` | `bool` | top-level node is a string |
 | `APgetJsonItemCount(string jsonContent)` | `Optional!long` | number of top-level items |
-| `APisDigitAP(dchar c)` | `bool` | an ASCII, Persian **or** Arabic-Indic digit |
-| `APnormalizeDigitsAP(string s)` | `string` | Persian and Arabic-Indic digits rewritten as ASCII digits, every other character untouched |
-| `APisInteger(string s)` | `bool` | the whole string is a number |
-| `APJsonPathParser(string input)` | `PathStep[]` | splits `"a.b[2]"` into path steps |
-| `APStrIsNUll(string input, string paramName, out bool, out string)` | `void` | null/empty/blank guard + reason |
+| `APisDigitAP(dchar c)` | `bool` | one character that is an ASCII, Persian **or** Arabic-Indic digit |
+| `APnormalizeDigitsAP(string s)` | `string` | digits rewritten as ASCII, plus `٫`/`٬` → `.` and `−` → `-`; every other character untouched |
+| `APisInteger(string s)` | `bool` | **only digits** — no sign, no decimal point (`"7"` yes, `"+7"` and `"12.5"` no) |
+| `APisSignedInteger(string s)` | `bool` | optional `+`/`-` then only digits (`"−7"` yes, `"7.5"` no) |
+| `APisDecimal(string s)` | `bool` | optional sign, digits, one `.`, digits (`"12.5"`, `"۱۲٫۵"` yes; `"1e9"`, `"12."` no) |
+| `APJsonPathParser(string input)` | `PathStep[]` | the JSON path parser — see [Path syntax](#path-syntax) |
+| `APstrIsNil(string input, string paramName, out bool, out string reason)` | `void` | null/empty/blank guard + reason |
 | `APCheckStringIsNullArray(string[] inputs)` | `bool` | guard for a list of strings |
-| `APrecursiveMerge(ref JSONValue target, ref JSONValue source, bool overwrite, bool mergeArrays, out string message)` | `bool` | deep merge with a message on failure |
+| `APrecursiveMerge(ref JSONValue target, JSONValue source, bool overwrite, bool mergeArrays, out string message)` | `bool` | deep merge into `target`; `source` is copied first, so the value you pass in is never touched |
+| `APrecursiveMergeCopy(JSONValue target, JSONValue source, bool overwrite, bool mergeArrays, out JSONValue result, out string message)` | `bool` | the same merge into a **copy**: `target` stays as it was and the outcome arrives in `result` |
+| `APdeepCopy(JSONValue v)` | `JSONValue` | an independent copy of a JSON tree — no array, object or nested node is shared |
+
+`APStrIsNUll` and `StrIsNUll` are still there, marked `deprecated`, and forward to
+`APstrIsNil` / `strIsNil`. The old names mixed the case of `Null` and spelled their message
+parameter `ErrorText`; 2.5.0 removes them.
 
 **Editing a file by path**
 
@@ -212,23 +232,58 @@ of throwing when the path or the file is unusable.
 | `APupdateJsonValueOBJECT!V(string filePath, string jsonPath, V value)` | replaces `path` in an object |
 | `APupdateJsonValueARRAY!V(string filePath, string jsonPath, V value)` | replaces `path` in an array |
 | `APaddJsonItemOBJECT!T(string filePath, string jsonPath, T item)` | adds a new key (fails if it exists) |
-| `APaddJsonItemARRAY!T(string filePath, string jsonPath, T item)` | appends to the array at `path` |
+| `APaddJsonItemARRAY!T(string filePath, string jsonPath, T item)` | inserts into the array at `path` |
 | `APremoveJsonItemOBJECT(string filePath, string jsonPath)` | removes a key |
 | `APremoveJsonItemARRAY(string filePath, string jsonPath)` | removes an array element |
 | `APmergeJson(string filePath, JSONValue jsonContentToMerge, bool overwriteExisting = true, bool mergeArrays = false)` | merges another document into the file |
 
-**Two path syntaxes, on purpose.** The file-edit API and `APJsonPathParser` take
-`MainData.items[2].name` with brackets. `APgetJsonValue` splits its path on `.` only, so an
-array element is its own segment: `items.1` reads the second element and `items[1]` is reported
-as a missing key. `APJsonPathParser` accepts ASCII, Persian and Arabic-Indic digits inside the
-brackets; they are normalized before the index is converted. A missing intermediate object key
-is created; a missing intermediate array index is **not** created. `APremoveJsonItemOBJECT`
-removes top-level keys as well as nested ones.
+### Path syntax
 
-**Arrays: add and update are not symmetric.** `APaddJsonItemARRAY` accepts `index == length` and
-appends there; `APupdateJsonValueARRAY` rejects that same index, because updating an element that
-does not exist is not a replacement. An out-of-range update reports
-`array index N is out of range (length M)`.
+**One syntax, everywhere.** As of 2.4.0 `APgetJsonValue`, `APJsonPathParser` and the whole
+file-edit API share a single parser, so one string means the same thing in all of them:
+
+```
+MainData.items[2].name
+```
+
+| Form | Meaning |
+|---|---|
+| `a.b` | object key `b` inside object `a` |
+| `items[2]` | the third element of the array `items` |
+| `rows[0][1]` | chained indexes — the second element of `rows[0]` |
+| `weird\.key.next` | `\` escapes the next character, so a key may contain `.`, `[` or `]` |
+| `rows[۲]` | Persian and Arabic-Indic digits are normalised before the index is converted |
+
+> **Breaking in 2.4.0 — `items.1` no longer indexes an array.** Up to 2.3.0 `APgetJsonValue`
+> split its path on `.` alone, so a bare numeric segment was used as an array index. With one
+> parser shared by every method, a bare segment is always an object key and only `[n]` is an
+> index; `items.1` on an array now raises `JSON path invalid: key '1' not found.` Write
+> `items[1]`. Nothing else in the path grammar changed.
+
+A path is read character by character, so a broken one is refused instead of quietly producing
+a wrong step. All of these raise `InvalidArgumentExceptionAP` (a `BaseExceptionAP`):
+
+| Path | Why it is refused |
+|---|---|
+| `""`, `"   "` | `JSON path is empty.` |
+| `a..b` | `JSON path contains an empty key.` |
+| `items[3` | `JSON path has a missing closing bracket.` |
+| `items]` | `JSON path has a ']' without '['.` |
+| `items[0]x` | `Unexpected character after ']'.` |
+| `items[abc]` | `array index must be a non-negative integer.` |
+| `items[-1]` | `array index must be a non-negative integer.` — negative indexes are not Python |
+
+`APgetJsonValue` uses the same parser and the same refusals; it also refuses an index past the
+end of the array and a key that is not there, and it rethrows every library exception rather
+than swallowing it into an empty `Optional`.
+
+A missing **intermediate object key** in the file-edit API is created; a missing intermediate
+**array index** is not. `APremoveJsonItemOBJECT` removes top-level keys as well as nested ones.
+
+**Arrays: add inserts, update replaces.** `APaddJsonItemARRAY` inserts the item **at** the
+index it is given, so `index == length` is the append position and anything larger is refused
+with `array index N is out of range (length M); nothing was changed.`. `APupdateJsonValueARRAY`
+rejects that same index, because updating an element that does not exist is not a replacement.
 
 Every call above has a twin that answers *why* it returned `false`:
 
@@ -246,7 +301,7 @@ if (!JsonAP.APupdateJsonValueOBJECTWithMessage!int(file, "settings.retry", 3, re
 | `APupdateJsonValueOBJECTWithMessage!V(filePath, jsonPath, value, out string message)` | the reason for an object-value update |
 | `APupdateJsonValueARRAYWithMessage!V(filePath, jsonPath, value, out string message)` | the reason for an array-value update |
 | `APaddJsonItemOBJECTWithMessage!T(filePath, jsonPath, item, out string message)` | the reason a key was not added |
-| `APaddJsonItemARRAYWithMessage!T(filePath, jsonPath, item, out string message)` | the reason an item was not appended |
+| `APaddJsonItemARRAYWithMessage!T(filePath, jsonPath, item, out string message)` | the reason an item was not inserted |
 | `APremoveJsonItemOBJECTWithMessage(filePath, jsonPath, out string message)` | the reason a key was not removed |
 | `APremoveJsonItemARRAYWithMessage(filePath, jsonPath, out string message)` | the reason an element was not removed |
 | `APmergeJsonWithMessage(filePath, jsonContentToMerge, overwriteExisting, mergeArrays, out string message)` | the reason a merge did not happen |
@@ -310,7 +365,7 @@ BaseExceptionAP
 │   └── JsonOperationExceptionAP     (jsonPath + jsonSnippet)
 ├── FileOperationExceptionAP         (systemErrorCode)
 ├── SyntaxErrorExceptionAP
-└── UnknownErrorexceptionAP
+└── UnknownErrorExceptionAP
 ```
 
 ```d
@@ -325,6 +380,12 @@ catch (JSONConvertExceptionAP e)
 }
 ```
 
-A JSON path with an unusable index (`items[]`, `items[x]`) is a `ConvertExceptionAP`, and a path
-with a missing `]` is an `UnknownErrorexceptionAP` — both inside this tree, so a consumer that
-catches `BaseExceptionAP` never dies on a stray `std.conv.ConvException`.
+Every path refusal is an `InvalidArgumentExceptionAP` — an empty path, an empty key, a missing
+`]`, a `]` without a `[`, a character after `]`, an index that is not a non-negative integer.
+The one exception is an index too large for an `int`, which is a `ConvertExceptionAP`. Both
+live inside this tree, so a consumer that catches `BaseExceptionAP` never dies on a stray
+`std.conv.ConvException`.
+
+`UnknownErrorexceptionAP` was spelled with a lower-case `e` in `exception`, unlike its sibling
+`SyntaxErrorExceptionAP`. 2.4.0 renames it to `UnknownErrorExceptionAP` and keeps the old
+spelling as a `deprecated` alias, so existing code still compiles and gets told to move.

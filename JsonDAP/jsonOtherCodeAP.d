@@ -1,6 +1,7 @@
 module jsonOtherCodeAP;
 
 import ExceptionAP;
+import ExceptionJsonAP;
 import std.stdio;
 import std.string;
 import std.algorithm;
@@ -33,72 +34,7 @@ public class CL_JsonOtherCode
 
     public static PathStep[] JsonPathParserAP(string input)
     {
-        string errorTextStrIsNull;
-        bool CheckStrIsNull;
-        CL_PublicCodeOtherCode.StrIsNUll(input, "input", CheckStrIsNull, errorTextStrIsNull);
-        if (CheckStrIsNull)
-        {
-            throw new UnknownErrorexceptionAP("Unknown error." ~ errorTextStrIsNull ~ " |____|  ",
-                    __FILE__, __LINE__);
-        }
-
-        PathStep[] pathSteps;
-        int currentIndex = 0;
-
-        foreach (part; input.splitter('.'))
-        {
-            if (part.empty)
-                continue;
-
-            auto bracketPos = part.indexOf('[');
-
-            if (bracketPos == -1)
-            {
-                PathStep newStep;
-                newStep.type = PathStepType.ObjectKey;
-                newStep.key = part;
-                pathSteps ~= newStep;
-            }
-            else
-            {
-                string keyPart = part[0 .. bracketPos];
-                if (!keyPart.empty)
-                {
-                    PathStep keyStep;
-                    keyStep.type = PathStepType.ObjectKey;
-                    keyStep.key = keyPart;
-                    pathSteps ~= keyStep;
-                }
-
-                string remaining = part[bracketPos .. $];
-                while (remaining.startsWith('['))
-                {
-                    auto closing = remaining.indexOf(']');
-                    if (closing == -1)
-                        throw new UnknownErrorexceptionAP("Syntax Error: Missing closing bracket.",
-                                __FILE__, __LINE__);
-
-                    string indexStr = remaining[1 .. closing];
-
-                    PathStep indexStep;
-                    indexStep.type = PathStepType.ArrayIndex;
-                    try
-                    {
-                        indexStep.index = to!int(CL_PublicCodeOtherCode.normalizeDigitsAP(indexStr));
-                    }
-                    catch (Exception e)
-                    {
-                        throw new ConvertExceptionAP("Failed to convert index.", "indexStr", indexStr,
-                                "string", "int", "to!int", e.msg, __FILE__, __LINE__, e);
-                    }
-                    pathSteps ~= indexStep;
-
-                    remaining = remaining[closing + 1 .. $];
-                }
-            }
-        }
-
-        return pathSteps;
+        return CL_PublicCodeOtherCode.parsePath(input);
     }
 
     public static bool recursiveMerge(ref JSONValue target, ref JSONValue source,
@@ -195,6 +131,18 @@ public class CL_JsonOtherCode
             {
                 return false;
             }
+        }
+    }
+
+    public static JSONValue deepCopy(JSONValue v)
+    {
+        try
+        {
+            return parseJSON(v.toString());
+        }
+        catch (JSONException e)
+        {
+            throw new JsonOperationExceptionAP("deep copy failed.", "$", "", __FILE__, __LINE__, e);
         }
     }
 }

@@ -36,7 +36,7 @@ public static class CL_FileAP_Merge
         {
             string errorCheck;
             bool outputBoolCheck;
-            CL_PublicCodeOtherCode.StrIsNUll(filePath, "input", outputBoolCheck, errorCheck);
+            CL_PublicCodeOtherCode.strIsNil(filePath, "input", outputBoolCheck, errorCheck);
             if (outputBoolCheck)
             {
                 return fail(message, "filePath is empty: " ~ errorCheck);

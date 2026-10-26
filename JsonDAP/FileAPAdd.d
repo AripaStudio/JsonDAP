@@ -201,6 +201,12 @@ public static class CL_FileAP_Add
                 }
                 else if (currentStep.type == PathStepType.ArrayIndex)
                 {
+                    if (currentStep.index < 0)
+                    {
+                        return fail(message, format!"array index %s is negative; indices start at 0."
+                                (currentStep.index));
+                    }
+
                     if (currentJsonNodeToTraverse.type != JSONType.ARRAY)
                     {
                         return fail(message, format!"'%s' is not an array, so index %s is out of reach."
@@ -247,20 +253,27 @@ public static class CL_FileAP_Add
             }
             else if (finalStep.type == PathStepType.ArrayIndex)
             {
+                if (finalStep.index < 0)
+                {
+                    return fail(message, format!"array index %s is negative; indices start at 0."
+                            (finalStep.index));
+                }
+
                 if (currentJsonNodeToTraverse.type != JSONType.ARRAY)
                 {
                     return fail(message, format!"the parent of index %s is not an array."
                             (finalStep.index));
                 }
-                // index == length is the append position, so "add" can extend
-                // the array; only an index past the end is out of range.
+                // the item is inserted at the index, so index == length is the append
+                // position and only an index past the end is out of range.
                 if (finalStep.index > (*currentJsonNodeToTraverse).array.length)
                 {
-                    return fail(message, format!"array index %s is past the end (length %s); the new item is appended."
+                    return fail(message, format!"array index %s is out of range (length %s); nothing was changed."
                             (finalStep.index, (*currentJsonNodeToTraverse).array.length));
                 }
 
-                (*currentJsonNodeToTraverse).array ~= convertValue;
+                (*currentJsonNodeToTraverse).array = (*currentJsonNodeToTraverse).array[0 .. finalStep.index]
+                        ~ convertValue ~ (*currentJsonNodeToTraverse).array[finalStep.index .. $];
             }
             else
             {

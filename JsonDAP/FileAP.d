@@ -26,7 +26,7 @@ public static class CL_FileAP
             string errorTextStrIsNull;
             bool CheckStrIsNull;
 
-            CL_PublicCodeOtherCode.StrIsNUll(filePath, "input",
+            CL_PublicCodeOtherCode.strIsNil(filePath, "input",
                     CheckStrIsNull, errorTextStrIsNull);
             if (CheckStrIsNull)
             {
@@ -65,7 +65,7 @@ public static class CL_FileAP
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP(
+            throw new UnknownErrorExceptionAP(
                     "An unexpected error occurred while reading JSON file.", null, 0, e);
         }
     }
@@ -79,16 +79,13 @@ public static class CL_FileAP
                 throw new InvalidArgumentExceptionAP("Output file path cannot be empty.",
                         "filePath", filePath, "Non-empty string expected", null, 0);
             }
-			//enforce(existsFile(filePath), throw new FileOperationExceptionAP(
-			//        "Target file not found for writing.", filePath, "write", 0, null, 0));
-
             import std.path : dirName;
-			string dir = dirName(filePath);
-			if (!dir.empty && !exists(dir))
-			{
-				mkdirRecurse(dir); 
-			}
 
+            string dir = dirName(filePath);
+            if (!dir.empty && !exists(dir))
+            {
+                mkdirRecurse(dir);
+            }
 
             auto jsonContent = CL_File_JSON.serializeToJson(data);
             std.file.write(filePath, jsonContent.toString());
@@ -110,7 +107,7 @@ public static class CL_FileAP
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP(
+            throw new UnknownErrorExceptionAP(
                     "An unexpected error occurred while writing JSON file.", null, 0, e);
         }
     }
@@ -143,7 +140,7 @@ public static class CL_FileAP
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP(
+            throw new UnknownErrorExceptionAP(
                     "An unexpected error occurred while getting file size.", null, 0, e);
         }
     }
@@ -154,7 +151,7 @@ public static class CL_FileAP
         {
             string errorTextStrIsNull;
             bool CheckStrIsNull;
-            CL_PublicCodeOtherCode.StrIsNUll(filepath, "input",
+            CL_PublicCodeOtherCode.strIsNil(filepath, "input",
                     CheckStrIsNull, errorTextStrIsNull);
             if (CheckStrIsNull)
             {
@@ -185,7 +182,7 @@ public static class CL_FileAP
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP(
+            throw new UnknownErrorExceptionAP(
                     "An unexpected error occurred while reading JSON array from file.", null, 0, e);
         }
     }
@@ -220,7 +217,7 @@ public static class CL_FileAP
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP(
+            throw new UnknownErrorExceptionAP(
                     "An unexpected error occurred during file existence check.", null, 0, e);
         }
 

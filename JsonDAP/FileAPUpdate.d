@@ -25,8 +25,8 @@ public static class CL_FileAP_Update
         return updateJsonValueOBJECT!V(filePath, jsonPath, value, ignoredMessage);
     }
 
-    public static bool updateJsonValueOBJECT(V)(string filePath, string jsonPath, V value,
-            out string message)
+    public static bool updateJsonValueOBJECT(V)(string filePath, string jsonPath,
+            V value, out string message)
     {
         message = "";
 
@@ -54,7 +54,8 @@ public static class CL_FileAP_Update
 
             if (rootJson.type != JSONType.OBJECT)
             {
-                return fail(message, format!"the root node is %s, not a JSON object."(rootJson.type));
+                return fail(message,
+                        format!"the root node is %s, not a JSON object."(rootJson.type));
             }
 
             PathStep[] parsedSteps;
@@ -75,31 +76,37 @@ public static class CL_FileAP_Update
                 {
                     if (currentJsonNodeToTraverse.type != JSONType.OBJECT)
                     {
-                        return fail(message, format!"'%s' is not an object, so '%s' cannot be reached."
-                                (currentStep.key, jsonPath));
+                        return fail(message,
+                                format!"'%s' is not an object, so '%s' cannot be reached."(currentStep.key,
+                                    jsonPath));
                     }
                     if (currentStep.key !in (*currentJsonNodeToTraverse).object)
                     {
-                        return fail(message, format!"the path '%s' does not exist: key '%s' is missing."
-                                (jsonPath, currentStep.key));
+                        return fail(message,
+                                format!"the path '%s' does not exist: key '%s' is missing."(jsonPath,
+                                    currentStep.key));
                     }
-                    currentJsonNodeToTraverse = &(*currentJsonNodeToTraverse).object[currentStep.key];
+                    currentJsonNodeToTraverse = &(*currentJsonNodeToTraverse)
+                        .object[currentStep.key];
                 }
                 else if (currentStep.type == PathStepType.ArrayIndex)
                 {
-                    return fail(message, format!"the path '%s' steps into an array; use APupdateJsonValueARRAY."
-                            (jsonPath));
+                    return fail(message,
+                            format!"the path '%s' steps into an array; use APupdateJsonValueARRAY."(
+                                jsonPath));
                 }
                 else
                 {
-                    return fail(message, format!"the path '%s' contains a step this overload cannot follow."
-                            (jsonPath));
+                    return fail(message,
+                            format!"the path '%s' contains a step this overload cannot follow."(
+                                jsonPath));
                 }
 
                 if (currentJsonNodeToTraverse.type != JSONType.OBJECT)
                 {
-                    return fail(message, format!"'%s' is not an object, so '%s' cannot be reached."
-                            (currentStep.key, jsonPath));
+                    return fail(message,
+                            format!"'%s' is not an object, so '%s' cannot be reached."(currentStep.key,
+                                jsonPath));
                 }
             }
 
@@ -119,7 +126,8 @@ public static class CL_FileAP_Update
             auto writeFile = CL_FileAP.writeJsonFile(filePath, rootJson);
             if (!writeFile)
             {
-                return fail(message, format!"the edited document could not be written to %s"(filePath));
+                return fail(message,
+                        format!"the edited document could not be written to %s"(filePath));
             }
 
             return true;
@@ -137,8 +145,8 @@ public static class CL_FileAP_Update
         return updateJsonValueARRAY!V(filePath, jsonPath, value, ignoredMessage);
     }
 
-    public static bool updateJsonValueARRAY(V)(string filePath, string jsonPath, V value,
-            out string message)
+    public static bool updateJsonValueARRAY(V)(string filePath, string jsonPath,
+            V value, out string message)
     {
         message = "";
 
@@ -181,35 +189,52 @@ public static class CL_FileAP_Update
                 {
                     if (currentJsonNodeToTraverse.type != JSONType.OBJECT)
                     {
-                        return fail(message, format!"'%s' is not an object, so '%s' cannot be reached."
-                                (currentStep.key, jsonPath));
+                        return fail(message,
+                                format!"'%s' is not an object, so '%s' cannot be reached."(currentStep.key,
+                                    jsonPath));
                     }
                     if (currentStep.key !in (*currentJsonNodeToTraverse).object)
                     {
-                        return fail(message, format!"the path '%s' does not exist: key '%s' is missing."
-                                (jsonPath, currentStep.key));
+                        return fail(message,
+                                format!"the path '%s' does not exist: key '%s' is missing."(jsonPath,
+                                    currentStep.key));
                     }
-                    currentJsonNodeToTraverse = &(*currentJsonNodeToTraverse).object[currentStep.key];
+                    currentJsonNodeToTraverse = &(*currentJsonNodeToTraverse)
+                        .object[currentStep.key];
                 }
                 else if (currentStep.type == PathStepType.ArrayIndex)
                 {
+                    if (currentStep.index < 0)
+                    {
+                        return fail(message,
+                                format!"array index %s is negative; indices start at 0."(
+                                    currentStep.index));
+                    }
+
                     if (currentJsonNodeToTraverse.type != JSONType.ARRAY)
                     {
-                        return fail(message, format!"'%s' is not an array, so index %s is out of reach."
-                                (currentStep.key, currentStep.index));
+                        return fail(message,
+                                format!"'%s' is not an array, so index %s is out of reach."(currentStep.key,
+                                    currentStep.index));
                     }
                     if (currentStep.index >= (*currentJsonNodeToTraverse).array.length)
                     {
-                        return fail(message, format!"array index %s is out of range (length %s)."
-                                (currentStep.index, (*currentJsonNodeToTraverse).array.length));
+                        return fail(message, format!"array index %s is out of range (length %s)."(currentStep.index,
+                                (*currentJsonNodeToTraverse).array.length));
                     }
                     currentJsonNodeToTraverse = &(*currentJsonNodeToTraverse).array[currentStep.index];
+                }
+                else
+                {
+                    return fail(message,
+                            format!"the path '%s' contains a step this overload cannot follow."(jsonPath));
                 }
 
                 if (currentJsonNodeToTraverse.type != JSONType.OBJECT
                         && currentJsonNodeToTraverse.type != JSONType.ARRAY)
                 {
-                    return fail(message, format!"'%s' is neither an object nor an array."(jsonPath));
+                    return fail(message,
+                            format!"'%s' is neither an object nor an array."(jsonPath));
                 }
             }
 
@@ -221,34 +246,44 @@ public static class CL_FileAP_Update
             {
                 if (currentJsonNodeToTraverse.type != JSONType.OBJECT)
                 {
-                    return fail(message, format!"the parent of '%s' is not an object."(finalStep.key));
+                    return fail(message,
+                            format!"the parent of '%s' is not an object."(finalStep.key));
                 }
                 (*currentJsonNodeToTraverse).object[finalStep.key] = convertValue;
             }
             else if (finalStep.type == PathStepType.ArrayIndex)
             {
+                if (finalStep.index < 0)
+                {
+                    return fail(message,
+                            format!"array index %s is negative; indices start at 0."(
+                                finalStep.index));
+
+                }
+
                 if (currentJsonNodeToTraverse.type != JSONType.ARRAY)
                 {
-                    return fail(message, format!"the parent of index %s is not an array."
-                            (finalStep.index));
+                    return fail(message,
+                            format!"the parent of index %s is not an array."(finalStep.index));
                 }
                 if (finalStep.index >= (*currentJsonNodeToTraverse).array.length)
                 {
-                    return fail(message, format!"array index %s is out of range (length %s)."
-                            (finalStep.index, (*currentJsonNodeToTraverse).array.length));
+                    return fail(message, format!"array index %s is out of range (length %s)."(finalStep.index,
+                            (*currentJsonNodeToTraverse).array.length));
                 }
                 (*currentJsonNodeToTraverse).array[finalStep.index] = convertValue;
             }
             else
             {
-                return fail(message, format!"the path '%s' ends with a step this overload cannot use."
-                        (jsonPath));
+                return fail(message,
+                        format!"the path '%s' ends with a step this overload cannot use."(jsonPath));
             }
 
             auto writeFile = CL_FileAP.writeJsonFile(filePath, rootJson);
             if (!writeFile)
             {
-                return fail(message, format!"the edited document could not be written to %s"(filePath));
+                return fail(message,
+                        format!"the edited document could not be written to %s"(filePath));
             }
 
             return true;

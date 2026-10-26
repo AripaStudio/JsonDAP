@@ -133,7 +133,7 @@ public static class CL_CoreAP_Serialize
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP("An unexpected error occurred during object to JSON conversion.",
+            throw new UnknownErrorExceptionAP("An unexpected error occurred during object to JSON conversion.",
                     __FILE__, __LINE__, e);
         }
     }

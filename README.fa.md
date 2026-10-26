@@ -1,7 +1,7 @@
 # JsonDAP
 
 **کتابخانه‌ی JSON برای زبان D — سریالایز/دیسریالایز، کار با فایل، ویرایش مسیری و یک درخت استثنای یکپارچه.**
-ساخته‌ی [Aripa Pars Studio](https://github.com/AripaStudio) · مجوز MIT · آخرین نسخه **2.3.0** است.
+ساخته‌ی [Aripa Pars Studio](https://github.com/AripaStudio) · مجوز MIT · آخرین نسخه **2.4.0** است.
 
 **[English](README.md) · فارسی**
 
@@ -16,6 +16,7 @@
 - [شروع سریع](#شروع-سریع)
 - [قرارداد JSON](#قرارداد-json)
 - [مرجع API](#مرجع-api)
+- [نحو مسیر](#نحو-مسیر)
 - [استثناها](#استثناها)
 
 ---
@@ -44,42 +45,45 @@
 |---|---|
 | کامپایلر D | DMD 2.100 به بالا (تست‌شده با DMD 2.113.0، x86_64) |
 | ابزار بیلد | dub 1.30 به بالا (تست‌شده با dub 1.42.0) |
-| پلتفرم | ویندوز (بیلد DLL از لینکر MSVC استفاده می‌کند)؛ سورس‌های D قابل حمل‌اند |
+| پلتفرم | هر پلتفرمی که DMD روی آن اجرا می‌شود — ویندوز، لینوکس، macOS |
 
 ## نصب
 
-**به‌عنوان وابستگی dub**
+JsonDAP یک **بسته‌ی سورس dub** است: `targetType` برابر `sourceLibrary` است، پس دیگر
+`JsonDAP.dll`، کتابخانه‌ی import یا باینری جدا وجود ندارد که بخواهد هم‌نسخه با سورس بماند.
+بیلد شما فایل‌های `.d` کتابخانه را کنار فایل‌های خودتان کامپایل می‌کند؛ تنها راهی که
+متدهای template مثل `APdeserializeJson!T` و `APgetJsonValue!V` بتوانند instantiate شوند همین است.
+
+**از یک checkout محلی**
 
 ```json
 {
   "dependencies": {
-    "jsondap": "~>2.3.0"
+    "jsondap": { "path": "../JsonDAP" }
   }
 }
 ```
 
-**با کپی سورس (مصرف‌کننده‌ی D)**
-
-فایل‌های `.d` پوشه‌ی `JsonDAP/` را در پروژه‌ی خود کپی کنید (فقط فایل‌ها، نه `bin/`) و
-بگذارید بیلد خودتان آن‌ها را کامپایل کند — instantiate همین‌جاست:
+**از registry دوب**
 
 ```json
 {
-  "sourcePaths": [ "vendor/JsonDAP" ]
+  "dependencies": {
+    "jsondap": "~>2.4.0"
+  }
 }
 ```
 
-مصرف‌کننده‌ی D دیگر به `JsonDAP.dll` لینک نمی‌شود. DLL برای کسانی است که D کامپایل
-نمی‌کنند؛ یک برنامه‌ی D که فقط با import library لینک شود، فراخوانی‌های template را پیدا
-نمی‌کند، چون بدنه‌ی آن‌ها در سورس است نه در DLL.
+بعد `import JsonDAP;` و استفاده از `JsonAP.AP…`. چیز دیگری نصب نمی‌شود: سورس کتابخانه با
+بسته می‌آید و در هر پلتفرمی داخل فایل اجرایی شما کامپایل می‌شود.
 
-> **سورس و DLL باید از یک بیلد باشند.** در `JsonDAP.dll` فقط نمادهای غیر-template قرار
-> می‌گیرند؛ ترکیب «DLL قدیمی + سورس جدید» (یا برعکس) پشتیبانی نمی‌شود.
+> چون سورس داخل خود مصرف‌کننده کامپایل می‌شود، امکان «نسخه‌ی ناهم‌خوان» وجود ندارد؛ و یک
+> `JsonDAP.dll` یا `.lib` یا `.exp` قدیمی که از نسخه‌های قبل جا مانده هیچ کاری انجام نمی‌دهد.
+> اگر از 2.3.0 یا قبل‌تر ارتقا می‌دهید، آن‌ها را حذف کنید.
 
-**باینری آماده** — `JsonDAP.dll` ویندوز به‌همراه کتابخانه‌ی import و سورس‌های هم‌نسخه در
-بخش **Releases** مخزن منتشر می‌شود و هر نسخه زیر `JsonDAP/bin/versionX.Y.Z/` هم نگه‌داری
-می‌گردد. آرشیوی را بردارید که با نسخه‌ی `dub.json` شما یکی است و `JsonDAP.dll` را کنار
-فایل اجرایی بگذارید.
+**مصرف‌کننده‌های غیر D** (مثل C#، C یا FFI‌های دیگر) هرگز هدف این کتابخانه نبودند و نسخه‌ی
+2.4.0 هم DLL برایشان منتشر نمی‌کند. اگر به DLL نیاز دارید، خودتان سورس را به یک shared
+library تبدیل کنید — سورس‌های D قابل حمل‌اند و هیچ کد ویندوز-محوری در آن‌ها نیست.
 
 ## شروع سریع
 
@@ -179,7 +183,7 @@ void main()
 | `APdeserializeJsonLenient!T(string jsonContent)` | `Optional!T` | متن JSON به `T` (فیلد غایب مجاز) |
 | `APdeserializeJsonArray!T(string jsonContent)` | `Optional!(T[])` | متن آرایه به `T[]` |
 | `APconvertJsonValueToT!T(JSONValue jsonValue, bool lenient = false)` | `Optional!T` | مقدار JSON به `T` |
-| `APgetJsonValue!V(string jsonContent, string path)` | `Optional!V` | خواندن مقدار در `path` |
+| `APgetJsonValue!V(string jsonContent, string path)` | `Optional!V` | خواندن مقدار در `path` با همان تجزیه‌کننده‌ی مشترک [نحو مسیر](#نحو-مسیر)؛ نوع گره باید با `V` بخواند. کلید نبودن، ایندکس خارج از دامنه یا نوع ناسازگار **پرتاب** می‌کند — `Optional` خالی فقط یعنی متن یا مسیر خالی بوده |
 | `APgetJsonValueType(JSONValue jsonValue)` | `JSONType` | نوع گره در `std.json` |
 | `APprettyPrintJson(string jsonContent)` | `Optional!string` | JSON خوانا و تودرتو |
 
@@ -193,13 +197,21 @@ void main()
 | `APisJsonNumber(string jsonContent)` | `bool` | گره‌ی سطح‌اول عدد است |
 | `APisJsonString(string jsonContent)` | `bool` | گره‌ی سطح‌اول رشته است |
 | `APgetJsonItemCount(string jsonContent)` | `Optional!long` | شمار آیتم‌های سطح‌اول |
-| `APisDigitAP(dchar c)` | `bool` | رقم ASCII، **یا** فارسی، **یا** عربی-هندی |
-| `APnormalizeDigitsAP(string s)` | `string` | ارقام فارسی و عربی-هندی را به ASCII بازنویسی می‌کند؛ هیچ کاراکتر دیگری تغییر نمی‌کند |
-| `APisInteger(string s)` | `bool` | کل رشته عدد است |
-| `APJsonPathParser(string input)` | `PathStep[]` | شکستن `"a.b[2]"` به گام‌های مسیر |
-| `APStrIsNUll(string input, string paramName, out bool, out string)` | `void` | گارد null/خالی/سفید + دلیل |
+| `APisDigitAP(dchar c)` | `bool` | یک کاراکتر که رقم ASCII، **یا** فارسی، **یا** عربی-هندی است |
+| `APnormalizeDigitsAP(string s)` | `string` | ارقام را به ASCII بازنویسی می‌کند، به‌علاوه‌ی `٫`/`٬` → `.` و `−` → `-`؛ هیچ کاراکتر دیگری تغییر نمی‌کند |
+| `APisInteger(string s)` | `bool` | **فقط رقم** — بدون علامت و بدون ممیز (`"7"` بله، `"+7"` و `"12.5"` نه) |
+| `APisSignedInteger(string s)` | `bool` | یک `+`/`-` اختیاری و بعد فقط رقم (`"−7"` بله، `"7.5"` نه) |
+| `APisDecimal(string s)` | `bool` | علامت اختیاری، رقم، یک `.` و رقم (`"12.5"` و `"۱۲٫۵"` بله؛ `"1e9"` و `"12."` نه) |
+| `APJsonPathParser(string input)` | `PathStep[]` | تجزیه‌کننده‌ی مسیر JSON — بخش [نحو مسیر](#نحو-مسیر) را ببینید |
+| `APstrIsNil(string input, string paramName, out bool, out string reason)` | `void` | گارد null/خالی/سفید + دلیل |
 | `APCheckStringIsNullArray(string[] inputs)` | `bool` | گارد برای فهرست رشته‌ها |
-| `APrecursiveMerge(ref JSONValue target, ref JSONValue source, bool overwrite, bool mergeArrays, out string message)` | `bool` | ادغام عمیق، با پیام خطا |
+| `APrecursiveMerge(ref JSONValue target, JSONValue source, bool overwrite, bool mergeArrays, out string message)` | `bool` | ادغام عمیق در `target`؛ از `source` اول نسخه‌ی مستقل گرفته می‌شود، پس مقداری که می‌دهید هرگز تغییر نمی‌کند |
+| `APrecursiveMergeCopy(JSONValue target, JSONValue source, bool overwrite, bool mergeArrays, out JSONValue result, out string message)` | `bool` | همان ادغام روی یک **کپی**: `target` دست‌نخورده می‌ماند و نتیجه در `result` می‌آید |
+| `APdeepCopy(JSONValue v)` | `JSONValue` | نسخه‌ی کاملاً مستقل از درخت JSON — هیچ آرایه، آبجکت یا گره تودرتو مشترک نیست |
+
+`APStrIsNUll` و `StrIsNUll` هنوز هستند و `deprecated` خورده‌اند؛ کار را به `APstrIsNil` و
+`strIsNil` می‌سپارند. نام قدیمی هم_case_ی `Null` را قاطی کرده بود و پارام پیامش را `ErrorText`
+می‌نامید؛ در نسخه‌ی 2.5.0 حذف می‌شوند.
 
 **ویرایش فایل با مسیر**
 
@@ -211,22 +223,55 @@ void main()
 | `APupdateJsonValueOBJECT!V(string filePath, string jsonPath, V value)` | جایگزینی مقدار `path` در object |
 | `APupdateJsonValueARRAY!V(string filePath, string jsonPath, V value)` | جایگزینی مقدار `path` در array |
 | `APaddJsonItemOBJECT!T(string filePath, string jsonPath, T item)` | افزودن کلید تازه (اگر وجود داشته باشد شکست می‌خورد) |
-| `APaddJsonItemARRAY!T(string filePath, string jsonPath, T item)` | افزودن به آرایه‌ی `path` |
+| `APaddJsonItemARRAY!T(string filePath, string jsonPath, T item)` | درج عضو در جایگاه مشخص‌شده‌ی آرایه |
 | `APremoveJsonItemOBJECT(string filePath, string jsonPath)` | حذف یک کلید |
 | `APremoveJsonItemARRAY(string filePath, string jsonPath)` | حذف یک عضو آرایه |
 | `APmergeJson(string filePath, JSONValue jsonContentToMerge, bool overwriteExisting = true, bool mergeArrays = false)` | ادغام سند دیگر در فایل |
 
-**دو شکل مسیر، عمداً.** API ویرایش فایل و `APJsonPathParser` شکل `[ ]` را می‌پذیرند:
-`MainData.items[2].name`. اما `APgetJsonValue` مسیر را فقط با `.` می‌شکافد، پس عضو آرایه یک
-بخش مستقل است: `items.1` عنصر دوم را می‌خواند و `items[1]` کلید یافت‌نشده گزارش می‌شود.
-`APJsonPathParser` ارقام ASCII، فارسی و عربی-هندی را داخل براکت می‌پذیرد و پیش از تبدیل به عدد
-آنها را یکسان‌سازی می‌کند. کلید میانیِ غایب در object ساخته می‌شود؛ ایندکس میانیِ غایب در array
+### نحو مسیر
+
+**یک شکل مسیر، همه‌جا.** از نسخه‌ی 2.4.0 متدهای `APgetJsonValue`، `APJsonPathParser` و کل API
+ویرایش فایل از **یک** تجزیه‌کننده استفاده می‌کنند، پس یک رشته در همه‌شان یک معنی دارد:
+
+```
+MainData.items[2].name
+```
+
+| شکل | معنی |
+|---|---|
+| `a.b` | کلید `b` داخل آبجکت `a` |
+| `items[2]` | عنصر سوم آرایه‌ی `items` |
+| `rows[0][1]` | ایندکس زنجیره‌ای — عنصر دومِ `rows[0]` |
+| `weird\.key.next` | `\` کاراکتر بعد را escape می‌کند، پس یک کلید می‌تواند `.`, `[` یا `]` داشته باشد |
+| `rows[۲]` | ارقام فارسی و عربی-هندی پیش از تبدیل به عدد یکسان‌سازی می‌شوند |
+
+> **شکستن سازگاری در 2.4.0 — `items.1` دیگر ایندکس آرایه نیست.** تا 2.3.0 متد
+> `APgetJsonValue` مسیر را فقط با `.` می‌شکافد، پس یک بخش عددیِ تنها به‌عنوان ایندکس آرایه
+> کار می‌کرد. حالا که همه‌ی متدها یک تجزیه‌کننده دارند، یک بخش تنها همیشه کلید است و تنها
+> `[n]` ایندکس محسوب می‌شود؛ `items.1` روی آرایه اکنون `JSON path invalid: key '1' not found.`
+> پرتاب می‌کند. بنویسید `items[1]`. چیز دیگری در دستور مسیر تغییر نکرده است.
+
+مسیر کاراکتر‌به‌کاراکتر خوانده می‌شود، پس مسیر خراب به‌جای تولید یک گام غلط، **رد** می‌شود.
+همه‌ی این‌ها `InvalidArgumentExceptionAP` (زیرشاخه‌ی `BaseExceptionAP`) می‌دهند:
+
+| مسیر | دلیل رد شدن |
+|---|---|
+| `""` و `"   "` | `JSON path is empty.` |
+| `a..b` | `JSON path contains an empty key.` |
+| `items[3` | `JSON path has a missing closing bracket.` |
+| `items]` | `JSON path has a ']' without '['.` |
+| `items[0]x` | `Unexpected character after ']'.` |
+| `items[abc]` | `array index must be a non-negative integer.` |
+| `items[-1]` | `array index must be a non-negative integer.` — ایندکس منفی مثل پایتون نیست |
+
+کلید میانیِ غایب در object در API ویرایش فایل **ساخته می‌شود**؛ ایندکس میانیِ غایب در array
 ساخته **نمی‌شود**. `APremoveJsonItemOBJECT` کلید سطح‌اول را هم حذف می‌کند.
 
-**آرایه: add و update متقارن نیستند.** `APaddJsonItemARRAY` مقدار `index == length` را می‌پذیرد و
-در همان‌جا الحاق می‌کند؛ `APupdateJsonValueARRAY` همان ایندکس را رد می‌کند، چون به‌روزرسانی عضوی که
-وجود ندارد جایگزینی نیست. ایندکس خارج از دامنه پیام
-`array index N is out of range (length M)` می‌دهد.
+**آرایه: add درج می‌کند، update جایگزین می‌کند.** `APaddJsonItemARRAY` عضو را **در همان
+ایندکس** قرار می‌دهد، پس `index == length` همان جایگاه الحاق است و بزرگ‌تر از آن رد می‌شود با
+پیام `array index N is out of range (length M); nothing was changed.`. متد
+`APupdateJsonValueARRAY` همان ایندکس را رد می‌کند، چون به‌روزرسانی عضوی که وجود ندارد
+جایگزینی نیست.
 
 هر متد بالا یک دوقلوی `WithMessage` دارد که می‌گوید **چرا** `false` برگشت:
 
@@ -308,7 +353,7 @@ BaseExceptionAP
 │   └── JsonOperationExceptionAP     (jsonPath + jsonSnippet)
 ├── FileOperationExceptionAP         (systemErrorCode)
 ├── SyntaxErrorExceptionAP
-└── UnknownErrorexceptionAP
+└── UnknownErrorExceptionAP
 ```
 
 ```d
@@ -323,6 +368,12 @@ catch (JSONConvertExceptionAP e)
 }
 ```
 
-مسیری با ایندکس بی‌استفاده (`items[]`، `items[x]`) یک `ConvertExceptionAP` می‌دهد و مسیری با
-براکتِ بسته‌نشده یک `UnknownErrorexceptionAP` — هر دو داخل همین درخت، پس مصرف‌کننده‌ای که
-`BaseExceptionAP` را می‌گیرد با یک `std.conv.ConvException` خام نمی‌میرد.
+هر ردِّ مسیر یک `InvalidArgumentExceptionAP` است — مسیر خالی، کلید خالی، براکتِ بسته‌نشده،
+`]` بدون `[`، کاراکتر بعد از `]`، یا ایندکسی که عددِ نامنفی نباشد (`items[]`، `items[x]`). تنها
+استثنا ایندکسی است که در `int` جا نمی‌شود و آن `ConvertExceptionAP` می‌گیرد. هر دو داخل همین
+درخت‌اند، پس مصرف‌کننده‌ای که `BaseExceptionAP` را می‌گیرد با یک `std.conv.ConvException`
+خام نمی‌میرد.
+
+نام `UnknownErrorexceptionAP` حرف `e` کوچک داشت در حالی که خواهرش `SyntaxErrorExceptionAP`
+حرف `E` بزرگ دارد. در 2.4.0 به `UnknownErrorExceptionAP` تغییر نام پیدا کرد و املای قدیمی به‌صورت
+یک `deprecated` alias باقی ماند؛ پس کد موجود همچنان کامپایل می‌شود و پیام جابه‌جایی را می‌گیرد.

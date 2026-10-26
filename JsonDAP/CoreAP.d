@@ -88,7 +88,7 @@ public class CL_CoreAP
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP("An unexpected error occurred during JSON parsing.",
+            throw new UnknownErrorExceptionAP("An unexpected error occurred during JSON parsing.",
                     __FILE__, __LINE__, e);
         }
     }
@@ -143,7 +143,7 @@ public class CL_CoreAP
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP("An unexpected error occurred while checking JSON number type.",
+            throw new UnknownErrorExceptionAP("An unexpected error occurred while checking JSON number type.",
                     __FILE__, __LINE__, e);
         }
     }
@@ -166,7 +166,7 @@ public class CL_CoreAP
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP("An unexpected error occurred while checking JSON string type.",
+            throw new UnknownErrorExceptionAP("An unexpected error occurred while checking JSON string type.",
                     __FILE__, __LINE__, e);
         }
     }
@@ -190,7 +190,7 @@ public class CL_CoreAP
         }
         catch (Exception e)
         {
-            throw new UnknownErrorexceptionAP("An unexpected error occurred during JSON pretty printing.",
+            throw new UnknownErrorExceptionAP("An unexpected error occurred during JSON pretty printing.",
                     __FILE__, __LINE__, e);
         }
     }
