@@ -5,6 +5,9 @@ import TextDAPConsole;
 import TextDAPScalar;
 import std.format;
 import std.json;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public class CL_TextDap_JsonEdit
 {
@@ -113,17 +116,11 @@ public class CL_TextDap_JsonEdit
 
         string blankReason;
         bool blankFlag;
-        JsonAP.APStrIsNUll(jsonPath, "json path", blankFlag, blankReason);
+        JsonAP.APstrIsNil(jsonPath, "json path", blankFlag, blankReason);
 
         if (blankFlag)
         {
             message = blankReason;
-            return Optional!bool.init;
-        }
-
-        if (!CL_TextDap_Console.holdsIndexBrackets(jsonPath))
-        {
-            message = format!"'%s' has a broken index, a bracket needs ASCII digits inside."(jsonPath);
             return Optional!bool.init;
         }
 

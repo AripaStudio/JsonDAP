@@ -7,6 +7,9 @@ import std.conv;
 import std.format;
 import std.json;
 import std.string;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public enum scalarKindText = "text";
 public enum scalarKindWhole = "whole";

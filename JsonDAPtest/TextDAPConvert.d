@@ -9,6 +9,9 @@ import std.format;
 import std.json;
 import std.string;
 import std.utf : decode;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public class CL_TextDap_Convert
 {
@@ -86,7 +89,7 @@ public class CL_TextDap_Convert
     {
         string blankReason;
         bool blankFlag;
-        JsonAP.APStrIsNUll(outPath, "export path", blankFlag, blankReason);
+        JsonAP.APstrIsNil(outPath, "export path", blankFlag, blankReason);
 
         if (blankFlag)
         {
@@ -191,20 +194,22 @@ public class CL_TextDap_Convert
             JSONValue added = JsonAP.APserializeToJson!DocumentRecord(many.get[1]);
 
             string mergeMessage;
-            if (!JsonAP.APrecursiveMerge(base, added, true, false, mergeMessage))
+            JSONValue mergedValue;
+            if (!JsonAP.APrecursiveMergeCopy(base, added, true, false, mergedValue, mergeMessage))
             {
                 CL_TextDap_Console.sayFail(mergeMessage);
                 return false;
             }
 
-            auto merged = JsonAP.APconvertJsonValueToT!DocumentRecord(base, true);
+            auto merged = JsonAP.APconvertJsonValueToT!DocumentRecord(mergedValue, true);
 
             CL_TextDap_Frame.showFrame("array in, merge, record out", [
                     CL_TextDap_Frame.fieldText("read", format!"%s from text"
                             (CL_TextDap_Console.countWord(many.get.length, "record"))),
-                    CL_TextDap_Frame.fieldText("keys", format!"%s after the merge"(base.object.length)),
+                    CL_TextDap_Frame.fieldText("keys", format!"%s after the merge"(mergedValue.object.length)),
                     CL_TextDap_Frame.fieldText("title", merged.isNull ? "nothing" : merged.get.title),
                     CL_TextDap_Frame.fieldText("path", merged.isNull ? "nothing" : merged.get.filePath),
+                    CL_TextDap_Frame.fieldText("target kept", base.object["title"].str),
                 ]);
 
             return !merged.isNull;
@@ -233,6 +238,19 @@ public class CL_TextDap_Convert
         }
 
         CL_TextDap_Frame.showFrame("which digits pass", rows);
+
+        string[] gates;
+        foreach (sample; ["7", "+7", "−7", "۱۲", "12.5", "۱۲٫۵", "1e9", "x"])
+        {
+            gates ~= CL_TextDap_Frame.fieldText(sample, format!"whole %s, signed %s, decimal %s"
+                    (CL_TextDap_Console.yesNo(JsonAP.APisInteger(sample)),
+                    CL_TextDap_Console.yesNo(JsonAP.APisSignedInteger(sample)),
+                    CL_TextDap_Console.yesNo(JsonAP.APisDecimal(sample))));
+        }
+
+        CL_TextDap_Frame.showFrame("what each gate accepts", gates);
+        CL_TextDap_Console.sayNote(format!"'%s' normalises to '%s'."("۱۲٫۵",
+                JsonAP.APnormalizeDigitsAP("۱۲٫۵")));
         CL_TextDap_Console.sayNote("the editor keeps only ASCII digits, so line numbers stay predictable.");
         return true;
     }

@@ -10,6 +10,9 @@ import std.file;
 import std.format;
 import std.json;
 import std.string;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public class CL_TextDap_JsonTools
 {
@@ -37,7 +40,7 @@ public class CL_TextDap_JsonTools
     {
         string blankReason;
         bool blankFlag;
-        JsonAP.APStrIsNUll(jsonContent, "json", blankFlag, blankReason);
+        JsonAP.APstrIsNil(jsonContent, "json", blankFlag, blankReason);
 
         if (blankFlag)
         {
@@ -68,18 +71,11 @@ public class CL_TextDap_JsonTools
     {
         string blankReason;
         bool blankFlag;
-        JsonAP.APStrIsNUll(jsonPath, "path", blankFlag, blankReason);
+        JsonAP.APstrIsNil(jsonPath, "path", blankFlag, blankReason);
 
         if (blankFlag)
         {
             CL_TextDap_Console.sayFail(blankReason);
-            return false;
-        }
-
-        if (!CL_TextDap_Console.holdsIndexBrackets(jsonPath))
-        {
-            CL_TextDap_Console.sayFail(format!"'%s' has a broken index, a bracket needs ASCII digits inside."
-                    (jsonPath));
             return false;
         }
 
@@ -111,13 +107,6 @@ public class CL_TextDap_JsonTools
 
     public static bool readValueAt(string filePath, string dotPath, string kind)
     {
-        if (!CL_TextDap_Console.holdsIndexBrackets(dotPath))
-        {
-            CL_TextDap_Console.sayFail(format!"'%s' has a broken index, a bracket needs ASCII digits inside."
-                    (dotPath));
-            return false;
-        }
-
         string text;
         if (!readDocument(filePath, text))
         {
@@ -207,7 +196,7 @@ public class CL_TextDap_JsonTools
     {
         string blankReason;
         bool blankFlag;
-        JsonAP.APStrIsNUll(filePath, "file path", blankFlag, blankReason);
+        JsonAP.APstrIsNil(filePath, "file path", blankFlag, blankReason);
 
         if (blankFlag)
         {

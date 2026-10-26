@@ -12,6 +12,9 @@ import std.array : join;
 import std.conv;
 import std.format;
 import std.string;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public enum screenLines = 40;
 

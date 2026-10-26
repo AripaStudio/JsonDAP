@@ -6,6 +6,9 @@ import TextDAPFrame;
 import TextDAPModel;
 import TextDAPState;
 import std.format;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public class CL_TextDap_CursorActions
 {

@@ -11,6 +11,9 @@ import TextDAPStats;
 import std.conv;
 import std.format;
 import std.string;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public class CL_TextDap_State
 {

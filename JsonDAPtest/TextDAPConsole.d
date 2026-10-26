@@ -6,6 +6,9 @@ import std.conv;
 import std.format;
 import std.stdio;
 import std.string;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public class CL_TextDap_Console
 {
@@ -53,7 +56,7 @@ public class CL_TextDap_Console
 
         bool blankFlag;
         string blankReason;
-        JsonAP.APStrIsNUll(raw, "number", blankFlag, blankReason);
+        JsonAP.APstrIsNil(raw, "number", blankFlag, blankReason);
 
         if (blankFlag)
         {
@@ -103,7 +106,7 @@ public class CL_TextDap_Console
 
         bool blankFlag;
         string blankReason;
-        JsonAP.APStrIsNUll(raw, "text", blankFlag, blankReason);
+        JsonAP.APstrIsNil(raw, "text", blankFlag, blankReason);
 
         if (blankFlag)
         {
@@ -155,46 +158,6 @@ public class CL_TextDap_Console
             {
                 return false;
             }
-        }
-
-        return true;
-    }
-
-    public static bool holdsIndexBrackets(string jsonPath)
-    {
-        if (jsonPath is null)
-        {
-            return false;
-        }
-
-        int walk;
-
-        while (walk < cast(int) jsonPath.length)
-        {
-            if (jsonPath[walk] != '[')
-            {
-                walk++;
-                continue;
-            }
-
-            int closing = walk + 1;
-
-            while (closing < cast(int) jsonPath.length && jsonPath[closing] != ']')
-            {
-                closing++;
-            }
-
-            if (closing == cast(int) jsonPath.length)
-            {
-                return false;
-            }
-
-            if (!isPlainAsciiDigits(jsonPath[walk + 1 .. closing]))
-            {
-                return false;
-            }
-
-            walk = closing + 1;
         }
 
         return true;

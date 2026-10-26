@@ -7,6 +7,9 @@ import std.conv;
 import std.file;
 import std.format;
 import std.string : splitLines;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public class CL_TextDap_Store
 {
@@ -14,7 +17,7 @@ public class CL_TextDap_Store
     {
         string blankReason;
         bool blankFlag;
-        JsonAP.APStrIsNUll(path, "file path", blankFlag, blankReason);
+        JsonAP.APstrIsNil(path, "file path", blankFlag, blankReason);
 
         if (blankFlag)
         {
@@ -42,7 +45,7 @@ public class CL_TextDap_Store
     {
         string blankReason;
         bool blankFlag;
-        JsonAP.APStrIsNUll(path, "target file path", blankFlag, blankReason);
+        JsonAP.APstrIsNil(path, "target file path", blankFlag, blankReason);
 
         if (blankFlag)
         {

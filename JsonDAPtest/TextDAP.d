@@ -8,10 +8,25 @@ import TextDAPJsonActions;
 import TextDAPModel;
 import TextDAPSetActions;
 import TextDAPState;
+import std.algorithm : canFind;
 import std.conv;
 import std.format;
+import std.path : baseName;
 import std.stdio;
 import std.string;
+
+alias Action = void function(CL_TextDap_State state);
+
+struct Command
+{
+    string key;
+    string label;
+    string section;
+    Action action;
+}
+
+enum string[] helpKeys = ["?", "help"];
+enum string[] quitKeys = ["q", "exit", "quit"];
 
 void main()
 {
@@ -19,18 +34,28 @@ void main()
 
     CL_TextDap_State state = new CL_TextDap_State(defaultSessionPath);
 
+    showMenu(state);
+
     while (true)
     {
-        showMenu(state);
-
-        string raw = CL_TextDap_Console.ask("your choice: ");
+        string raw = CL_TextDap_Console.ask(promptOf(state));
         if (raw is null)
         {
             break;
         }
 
         string choice = toLower(strip(raw));
-        if (choice == "q" || choice == "exit")
+
+        if (choice.empty)
+        {
+            continue;
+        }
+        if (helpKeys.canFind(choice))
+        {
+            showMenu(state);
+            continue;
+        }
+        if (quitKeys.canFind(choice))
         {
             break;
         }
@@ -41,159 +66,103 @@ void main()
     leave(state);
 }
 
+Command[] commands()
+{
+    return [
+        Command("o", "open a file", "document", &CL_TextDap_DocActions.openFile),
+        Command("n", "start a new file", "document", &CL_TextDap_DocActions.startFile),
+        Command("r", "read the buffer", "document", &CL_TextDap_DocActions.readBuffer),
+        Command("w", "write the buffer", "document", &CL_TextDap_DocActions.writeFile),
+        Command("s", "write under a name", "document", &CL_TextDap_DocActions.writeUnder),
+        Command("i", "inspect the buffer", "document", &CL_TextDap_DocActions.inspectDocument),
+        Command("d", "discard the edits", "document", &CL_TextDap_DocActions.discardEdits),
+        Command("e", "replace one line", "edit", &CL_TextDap_DocActions.replaceLine),
+        Command("x", "delete one line", "edit", &CL_TextDap_DocActions.deleteLine),
+        Command("a", "append a line", "edit", &CL_TextDap_DocActions.appendLine),
+        Command("z", "undo the last edit", "edit", &CL_TextDap_DocActions.undoLastEdit),
+        Command("f", "find text in the buffer", "edit", &CL_TextDap_DocActions.findText),
+        Command("j", "validate the buffer", "json", &CL_TextDap_JsonActions.validateBuffer),
+        Command("v", "describe this JSON file", "json", &CL_TextDap_JsonActions.describeCurrent),
+        Command("g", "read a path", "json", &CL_TextDap_JsonActions.getValueAt),
+        Command("u", "write a path", "json", &CL_TextDap_JsonActions.updateValueAt),
+        Command("k", "add a key", "json", &CL_TextDap_JsonActions.addValueAt),
+        Command("-", "remove a key or item", "json", &CL_TextDap_JsonActions.removeValueAt),
+        Command("p", "explain a path", "json", &CL_TextDap_JsonActions.explainAPath),
+        Command("m", "merge another file", "json", &CL_TextDap_JsonActions.mergeAnotherFile),
+        Command("c", "the session cursor", "json", &CL_TextDap_CursorActions.work),
+        Command("h", "files opened before", "history and settings", &CL_TextDap_SetActions.showHistory),
+        Command("t", "settings", "history and settings", &CL_TextDap_SetActions.showSettings),
+        Command("y", "conversion demos", "history and settings", &CL_TextDap_SetActions.runConversionDemos),
+    ];
+}
+
 void runChoice(CL_TextDap_State state, string choice)
 {
-    if (choice == "o")
+    foreach (command; commands())
     {
-        CL_TextDap_DocActions.openFile(state);
-        return;
-    }
-    if (choice == "n")
-    {
-        CL_TextDap_DocActions.startFile(state);
-        return;
-    }
-    if (choice == "r")
-    {
-        CL_TextDap_DocActions.readBuffer(state);
-        return;
-    }
-    if (choice == "w")
-    {
-        CL_TextDap_DocActions.writeFile(state);
-        return;
-    }
-    if (choice == "s")
-    {
-        CL_TextDap_DocActions.writeUnder(state);
-        return;
-    }
-    if (choice == "i")
-    {
-        CL_TextDap_DocActions.inspectDocument(state);
-        return;
-    }
-    if (choice == "d")
-    {
-        CL_TextDap_DocActions.discardEdits(state);
-        return;
-    }
-    if (choice == "e")
-    {
-        CL_TextDap_DocActions.replaceLine(state);
-        return;
-    }
-    if (choice == "a")
-    {
-        CL_TextDap_DocActions.appendLine(state);
-        return;
-    }
-    if (choice == "x")
-    {
-        CL_TextDap_DocActions.deleteLine(state);
-        return;
-    }
-    if (choice == "z")
-    {
-        CL_TextDap_DocActions.undoLastEdit(state);
-        return;
-    }
-    if (choice == "f")
-    {
-        CL_TextDap_DocActions.findText(state);
-        return;
-    }
-    if (choice == "j")
-    {
-        CL_TextDap_JsonActions.validateBuffer(state);
-        return;
-    }
-    if (choice == "v")
-    {
-        CL_TextDap_JsonActions.describeCurrent(state);
-        return;
-    }
-    if (choice == "g")
-    {
-        CL_TextDap_JsonActions.getValueAt(state);
-        return;
-    }
-    if (choice == "u")
-    {
-        CL_TextDap_JsonActions.updateValueAt(state);
-        return;
-    }
-    if (choice == "k")
-    {
-        CL_TextDap_JsonActions.addValueAt(state);
-        return;
-    }
-    if (choice == "-")
-    {
-        CL_TextDap_JsonActions.removeValueAt(state);
-        return;
-    }
-    if (choice == "p")
-    {
-        CL_TextDap_JsonActions.explainAPath(state);
-        return;
-    }
-    if (choice == "m")
-    {
-        CL_TextDap_JsonActions.mergeAnotherFile(state);
-        return;
-    }
-    if (choice == "c")
-    {
-        CL_TextDap_CursorActions.work(state);
-        return;
-    }
-    if (choice == "h")
-    {
-        CL_TextDap_SetActions.showHistory(state);
-        return;
-    }
-    if (choice == "t")
-    {
-        CL_TextDap_SetActions.showSettings(state);
-        return;
-    }
-    if (choice == "y")
-    {
-        CL_TextDap_SetActions.runConversionDemos(state);
+        if (command.key != choice)
+        {
+            continue;
+        }
+
+        command.action(state);
         return;
     }
 
-    CL_TextDap_Console.sayFail(format!"'%s' is not on the menu."(choice));
+    CL_TextDap_Console.sayFail(format!"'%s' is not on the menu; type ? for the list."(choice));
 }
 
 void showMenu(CL_TextDap_State state)
 {
-    CL_TextDap_Frame.showFrame(titleOf(state), [
-            pair("o", "open a file", "n", "start a new file"),
-            pair("r", "read the buffer", "w", "write the buffer"),
-            pair("s", "write under a name", "i", "inspect the buffer"),
-            CL_TextDap_Frame.cell("d", "discard the edits"),
-        ]);
+    Command[] table = commands();
+    size_t walk;
 
-    CL_TextDap_Frame.showFrame("edit", [
-            pair("e", "replace one line", "x", "delete one line"),
-            pair("a", "append a line", "z", "undo the last edit"),
-            CL_TextDap_Frame.cell("f", "find text in the buffer"),
-        ]);
+    while (walk < table.length)
+    {
+        string section = table[walk].section;
+        size_t end = walk;
 
-    CL_TextDap_Frame.showFrame("json", [
-            pair("j", "validate the buffer", "v", "describe this JSON file"),
-            pair("g", "read a path", "u", "write a path"),
-            pair("k", "add a key", "-", "remove a key or item"),
-            pair("p", "explain a path", "m", "merge another file"),
-            CL_TextDap_Frame.cell("c", "the session cursor"),
-        ]);
+        while (end < table.length && table[end].section == section)
+        {
+            end++;
+        }
 
-    CL_TextDap_Frame.showFrame("history and settings", [
-            pair("h", "files opened before", "t", "settings"),
-            pair("y", "conversion demos", "q", "quit and save"),
+        string[] rows;
+        size_t at = walk;
+
+        while (at < end)
+        {
+            if (end - at > 1)
+            {
+                rows ~= cellPair(table[at], table[at + 1]);
+                at += 2;
+            }
+            else
+            {
+                rows ~= CL_TextDap_Frame.cell(table[at].key, table[at].label);
+                at++;
+            }
+        }
+
+        CL_TextDap_Frame.showFrame(walk is 0 ? titleOf(state) : section, rows);
+        walk = end;
+    }
+
+    CL_TextDap_Frame.showFrame("help and exit", [
+            CL_TextDap_Frame.cell(helpKeys[0], "show this menu")
+            ~ CL_TextDap_Frame.cell(quitKeys[0], "quit and save"),
         ]);
+}
+
+string promptOf(CL_TextDap_State state)
+{
+    if (!state.document.open)
+    {
+        return "TextDAP> ";
+    }
+
+    return format!"%s%s> "(CL_TextDap_Frame.clip(baseName(state.document.path), 28),
+            state.document.edited ? "*" : "");
 }
 
 string titleOf(CL_TextDap_State state)
@@ -207,10 +176,10 @@ string titleOf(CL_TextDap_State state)
     return state.options.sessionTitle;
 }
 
-string pair(string firstKey, string firstLabel, string secondKey, string secondLabel)
+string cellPair(Command first, Command second)
 {
-    return CL_TextDap_Frame.cell(firstKey, firstLabel)
-            ~ CL_TextDap_Frame.cell(secondKey, secondLabel);
+    return CL_TextDap_Frame.cell(first.key, first.label)
+            ~ CL_TextDap_Frame.cell(second.key, second.label);
 }
 
 void leave(CL_TextDap_State state)

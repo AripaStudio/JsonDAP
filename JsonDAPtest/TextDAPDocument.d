@@ -8,6 +8,9 @@ import std.algorithm : canFind;
 import std.format;
 import std.path : dirName;
 import std.string;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public enum maxSnapshots = 20;
 
@@ -70,7 +73,7 @@ public class CL_TextDap_Document
     {
         string blankReason;
         bool blankFlag;
-        JsonAP.APStrIsNUll(path, "new file path", blankFlag, blankReason);
+        JsonAP.APstrIsNil(path, "new file path", blankFlag, blankReason);
 
         if (blankFlag)
         {
@@ -148,7 +151,7 @@ public class CL_TextDap_Document
     {
         string blankReason;
         bool blankFlag;
-        JsonAP.APStrIsNUll(newPath, "target file path", blankFlag, blankReason);
+        JsonAP.APstrIsNil(newPath, "target file path", blankFlag, blankReason);
 
         if (blankFlag)
         {

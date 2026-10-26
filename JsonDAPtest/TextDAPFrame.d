@@ -1,5 +1,6 @@
 module TextDAPFrame;
 
+import std.conv : to;
 import std.format;
 import std.stdio;
 
@@ -47,24 +48,24 @@ public class CL_TextDap_Frame
             return "";
         }
 
-        if (cast(int) text.length <= width)
+        if (displayWidth(text) <= width)
         {
             return text;
         }
 
-        int cut = width - 1;
-        while (cut > 0 && isUtf8Tail(text[cut]))
-        {
-            cut--;
-        }
-
-        return text[0 .. cut] ~ "~";
+        dchar[] units = to!(dchar[])(text);
+        return cast(string) units[0 .. width - 1] ~ "~";
     }
 
     public static string padRight(string text, int width)
     {
         string clipped = clip(text, width);
-        return clipped ~ spaces(width - cast(int) clipped.length);
+        return clipped ~ spaces(width - displayWidth(clipped));
+    }
+
+    public static int displayWidth(string text)
+    {
+        return text is null ? 0 : cast(int) to!(dchar[])(text).length;
     }
 
     private static string edge(char fill)
@@ -75,7 +76,7 @@ public class CL_TextDap_Frame
     private static string titleEdge(string title)
     {
         string label = "-- " ~ clip(title, innerWidth - 4) ~ " ";
-        return "+" ~ label ~ fillLine('-', innerWidth - cast(int) label.length) ~ "+";
+        return "+" ~ label ~ fillLine('-', innerWidth - displayWidth(label)) ~ "+";
     }
 
     private static string bodyRow(string text)
@@ -86,7 +87,7 @@ public class CL_TextDap_Frame
     private static string centered(string text)
     {
         string clipped = clip(text, innerWidth);
-        int gap = innerWidth - cast(int) clipped.length;
+        int gap = innerWidth - displayWidth(clipped);
         int left = gap / 2;
 
         return "|" ~ spaces(left) ~ clipped ~ spaces(gap - left) ~ "|";
@@ -108,10 +109,5 @@ public class CL_TextDap_Frame
     private static string spaces(int count)
     {
         return fillLine(' ', count);
-    }
-
-    private static bool isUtf8Tail(char unit)
-    {
-        return (cast(ubyte) unit & 0xC0) == 0x80;
     }
 }

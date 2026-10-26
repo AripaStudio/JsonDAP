@@ -6,6 +6,9 @@ import std.json;
 import std.path : baseName;
 import std.string;
 import std.sumtype;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public enum sessionSchema = "textdap.session.1";
 public enum defaultSessionPath = "textdap_session.json";

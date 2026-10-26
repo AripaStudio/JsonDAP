@@ -9,6 +9,9 @@ import std.file;
 import std.format;
 import std.json;
 import std.string;
+import std.typecons;
+
+alias Optional = Nullable;
 
 public class CL_TextDap_Session
 {
@@ -16,7 +19,7 @@ public class CL_TextDap_Session
     {
         string blankReason;
         bool blankFlag;
-        JsonAP.APStrIsNUll(filePath, "session path", blankFlag, blankReason);
+        JsonAP.APstrIsNil(filePath, "session path", blankFlag, blankReason);
 
         if (blankFlag)
         {
