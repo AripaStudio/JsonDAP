@@ -369,7 +369,10 @@ FodyWeavers.xsd
 
 # DUB temporary build directories and artifact caches
 .dub/
+# `dub generate doc` writes this; the hand-written tutorial lives in Docs/ and must stay
+# visible to git (core.ignorecase is true here, so `docs/` would also match `Docs/`).
 docs/
+!Docs/
 
 # Compiled outputs and libraries
 *.exe
@@ -394,11 +397,14 @@ jsondap-test-library.pdb
 *.exp
 *.pdb
 
-# Test harness folder (tests run from JsonDAP/dub.json) and its runtime file
-/JsonDAP/test
+# Runtime files the test scenarios write next to the runner
 test_aripa_dap.json
+
+# TextDAP writes its session/history files into the working directory
+JsonDAPtest/textdap_session.json
+JsonDAPtest/textdap_history.json
+JsonDAPtest/probe-cli.json
 
 # Agent workspace and agent documentation
 /.freebuff
 /Archive
-/CHANGELOG.md

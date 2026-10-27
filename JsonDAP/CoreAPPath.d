@@ -60,7 +60,7 @@ public static class CL_CoreAP_Path
             }
 
             mixin(q{
-				static if (is(V == string))
+                static if (is(V == string))
                 {
                     if (current.type != JSONType.STRING)
                     {
@@ -88,7 +88,11 @@ public static class CL_CoreAP_Path
                                 "path", path, current.type.to!string, V.stringof, "getJsonValue",
                                 "Requested type does not match the JSON value type.", __FILE__, __LINE__);
                     }
-                    return Optional!V(current.floating.to!V());
+                    if (current.type == JSONType.FLOAT)
+                    {
+                        return Optional!V(current.floating.to!V());
+                    }
+                    return Optional!V(current.integer.to!V());
                 }
                 else static if (is(V == bool))
                 {
@@ -100,8 +104,8 @@ public static class CL_CoreAP_Path
                     }
                     return Optional!V(current.boolean);
                 }
-                else  throw new ConvertExceptionAP("JSON type conversion not supported.", "current.type", to!string(current.type), to!string(current.type), to!string(V.stringof), "getJsonValue", "Requested type is not supported.", __FILE__, __LINE__); 
-			});
+                else  throw new ConvertExceptionAP("JSON type conversion not supported.", "current.type", to!string(current.type), to!string(current.type), to!string(V.stringof), "getJsonValue", "Requested type is not supported.", __FILE__, __LINE__);
+            });
 
         }
         catch (JSONException e)

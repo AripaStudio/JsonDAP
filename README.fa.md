@@ -1,11 +1,14 @@
 # JsonDAP
 
 **کتابخانه‌ی JSON برای زبان D — سریالایز/دیسریالایز، کار با فایل، ویرایش مسیری و یک درخت استثنای یکپارچه.**
-ساخته‌ی [Aripa Pars Studio](https://github.com/AripaStudio) · مجوز MIT · آخرین نسخه **2.4.0** است.
+ساخته‌ی [Aripa Pars Studio](https://github.com/AripaStudio) · مجوز MIT · آخرین نسخه **2.4.1** است.
 
 **[English](README.md) · فارسی**
 
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+> این فایل **مرجع** است. آموزش گام‌به‌گام — یازده فصل، با مثال‌هایی که همه کامپایل و اجرا شده‌اند —
+> در [`Docs/`](Docs/StartPe.md) است.
 
 ---
 
@@ -64,18 +67,30 @@ JsonDAP یک **بسته‌ی سورس dub** است: `targetType` برابر `sou
 }
 ```
 
-**از registry دوب**
+**از راهِ git repository**
 
 ```json
 {
   "dependencies": {
-    "jsondap": "~>2.4.0"
+    "jsondap": {
+      "repository": "git+https://github.com/AripaStudio/JsonDAP.git",
+      "version": "v2.4.1"
+    }
   }
 }
 ```
 
+`repository` آدرس کلون است و `version` دقیقاً نام همان Git tag است که dub روی آن checkout
+می‌کند. تگ نسخه‌ی 2.4.1 در این پروژه `v2.4.1` است، پس پیشوند `v` را در این فیلد نگه دارید.
+dub آن تگ را کلون می‌کند و سورسش را داخل بیلد شما کامپایل می‌کند، پس نسخه‌ای که قفل
+کرده‌اید همان سورسی است که در گیت‌هاب می‌خوانید.
+
+JsonDAP در registry دوب منتشر نشده است، بنابراین `"jsondap": "~>2.4.1"` به چیزی resolve
+نمی‌شود. برای چک‌اوتی که کنار پروژه‌تان نگه می‌دارید از حالت `path` و برای همه‌ی حالت‌های
+دیگر از حالت git استفاده کنید.
+
 بعد `import JsonDAP;` و استفاده از `JsonAP.AP…`. چیز دیگری نصب نمی‌شود: سورس کتابخانه با
-بسته می‌آید و در هر پلتفرمی داخل فایل اجرایی شما کامپایل می‌شود.
+وابستگی می‌آید و در هر پلتفرمی داخل فایل اجرایی شما کامپایل می‌شود.
 
 > چون سورس داخل خود مصرف‌کننده کامپایل می‌شود، امکان «نسخه‌ی ناهم‌خوان» وجود ندارد؛ و یک
 > `JsonDAP.dll` یا `.lib` یا `.exp` قدیمی که از نسخه‌های قبل جا مانده هیچ کاری انجام نمی‌دهد.
@@ -177,7 +192,7 @@ void main()
 | متد | خروجی | کار |
 |---|---|---|
 | `APserializeToJson!T(T obj)` | `JSONValue` | تبدیل `T` به مقدار JSON |
-| `APserializeToJsonArray!T(T data)` | `JSONValue[]` | تبدیل آرایه/range به آرایه‌ی JSON |
+| `APserializeToJsonArray!T(T data)` | `JSONValue[]` | **یک** مقدار → آرایه‌ی تک‌عضویی، آماده‌ی `~=` کردن در batch؛ یک `JSONValue[]` بدون تغییر برمی‌گردد |
 | `APserializeTToJsonValue!T(T obj)` | `JSONValue` | تبدیل سطح‌پایین `T` به JSON |
 | `APdeserializeJson!T(string jsonContent)` | `Optional!T` | متن JSON به `T` (strict) |
 | `APdeserializeJsonLenient!T(string jsonContent)` | `Optional!T` | متن JSON به `T` (فیلد غایب مجاز) |

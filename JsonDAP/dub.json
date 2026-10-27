@@ -31,31 +31,49 @@
   "configurations": [
     {
       "name": "library",
+      "dflags": [],
+      "lflags": [],
+      "versions": [],
+      "buildOptions": [],
       "targetType": "sourceLibrary"
     },
     {
       "name": "unittest",
       "targetPath": "bin/test",
+      "dflags": [],
+      "lflags": [],
+      "versions": [],
+      "buildOptions": [],
       "targetType": "staticLibrary",
       "sourceFiles": [],
       "sourcePaths": [
-        ".",
-        "test"
+        "."
       ],
       "excludedSourceFiles": [
-        "bin/**"
+        "bin/**",
+        "Output/**",
+        "x64/**"
       ]
     },
     {
       "name": "debug",
-      "targetPath": "Output/debug"
+      "targetPath": "Output/debug",
+      "dflags": [],
+      "lflags": [],
+      "versions": [],
+      "buildOptions": []
     },
     {
       "name": "release",
-      "targetPath": "Output/release"
+      "targetPath": "Output/release",
+      "dflags": [],
+      "lflags": [],
+      "versions": [],
+      "buildOptions": []
     }
   ],
-  "version": "2.4.0",
+  "targetPath": "Output",
+  "version": "2.4.1",
   "homepage": "https://github.com/AripaStudio/JsonDAP",
   "importPaths": [
     "."

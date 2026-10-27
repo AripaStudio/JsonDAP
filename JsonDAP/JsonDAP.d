@@ -23,7 +23,7 @@ alias Optional = Nullable;
 //CL_JsonOtherCode :
 export import jsonOtherCodeAP;
 
-//Exceptions : 
+//Exceptions :
 export import ExceptionAP;
 
 export import ExceptionJsonAP;
@@ -174,7 +174,7 @@ public class JsonAP : APEditMessages
         return CL_FileAP.Exists(filePath);
     }
 
-    // CL_FileAP_Edit : 
+    // CL_FileAP_Edit :
 
     export static bool APupdateJsonValueOBJECT(V)(string filePath, string jsonPath, V value)
     {
@@ -220,12 +220,13 @@ public class JsonAP : APEditMessages
         string message;
         bool merge =  CL_FileAP_Merge.mergeJsonWithMessage(filePath, jsonContentToMerge, overwriteExisting, mergeArrays, message);
         if (merge)
-		{
+        {
             return "";
-		}else
-		{
+        }
+        else
+        {
             return message;
-		}
+        }
     }
 
     //A member of JsonAP hides the inherited member of the same name, so the out-parameter

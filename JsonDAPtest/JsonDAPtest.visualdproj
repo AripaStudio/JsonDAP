@@ -10,6 +10,8 @@
   <lib>0</lib>
   <subsystem>1</subsystem>
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <imppath>..\JsonDAP</imppath>
+  <additionalOptions>-i</additionalOptions>
  </Config>
  <Config platform="Win32" name="Release">
   <isX86_64>0</isX86_64>
@@ -22,6 +24,8 @@
   <lib>0</lib>
   <subsystem>1</subsystem>
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <imppath>..\JsonDAP</imppath>
+  <additionalOptions>-i</additionalOptions>
  </Config>
  <Config platform="x64" name="Debug">
   <isX86_64>1</isX86_64>
@@ -32,6 +36,8 @@
   <lib>0</lib>
   <subsystem>1</subsystem>
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <imppath>..\JsonDAP</imppath>
+  <additionalOptions>-i</additionalOptions>
  </Config>
  <Config platform="x64" name="Release">
   <isX86_64>1</isX86_64>
@@ -43,6 +49,8 @@
   <lib>0</lib>
   <subsystem>1</subsystem>
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <imppath>..\JsonDAP</imppath>
+  <additionalOptions>-i</additionalOptions>
  </Config>
  <Folder name="JsonDAPtest">
   <File path="dub.json" />

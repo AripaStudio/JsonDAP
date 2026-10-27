@@ -2,11 +2,14 @@
 
 **A JSON and file-handling library for the D programming language** — serialization,
 path-based file editing, and one exception tree.
-Built by [Aripa Pars Studio](https://github.com/AripaStudio) · MIT licensed · latest version **2.4.0**.
+Built by [Aripa Pars Studio](https://github.com/AripaStudio) · MIT licensed · latest version **2.4.1**.
 
 **[English](README.md) · [فارسی](README.fa.md)**
 
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+> This file is the **reference**. The step-by-step tutorial — eleven chapters, every example
+> compiled and run — is in [`Docs/`](Docs/StartEn.md).
 
 ---
 
@@ -65,18 +68,29 @@ methods (`APdeserializeJson!T`, `APgetJsonValue!V`, …) can be instantiated.
 }
 ```
 
-**From the dub registry**
+**From the git repository**
 
 ```json
 {
   "dependencies": {
-    "jsondap": "~>2.4.0"
+    "jsondap": {
+      "repository": "git+https://github.com/AripaStudio/JsonDAP.git",
+      "version": "v2.4.1"
+    }
   }
 }
 ```
 
+`repository` is the clone URL; `version` is the exact Git tag dub checks out. The 2.4.1 tag is
+`v2.4.1`, so keep the prefix in this field. dub clones that tag and compiles its sources into
+your build, so the pinned version is the source you read on GitHub.
+
+JsonDAP is **not** published on the dub registry, so `"jsondap": "~>2.4.1"` resolves to
+nothing. Use the path form for a checkout you keep beside your project and the git form for
+everything else.
+
 Then `import JsonDAP;` and use `JsonAP.AP…`. Nothing else to install: the library's sources
-arrive with the package and are compiled into your executable on every platform.
+arrive with the dependency and are compiled into your executable on every platform.
 
 ```d
 import JsonDAP;
@@ -186,7 +200,7 @@ with `enum bool value`: `IsIntAP`, `IsFloatAP`, `IsNumberAP`, `IsBoolAP`, `IsStr
 | Method | Returns | What it does |
 |---|---|---|
 | `APserializeToJson!T(T obj)` | `JSONValue` | `T` → JSON value |
-| `APserializeToJsonArray!T(T data)` | `JSONValue[]` | array/range → JSON array |
+| `APserializeToJsonArray!T(T data)` | `JSONValue[]` | **one** value → a one-element array, ready to `~=` into a batch; a `JSONValue[]` comes back unchanged |
 | `APserializeTToJsonValue!T(T obj)` | `JSONValue` | low-level `T` → JSON value |
 | `APdeserializeJson!T(string jsonContent)` | `Optional!T` | JSON text → `T` (strict) |
 | `APdeserializeJsonLenient!T(string jsonContent)` | `Optional!T` | JSON text → `T` (missing fields allowed) |
