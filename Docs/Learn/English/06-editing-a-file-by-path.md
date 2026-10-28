@@ -2,51 +2,98 @@
 
 Index: [StartEn.md](../../StartEn.md) · Previous: [05](05-reading-a-value.md)
 
-Each of these calls reads the file, changes one node, writes the file back, and answers `bool`.
-Nothing is thrown at you on a bad path — you get `false`, and the `…WithMessage` twin tells you why.
+Six methods change one node of a file at a time; six twins do the same and also tell you **why**
+when they answer `false`. The two you need most are `add` and `update` — here is how a real save
+uses them together.
+
+## Build a save on one twin
+
+`writeValue` tries to add, then updates — create-or-replace in two calls
+([TextDAPSession.d:114](../../../JsonDAPtest/TextDAPSession.d#L114)):
 
 ```d
-string path = /* a file holding {"autosave":false,"tab_width":4} */;
+public static bool writeValue(V)(string filePath, string jsonPath, V value, out string message)
+{
+    message = "";
 
-assert(JsonAP.APupdateJsonValueOBJECT!bool(path, "autosave", true));    // replace an existing key
-assert(JsonAP.APaddJsonItemOBJECT!int(path, "max_history", 12));        // add a key that is not there
-assert(JsonAP.APaddJsonItemOBJECT!int(path, "limits.rows", 50));        // creates "limits" on the way
-assert(JsonAP.APremoveJsonItemOBJECT(path, "max_history"));             // removes a key
+    string[] blankInputs = [filePath, jsonPath];
+    if (JsonAP.APCheckStringIsNullArray(blankInputs))
+    {
+        message = "the session path and the file path must both hold text.";
+        return false;
+    }
+
+    bool added = JsonAP.APaddJsonItemOBJECTWithMessage!V(filePath, jsonPath, value, message);
+    if (added)
+    {
+        return true;                  // it did not exist: it was added
+    }
+
+    return JsonAP.APupdateJsonValueOBJECTWithMessage!V(filePath, jsonPath, value, message);
+}
 ```
 
-After those four calls the file is `{"autosave":true,"limits":{"rows":50},"tab_width":4}`; the
-removal above leaves `{"autosave":true,"limits":{},"tab_width":4}` — an empty object stays, because
-only the named node was removed.
+| Line | What it does |
+|---|---|
+| `APCheckStringIsNullArray` | one guard for both inputs, before any file is touched |
+| `add` first | if the key is new, it is created — no pre-read needed |
+| `update` second | if it existed, `add` already said so; `message` now carries the real reason |
+
+Options, cursor, and every document field really do go through this one function — the
+document variant only composes the path first:
+
+```d
+public static bool writeDocumentValue(V)(string filePath, int index, string memberPath,
+        V value, out string message)
+{
+    return writeValue(filePath, CL_TextDap_History.documentPath(index) ~ "." ~ memberPath,
+            value, message);
+}
+```
+
+## Picking OBJECT or ARRAY from the path
+
+The path says which family you need — the **last step** decides (see
+[04](04-path-syntax.md) and `itemShape` at
+[TextDAPJsonEdit.d:113](../../../JsonDAPtest/TextDAPJsonEdit.d#L113)):
+
+```d
+return Optional!bool(steps[$ - 1].type == PathStepType.ArrayIndex);
+```
+
+`true` → the `…ARRAY…` family, `false` → the `…OBJECT…` family.
+
+## What the six do
 
 | Method | Contract |
 |---|---|
-| `APupdateJsonValueOBJECT!V` | the key must exist; `V` is the value's type |
-| `APaddJsonItemOBJECT!T` | the key must **not** exist, otherwise `false` |
-| `APremoveJsonItemOBJECT` | removes a nested or a top-level key |
-| `APupdateJsonValueARRAY!V` | replaces the element at the index |
-| `APaddJsonItemARRAY!T` | **inserts at** the index; `index == length` is the append position |
-| `APremoveJsonItemARRAY` | removes the element at the index |
+| `APupdateJsonValueOBJECT!V(path, key, value)` | the key must exist; `V` is the value's type |
+| `APaddJsonItemOBJECT!T(path, key, value)` | the key must **not** exist, or `false` |
+| `APremoveJsonItemOBJECT(path, key)` | removes a nested or a top-level key |
+| `APupdateJsonValueARRAY!V(path, index, value)` | replaces the element at the index |
+| `APaddJsonItemARRAY!T(path, index, value)` | **inserts at** the index; `index == length` appends |
+| `APremoveJsonItemARRAY(path, index)` | removes the element at the index |
 
-A missing intermediate **object key** is created. A missing intermediate **array index** is not.
+A missing intermediate **object key** is created on the way. A missing intermediate **array
+index** is not — there is nothing there to extend.
 
 ```d
-string arrayPath = /* a file holding [{"x":1,"y":1},{"x":2,"y":2}] */;
+assert(JsonAP.APaddJsonItemOBJECTWithMessage!int(path, "limits.rows", 50, message));
+// makes "limits" on the way → {"limits":{"rows":50}, …}
 
-assert(JsonAP.APupdateJsonValueARRAY!int(arrayPath, "[1].y", 99));        // [{"x":1,"y":1},{"x":2,"y":99}]
-assert(JsonAP.APaddJsonItemARRAY!Point(arrayPath, "[2]", Point(7, 8)));   // append at length
-// [{"x":1,"y":1},{"x":2,"y":99},{"x":7,"y":8}]
-assert(JsonAP.APremoveJsonItemARRAY(arrayPath, "[0]"));                   // [{"x":2,"y":99},{"x":7,"y":8}]
+assert(JsonAP.APupdateJsonValueARRAYWithMessage!int(path, "[1].y", 99, message));
+// [{…,"y":1},{…,"y":2}] → the second element's y becomes 99
 ```
 
-Indexes start at the file's root, so `"[1].y"` means *the second element's `y`*. There is no way
-to say "an element of the root array" without the leading bracket, and `APupdateJsonValueARRAY`
-refuses an index that is not there — updating a non-existent element is not a replacement.
+Negative indexes are refused (`items[-1]`), and updating an index that does not exist is refused
+too — replacing nothing is not a replacement.
 
 ## Why it returned `false`
 
-Every method above has a twin with `out string message`
-([JsonAPMessages.d:13](../../../JsonDAP/JsonAPMessages.d#L13)). These twins **never throw**: a
-missing file, a broken document, an unusable path — all come back as `false` plus a sentence.
+Every method above has a twin with `out string message`. These twins **never throw**: a missing
+file, a broken document, an unusable path — all come back as `false` plus a sentence. `message`
+is cleared at the start of every call, so one variable is safe to reuse, exactly as `writeValue`
+does.
 
 ```d
 string message;
@@ -63,8 +110,6 @@ if (!JsonAP.APupdateJsonValueOBJECTWithMessage!int(path, "settings.retry", 3, me
     // the path 'settings.retry' does not exist: key 'settings' is missing.
 }
 
-assert(JsonAP.APremoveJsonItemOBJECTWithMessage(path, "limits.rows", message));
-
 if (!JsonAP.APaddJsonItemARRAYWithMessage!Point(arrayPath, "[9]", Point(0, 0), message))
 {
     writeln(message);
@@ -72,33 +117,9 @@ if (!JsonAP.APaddJsonItemARRAYWithMessage!Point(arrayPath, "[9]", Point(0, 0), m
 }
 ```
 
-`message` is cleared at the start of every call, so one variable is safe to reuse — which is what
-[TextDAPSession.d:118](../../../JsonDAPtest/TextDAPSession.d#L118) relies on:
-
-```d
-bool added = JsonAP.APaddJsonItemOBJECTWithMessage!V(filePath, jsonPath, value, message);
-if (added)
-{
-    return true;                                  // the key did not exist: it is new
-}
-
-return JsonAP.APupdateJsonValueOBJECTWithMessage!V(filePath, jsonPath, value, message);
-```
-
-| Line | What it does |
-|---|---|
-| `add` first | the cheap way to say "create or replace" without reading the file |
-| `if (added) return true` | returns now, so the update never overwrites `message` |
-| the second call | same `message` variable, overwritten from the inside |
-
-That function is `writeValue` — the single write path of the whole app. Options, cursor, current
-file and every document field go through it
-([TextDAPSession.d:138](../../../JsonDAPtest/TextDAPSession.d#L138) adds the document index to the
-path before calling it).
-
 ## The two families side by side
 
-| Non-message (used by the tests) | Message twin (used by the app) |
+| Plain (`bool`) | Twin (`bool` + `message`) |
 |---|---|
 | `APupdateJsonValueOBJECT` | `APupdateJsonValueOBJECTWithMessage` |
 | `APupdateJsonValueARRAY` | `APupdateJsonValueARRAYWithMessage` |
@@ -107,10 +128,19 @@ path before calling it).
 | `APremoveJsonItemOBJECT` | `APremoveJsonItemOBJECTWithMessage` |
 | `APremoveJsonItemARRAY` | `APremoveJsonItemARRAYWithMessage` |
 
-The plain forms answer `bool` and stay quiet about the reason; the tests use them because an
-assertion on `false` is enough there
-([jsondap_file_tests.d:32](../../../JsonDAPtest/test/jsondap_file_tests.d#L32),
-[:56](../../../JsonDAPtest/test/jsondap_file_tests.d#L56)). Keep the twins — neither replaces the
-other.
+TextDAP itself always takes the twin — it wants the reason on every failure. The plain forms are
+for the moment when only success matters, such as a test that just asserts the edit happened:
+
+```d
+assert(JsonAP.APupdateJsonValueARRAY!int(path, "[1].y", 99));
+assert(JsonAP.APaddJsonItemARRAY!Point(path, "[2]", Point(7, 8)));
+assert(JsonAP.APremoveJsonItemARRAY(path, "[0]"));
+
+assert(JsonAP.APupdateJsonValueOBJECT!string(path, "text", "after"));
+assert(JsonAP.APaddJsonItemOBJECT!int(path, "extra.count", 5));
+assert(JsonAP.APremoveJsonItemOBJECT(path, "extra.count"));
+```
+
+Keep both families: neither replaces the other.
 
 Next: [07 — Merging and copying](07-merge-and-copy.md)

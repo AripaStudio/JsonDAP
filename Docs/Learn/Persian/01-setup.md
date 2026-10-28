@@ -2,16 +2,17 @@
 
 فهرست: [StartPe.md](../../StartPe.md)
 
-## دو راه برای وابسته شدن به JsonDAP
+## افزودن وابستگی
 
-JsonDAP یک **بستهٔ منبعی** (source package) برای dub است (`"targetType": "sourceLibrary"`). نه DLLای وجود دارد، نه کتابخانهٔ import و نه هیچ چیز دیگری که باید هم‌گام با سورس‌ها نگه داشته شود — dub فایل‌های `.d` را داخل build خود شما کامپایل می‌کند.
+JsonDAP یک **بستهٔ منبعی** (source package) برای dub است: نه DLLای وجود دارد، نه کتابخانهٔ
+import — dub فایل‌های `.d` را مستقیم داخل build شما کامپایل می‌کند.
 
 یک checkout که کنار پروژهٔ شما نشسته است:
 
 ```json
 {
   "dependencies": {
-    "jsondap": { "path": "../JsonDAP" }   // the folder holding JsonDAP/dub.json
+    "jsondap": { "path": "../../JsonDAP" }
   }
 }
 ```
@@ -23,66 +24,72 @@ JsonDAP یک **بستهٔ منبعی** (source package) برای dub است (`"t
   "dependencies": {
     "jsondap": {
       "repository": "git+https://github.com/AripaStudio/JsonDAP.git",
-      "version": "v2.4.1"                 // نام دقیق Git tag
+      "version": "v2.4.1"
     }
   }
 }
 ```
 
-JsonDAP روی registry رسمی dub نیست، پس `"jsondap": "~>2.4.1"` به هیچ چیز resolve نمی‌شود. نام Git tag برابر `v2.4.1` است؛ پیشوند `v` را در وابستگی نگه دارید.
+JsonDAP روی registry رسمی dub نیست، پس `~>2.4.1` به هیچ‌چیز resolve نمی‌شود. نام Git tag برابر
+`v2.4.1` است؛ پیشوند `v` را نگه دارید.
 
-## اولین خط‌های یک برنامه
+## نخستین برنامه
+
+همه‌چیز از کلاس `JsonAP` می‌گذرد. این مدل خودِ TextDAP است که کوچکش کرده‌ام:
 
 ```d
-import std.json;          // JSONValue / JSONType / parseJSON stay Phobos' own types
-import std.typecons;      // Nullable, which the library calls Optional
-import JsonDAP;           // one module brings the whole API
+import std.json;
+import std.typecons;      // Nullable که کتابخانه با نام Optional صدا می‌زندش
+import JsonDAP;
 
-struct Greeting
+struct Session
 {
-    @JsonName("text") string body;          // the wire key is "text"
+    @JsonName("current_file") string currentFile;   // کلید سیم با نام فیلد فرق دارد
+    @JsonName("tab_width") int tabWidth;
+    @JsonIgnore string lookupKey;                   // فقط در حافظه، هرگز نوشته نمی‌شود
 }
 
 void main()
 {
-    auto parsed = JsonAP.APdeserializeJson!Greeting(`{"text":"hello"}`);   // always qualified, always AP…
-    if (!parsed.isNull)
+    auto session = JsonAP.APdeserializeJsonLenient!Session(
+            `{"current_file":"notes.txt"}`);
+
+    if (!session.isNull)
     {
-        parsed.get.body;                     // "hello"
+        session.get.currentFile;   // "notes.txt"
+        session.get.tabWidth;      // 0 — در حالت مداراگر، فیلد غایب مقدار پیش‌فرضش را نگه می‌دارد
     }
 }
 ```
 
 | خط | چه کاری انجام می‌دهد |
 |---|---|
-| `import std.json;` | `JsonDAP` آن نوع `JSONValue` را دوباره export نمی‌کند؛ خودتان import کنید |
-| `import std.typecons;` | نوع بازگشتی خواننده‌ها `Nullable!T` است که با نام مستعار `Optional!T` صدا زده می‌شود |
-| `import JsonDAP;` | `JsonAP`، `PathStep`، استثناها و traitها را در دسترس می‌گذارد |
-| `JsonAP.AP…` | هر متد روی کلاس `JsonAP` به‌صورت `export static` است — تابع آزاد وجود ندارد |
-| `APdeserializeJson!Greeting` | **متن JSONی** را می‌گیرد که گرهٔ بالاترین سطحش یک object است؛ یک `"text"` به‌تنهایی یا `[1,2]` رد می‌شود |
+| `import std.typecons;` | خواننده‌ها `Nullable!T` برمی‌گردانند که با نام `Optional!T` صدا زده می‌شود |
+| `import JsonDAP;` | یک ماژول، `JsonAP` و استثناها و traitها را در دسترس می‌گذارد |
+| `JsonAP.AP…` | هر متد `export static` روی `JsonAP` است — تابع آزادی نیست |
+| `@JsonName("…")` | کلید روی سیم را عوض می‌کند؛ بدون صفت، همان نام فیلد D استفاده می‌شود |
+| `@JsonIgnore` | فیلد در حافظه می‌ماند و هرگز به فایل نمی‌رسد |
+| `APdeserializeJsonLenient!Session` | فیلد غایب به‌جای پرتاب استثنا، مقدار پیش‌فرضش را نگه می‌دارد |
 
-## build، test و برنامهٔ مرجع
-
-```bash
-dub build          # in your own package
-dub test           # compiles the library and runs every unittest in it
-```
-
-مخزن یک مصرف‌کنندهٔ کامل به نام **TextDAP** را در `JsonDAPtest/` همراه دارد — ویرایشگر متن کنسولی که فایل وضعیتش یک سند JSON است. این بزرگ‌ترین تست واقعی این کتابخانه است، و هر باب از این آموزش به خطی اشاره می‌کند که همان کار را آنجا انجام می‌دهد.
+## بیلد، تست و برنامهٔ مرجع
 
 ```bash
 cd JsonDAPtest
-dub build --force  # Output/TextDAP.exe
-dub test  --force  # the library's own test suite, living in JsonDAPtest/test/
+dub build --force   # Output/TextDAP.exe
+dub test  --force   # تست‌های خودِ کتابخانه، در JsonDAPtest/test/
 ```
+
+**TextDAP** (`JsonDAPtest/`) یک ویرایشگر متن کنسولی است که فایل وضعیتش یک سند JSON است —
+بزرگ‌ترین تست واقعی این کتابخانه. هر فصل زیر به فایل و خطی اشاره می‌کند که همان کار را انجام
+می‌دهد:
 
 | فایل | چرا خواندنش ارزش دارد |
 |---|---|
-| [TextDAPModel.d:27](../../../JsonDAPtest/TextDAPModel.d#L27) | structها، enum و به‌کارگیری `@JsonName` / `@JsonIgnore` |
-| [TextDAPSession.d:18](../../../JsonDAPtest/TextDAPSession.d#L18) | بارگذاری: guard، بررسی exists، اعتبارسنجی، خواندن مداراگر و پلهٔ catch |
-| [TextDAPSession.d:83](../../../JsonDAPtest/TextDAPSession.d#L83) | ذخیره: serialize، merge، نوشتن و راستی‌آزمایی |
-| [TextDAPConvert.d:18](../../../JsonDAPtest/TextDAPConvert.d#L18) | رفت‌وبرگشت‌های یک رکورد، یک مکان‌نما (cursor) و یک آرایه |
+| [TextDAPModel.d:27](../../../JsonDAPtest/TextDAPModel.d#L27) | structها، enum، `@JsonName` و `@JsonIgnore` |
+| [TextDAPSession.d:18](../../../JsonDAPtest/TextDAPSession.d#L18) | بارگذاری: گارد، وجود فایل، اعتبارسنجی، خواندن مداراگر، پلهٔ catch |
+| [TextDAPSession.d:83](../../../JsonDAPtest/TextDAPSession.d#L83) | ذخیره: serialize، merge، نوشتن، راستی‌آزمایی |
+| [TextDAPConvert.d:18](../../../JsonDAPtest/TextDAPConvert.d#L18) | رفت‌وبرگشت یک رکورد، یک مکان‌نما و یک آرایه |
 | [TextDAPJsonTools.d:108](../../../JsonDAPtest/TextDAPJsonTools.d#L108) | خواندن یک مقدار در یک مسیر |
-| [TextDAPJsonEdit.d:113](../../../JsonDAPtest/TextDAPJsonEdit.d#L113) | از روی شکل مسیر انتخاب می‌کند که کدام متد ویرایش درست است |
+| [TextDAPJsonEdit.d:113](../../../JsonDAPtest/TextDAPJsonEdit.d#L113) | انتخاب متد ویرایش درست از روی شکل مسیر |
 
 بعدی: [۰۲ — انواع و رفت‌وبرگشت](02-types-and-the-round-trip.md)

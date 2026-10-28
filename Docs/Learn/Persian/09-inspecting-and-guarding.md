@@ -2,68 +2,90 @@
 
 فهرست: [StartPe.md](../../StartPe.md) · قبلی: [۰۸](08-sumtype.md)
 
-هیچ‌چیز در این فصل فایل نمی‌نویسد. این‌ها آن تابع‌هایی هستند که تصمیم می‌گیرند یک تکه‌متن
-ارزش این را دارد که به بقیه‌ی کتابخانه سپرده شود یا نه.
+اینجا فایلی نوشته نمی‌شود. این‌ها بررسی‌هایی‌اند که **پیش از** اعتماد به متنِ یک فایل، جعبهٔ مسیر
+یا کیبورد انجام می‌شوند.
 
 ## این JSON از چه نوعی است؟
 
 ```d
 assert(JsonAP.APisValidJson(`{"a":1}`));
-assert(!JsonAP.APisValidJson(`{"a":`));              // no exception, just false
+assert(!JsonAP.APisValidJson(`{"a":`));              // false، بدون استثنا
 
 assert(JsonAP.APisJsonObject(`{"a":1}`));
 assert(JsonAP.APisJsonArray(`[1,2]`));
 assert(JsonAP.APisJsonNumber(`42`));
 assert(JsonAP.APisJsonString(`"text"`));
-assert(!JsonAP.APisJsonObject(`[1,2]`));              // valid JSON, wrong shape
+assert(!JsonAP.APisJsonObject(`[1,2]`));              // JSON معتبر، شکلِ دیگر
 ```
 
-| متد | چه چیزی می‌پرسد |
-|---|---|
-| `APisValidJson(text)` | آیا اصلاً parse می‌شود |
-| `APisJsonObject` / `APisJsonArray` / `APisJsonNumber` / `APisJsonString` | گره‌ی **بالایی** (top) چیست |
-| `APgetJsonItemCount(text)` | `Optional!long` — تعداد کلیدهای یک شیء یا عنصرهای یک آرایه، برای بقیه خالی |
-| `APprettyPrintJson(text)` | `Optional!string`، با تورفتگیِ چهار فاصله |
-| `APgetJsonValueType(JSONValue)` | نوع گره را از `std.json` به شکل `JSONType` برمی‌گرداند — برای گره‌ای که همین حالا در دست دارید |
+TextDAP جوابِ «این فایل چیست؟» را با پرسیدنِ به ترتیبِ هر چهار predicate می‌دهد، و وقتی
+بارگذاری شکست می‌خورد، تعداد را کنارِ دلیل می‌گذارد:
 
 ```d
-assert(JsonAP.APgetJsonItemCount(`{"a":1,"b":2}`).get == 2);   // two keys
-assert(JsonAP.APgetJsonItemCount(`[1,2,3]`).get == 3);         // three elements
-assert(JsonAP.APgetJsonItemCount(`nope`).isNull);              // not JSON: no answer
+private static string shapeOf(string jsonContent)
+{
+    if (JsonAP.APisJsonObject(jsonContent)) { return "object"; }
+    if (JsonAP.APisJsonArray(jsonContent))  { return "array"; }
+    if (JsonAP.APisJsonNumber(jsonContent)) { return "number"; }
+    if (JsonAP.APisJsonString(jsonContent)) { return "string"; }
+    return "other";
+}
 
+// و وقتی متن object نیست:
+if (!JsonAP.APisValidJson(text))
+{
+    Optional!long count = JsonAP.APgetJsonItemCount(text);
+    // "%s holds %d items but is not a JSON object."
+}
+```
+
+```d
+if (!JsonAP.APisValidJson(text))
+{
+    Optional!long count = JsonAP.APgetJsonItemCount(text);
+    // "%s holds %d items but is not a JSON object."
+}
+```
+
+نمایِ مرتب‌تر، وقتی می‌خواهید پارسه‌شده را نشان دهید:
+
+```d
 Optional!string pretty = JsonAP.APprettyPrintJson(`{"a":1}`);
-writeln(pretty.get);
 // {
 //     "a": 1
 // }
+// یک Optional!string: وقتی متن JSON نیست خالی است
 ```
 
-اپ به سؤال «این فایل چیست؟» با همان چهار predicate و به ترتیب جواب می‌دهد
-([TextDAPJsonTools.d:232](../../../JsonDAPtest/TextDAPJsonTools.d#L232)) و تعداد آیتم‌ها را کنار
-دلیلِ شکستِ یک بارگذاری چاپ می‌کند
-([TextDAPSession.d:44](../../../JsonDAPtest/TextDAPSession.d#L44) — `%s holds %d items but is not a JSON object`).
+| متد | چه می‌گوید |
+|---|---|
+| `APisValidJson(text)` | اصلاً parse می‌شود یا نه |
+| `APisJsonObject` / `APisJsonArray` / `APisJsonNumber` / `APisJsonString` | شکلِ گرهِ **بالایی** |
+| `APgetJsonItemCount(text)` | `Optional!long` — کلیدهای شیء یا عنصرهای آرایه، بقیه خالی |
+| `APprettyPrintJson(text)` | `Optional!string` با تورفتگیِ چهار فاصله‌ای |
+| `APgetJsonValueType(JSONValue)` | نوعِ گرهی که همین حالا در دست دارید |
 
-## خانواده‌ی رقم‌ها
+## خانوادهٔ رقم‌ها
 
-در ویرایشگر متن، عددها تایپ می‌شوند، با هر رقمی که کیبوردِ کاربر تولید کرده باشد.
+اعداد «تایپ» می‌شوند، با هر رقمی که کیبورد تولید کرده باشد.
 
 ```d
 assert(JsonAP.APisDigitAP('7'));
-assert(JsonAP.APisDigitAP('۵'));            // Persian U+06F5
-assert(JsonAP.APisDigitAP('٧'));            // Arabic-Indic U+0667
+assert(JsonAP.APisDigitAP('۵'));              // فارسی U+06F5
+assert(JsonAP.APisDigitAP('٧'));              // عربی-هندی U+0667
 assert(!JsonAP.APisDigitAP('x'));
 
-assert(JsonAP.APisInteger("123"));            // digits only, no sign, no point
+assert(JsonAP.APisInteger("123"));            // فقط دنبالهٔ رقم — بدون علامت، بدون نقطه
 assert(!JsonAP.APisInteger("+7"));
 assert(!JsonAP.APisInteger("12.5"));
 
-assert(JsonAP.APisSignedInteger("-12"));      // optional ASCII sign, then digits
-assert(JsonAP.APisSignedInteger("−7"));        // the U+2212 minus is normalised first
+assert(JsonAP.APisSignedInteger("-12"));      // علامتِ اختیاری، بعد ارقام
+assert(JsonAP.APisSignedInteger("−7"));        // منهای U+2212، اول نرمال می‌شود
 
-assert(JsonAP.APisDecimal("12.5"));           // sign, digits, one point, digits
-assert(JsonAP.APisDecimal("۱۲٫۵"));            // Persian digits and the Persian decimal point
-assert(!JsonAP.APisDecimal("1e9"));           // no exponent form
-assert(!JsonAP.APisDecimal("12"));            // a whole number is not a decimal
+assert(JsonAP.APisDecimal("12.5"));           // علامت، ارقام، یک نقطه، ارقام
+assert(JsonAP.APisDecimal("۱۲٫۵"));            // ارقام و نقطهٔ فارسی
+assert(!JsonAP.APisDecimal("1e9"));           // شکلِ توان ندارد
+assert(!JsonAP.APisDecimal("12"));            // صحیح ≠ اعشاری
 
 assert(JsonAP.APnormalizeDigitsAP("۱۲٫۵") == "12.5");
 assert(JsonAP.APnormalizeDigitsAP("−7") == "-7");
@@ -71,52 +93,74 @@ assert(JsonAP.APnormalizeDigitsAP("−7") == "-7");
 
 | خط | چه کاری انجام می‌دهد |
 |---|---|
-| `APisDigitAP(dchar)` | یک نویسه، سه نوشتار (script) — دروازه‌ی ورودیِ یک اسکنرِ دست‌نویس |
-| `APisInteger` / `APisSignedInteger` / `APisDecimal` | سه سؤالِ کاملاً متفاوت؛ همانی را بردارید که منظورتان است |
-| `APnormalizeDigitsAP(string)` | رقم‌ها را به ASCII، `٫`/`٬` را به `.` و `−` را به `-` تبدیل می‌کند؛ هر بایتِ دیگر دست‌نخورده می‌ماند |
+| `APisDigitAP(dchar)` | یک نویسه، سه نوشتار — دروازه‌ای که اسکنرِ دست‌نویس از آن رد می‌شود |
+| `APisInteger` / `APisSignedInteger` / `APisDecimal` | سه سؤال متفاوت؛ همانی را بردارید که منظورتان است |
+| `APnormalizeDigitsAP(string)` | رقم‌ها → ASCII، `٫`/`٬` → `.`، `−` → `-`؛ بقیهٔ بایت‌ها دست‌نخورده |
 
-اول نرمال‌سازی **و بعد** تبدیل، همان چیزی است که در پارسرِ مسیر اجازه می‌دهد `rows[۲]` کار کند
-([۰۴](04-path-syntax.md)). demoای که همه‌ی این‌ها را چاپ می‌کند
-[TextDAPConvert.d:224](../../../JsonDAPtest/TextDAPConvert.d#L224) است، و promptِ عددیِ کنسول قبل از
-هر `to!int`، `APstrIsNil` را با `APisInteger` ترکیب می‌کند
-([TextDAPConsole.d:59](../../../JsonDAPtest/TextDAPConsole.d#L59)).
+`digitGateDemo` همین جدول را از کاوشِ واقعی می‌سازد — یک خط برای هر نمونه، بعد سه گارد:
+
+```d
+foreach (sample; ["7", "+7", "−7", "۱۲", "12.5", "۱۲٫۵", "1e9", "x"])
+{
+    gates ~= CL_TextDap_Frame.fieldText(sample, format!"whole %s, signed %s, decimal %s"
+            (CL_TextDap_Console.yesNo(JsonAP.APisInteger(sample)),
+            CL_TextDap_Console.yesNo(JsonAP.APisSignedInteger(sample)),
+            CL_TextDap_Console.yesNo(JsonAP.APisDecimal(sample))));
+}
+```
+
+و promptِ عددی، پیش از هر `to!int`، گاردِ خالی را با `APisInteger` ترکیب می‌کند:
+
+```d
+JsonAP.APstrIsNil(raw, "number", blankFlag, blankReason);
+if (!blankFlag && JsonAP.APisInteger(raw))
+{
+    // حالا می‌شود تبدیل کرد
+}
+```
+
+اول نرمال‌سازی و **بعد** تبدیل، همان چیزی است که به `items[۲]` اجازهٔ کار می‌دهد (ر.ک
+[۰۴](04-path-syntax.md)).
 
 ## نگهبان‌های فضای خالی
 
+`APstrIsNil` یک predicate با خروجی `bool` نیست — `void` است با دو پارامتر `out`: یک flag و یک
+جمله که نامِ همان پارامتری را می‌برد که داده‌اید.
+
 ```d
-bool flag;
-string reason;
+bool flag; string reason;
 
 JsonAP.APstrIsNil("notes.txt", "file path", flag, reason);
-assert(!flag);                                   // a real value: nothing to report
-assert(reason.length == 0);
+assert(!flag);                                   // مقدار واقعی: چیزی برای گفتن نیست
 
 JsonAP.APstrIsNil("   ", "file path", flag, reason);
-assert(flag);                                    // the flag means "this input is unusable"
-writeln(reason);                                 // Parameter 'file path' cannot be just whitespace.
+assert(flag);                                    // «این ورودی قابل استفاده نیست»
+// reason: Parameter 'file path' cannot be just whitespace.
 ```
-
-نامش شبیه یک predicate است که bool برمی‌گرداند؛ ولی نیست — `void` است و دو پارامتر `out` می‌نویسد.
-وقتی ورودی `null` است یا خالی یا فقط فاصله‌ی سفید، flag برابر `true` می‌شود و پیام همان پارامتری را
-نام می‌برد که داده‌اید.
 
 ```d
-assert(!JsonAP.APCheckStringIsNullArray(["a", "b"]));        // all of them hold text
-assertThrown!UnknownErrorExceptionAP(JsonAP.APCheckStringIsNullArray(["a", ""]));
-assert(JsonAP.APCheckStringIsNullArray([]));                  // an empty list answers true
+assert(!JsonAP.APCheckStringIsNullArray(["a", "b"]));   // همه متن دارند
+assert(JsonAP.APCheckStringIsNullArray([]));            // فهرست خالی -> true، چیزی برای بررسی نیست
+// یک ورودیِ خالی -> UnknownErrorExceptionAP با فهرست همهٔ indexهای خاطی
 ```
 
-[PublicCodeOtherCode.d:132](../../../JsonDAP/PublicCodeOtherCode.d#L132): فهرست را طی می‌کند، و یک
-`UnknownErrorExceptionAP` همه‌ی indexهای خاطی و پیامشان را با هم با خودش می‌آورد. پاسخِ سه‌حالتیِ
-نسخه‌ی آرایه‌ای (`false` = تمیز، `true` = چیزی برای بررسی نیست، throw = دست‌کم یک فضای خالی) دلیلش
-است که اپ همان را یک بار و در ابتدای هر نوشتن صدا می‌کند
-([TextDAPSession.d:123](../../../JsonDAPtest/TextDAPSession.d#L123)).
+هر نوشتنِ TextDAP با همین یک فراخوانی شروع می‌شود، پیش از هر دست‌زدنی به فایل:
+
+```d
+string[] blankInputs = [filePath, jsonPath];
+if (JsonAP.APCheckStringIsNullArray(blankInputs))
+{
+    message = "the session path and the file path must both hold text.";
+    return false;
+}
+```
+
+فرمِ دوپارامتری همان کار را برای یک ورودی می‌کند — `load`، `explainPath`، `validateText` و
+`readDocument` همه با همین شروع می‌شوند.
 
 ## نام‌های منسوخ (Deprecated)
 
-`APStrIsNUll` ([JsonDAP.d:160](../../../JsonDAP/JsonDAP.d#L160)) و `StrIsNUll` هنوز export می‌شوند،
-با برچسب `deprecated`، و کار را به املای درستِ همان نام‌ها می‌سپارند. دلیلِ نگه‌داشتنشان این قاعده‌ی
-کتابخانه است که در یک patch هیچ‌چیز حذف نمی‌شود؛ در `2.5.0` برداشته می‌شوند. از `APstrIsNil` استفاده
-کنید.
+`APStrIsNUll` و `StrIsNUll` هنوز export می‌شوند، با برچسب `deprecated`، و کار را به املای درستِ
+همان نام‌ها می‌سپارند — در یک patch هیچ‌چیز حذف نمی‌شود. از `APstrIsNil` استفاده کنید.
 
 بعدی: [۱۰ — استثناها](10-exceptions.md)

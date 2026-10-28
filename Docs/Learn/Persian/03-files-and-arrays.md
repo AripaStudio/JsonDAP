@@ -2,108 +2,100 @@
 
 فهرست: [StartPe.md](../../StartPe.md) · قبلی: [۰۲](02-types-and-the-round-trip.md)
 
-## یک رکورد، یک فایل
+## یک ذخیره، یک بارگذاری
+
+این یک `save` تا حد زیادی عین خودش
+([TextDAPSession.d:83](../../../JsonDAPtest/TextDAPSession.d#L83)) — serialize، ادغام در فایلِ
+موجود، و بعد خواندن دوبارهٔ نتیجه:
 
 ```d
-struct Point
+JSONValue wire = JsonAP.APserializeToJson!SessionFile(session);
+
+if (JsonAP.APexistsFile(filePath))
 {
-    @JsonName("x") int x;
-    @JsonName("y") int y;
+    if (JsonAP.APmergeJsonWithMessage(filePath, wire, true, false, message))
+    {
+        return verify(filePath, message);
+    }
 }
 
-string path = buildPath(tempDir, "note.json");
-
-assert(!JsonAP.APexistsFile(path));                              // nothing there yet
-assert(JsonAP.APwriteJsonFile!Point(path, Point(1, 2)));         // serialize + write, true on success
-assert(JsonAP.APexists(path));                                   // the same check, the older name
-assert(JsonAP.APgetJsonFileSize(path).get > 0);                   // Optional!long, bytes
-assert(JsonAP.APreadJsonFile!Point(path).get == Point(1, 2));     // read + deserialize
+if (!JsonAP.APwriteJsonFile!JSONValue(filePath, wire))
+{
+    message = format!"nothing was written to %s."(filePath);
+    return false;
+}
 ```
 
-اکنون فایل `{"x":1,"y":2}` را نگه می‌دارد.
+چرا ادغام و نه بازنویسی؟ کلیدهایی که برنامه نمی‌شناسد — مثل یک `cursor` که قابلیت دیگری
+نوشته — بعد از ذخیره سرِ جایشان می‌مانند. بعد `verify` دوباره فایل را می‌خواند: هست، خواندنی
+است، و هنوز JSON معتبر است.
 
 | خط | چه کاری انجام می‌دهد |
 |---|---|
-| `APwriteJsonFile!Point` | آرگومان template نوعِ *آرگومان دوم* است؛ پاسخ `bool` می‌دهد و مقداری برنمی‌گرداند |
-| `APexistsFile` | یک فراخوانی، بدون استثنا روی فایلِ نبودن — فقط `false` جواب می‌دهد |
-| `APgetJsonFileSize` | `Optional!long`؛ وقتی اندازه را نشود گرفت خالی است |
-| `APreadJsonFile!Point` | وقتی فایل آنجا نباشد `FileOperationExceptionAP` را **پرتاب می‌کند** (پایین‌تر ببینید) |
+| `APexistsFile(path)` | فایل نبود `false`؛ هرگز استثنا نمی‌دهد |
+| `APwriteJsonFile!T` | `bool`؛ آن `!T` نوعِ آرگومان دوم است |
+| `APmergeJsonWithMessage` | `wire` را در فایلِ روی دیسک ادغام می‌کند؛ پاسخ `bool` + `message` |
+| `verify` | موفقیتِ خام ممنوع: آنچه نوشته شد باید دوباره خوانده شود |
+
+`APreadJsonFile!T` وقتی فایل نباشد `FileOperationExceptionAP` پرتاب می‌کند:
 
 ```d
-try
-{
-    JsonAP.APreadJsonFile!Point(buildPath(tempDir, "no_such_file.json"));
-}
 catch (FileOperationExceptionAP caught)
 {
-    caught.filePath;        // C:\Users\…\Temp\no_such_file.json
-    caught.operationType;   // read
-    // File not found for reading.
+    caught.filePath;      // کدام فایل
+    caught.operationType; // "read"
 }
 ```
 
 ## پوشه‌های والد برایتان ساخته می‌شوند
 
 ```d
-string nested = buildPath(tempDir, "a", "b", "note.json");
-assert(JsonAP.APwriteJsonFile!Point(nested, Point(9, 9)));   // a/ and a/b/ are made on the way
-assert(exists(nested));
+// فایلِ وضعیت در یک مسیر تو در تو، در اولین اجرا:
+JsonAP.APwriteJsonFile!JSONValue("state/session/textdap_session.json", wire);
+// state/ و state/session/ در همین مسیر ساخته می‌شوند
 ```
 
-[FileAP.d:87](../../../JsonDAP/FileAP.d#L87) پیش از نوشتن `mkdirRecurse` را صدا می‌زند، پس برنامه‌ای که
-وضعیتش را در `state/app.json` ذخیره می‌کند در اولین اجرا لازم نیست چیزی را دستی بسازد.
+نیازی به `mkdirRecurse` دستی نیست: نویسنده پوشه‌های نبوده را خودش می‌سازد.
 
-## یک آرایه از رکوردها در یک فایل
+## یک آرایه از رکوردها
 
-```d
-Point[] points = [Point(1, 2), Point(3, 4)];
-
-assert(JsonAP.APwriteJsonFile!(Point[])(path, points));       // writes [{"x":1,"y":2},{"x":3,"y":4}]
-Point[] fromFile = JsonAP.APreadJsonArray!Point(path).get;    // the array reader wants T, not T[]
-assert(fromFile.length == 2);
-assert(fromFile[1] == Point(3, 4));
-```
-
-`APreadJsonArray!T` کل فایل را می‌خواند، اصرار دارد که گرهٔ بالاترین سطح یک array است و
-`Optional!(T[])` برمی‌گرداند. همان تبدیل از **متن** با `APdeserializeJsonArray!T` انجام می‌شود:
-
-```d
-Point[] fromText = JsonAP.APdeserializeJsonArray!Point(`[{"x":5,"y":6}]`).get;
-assert(fromText[0] == Point(5, 6));
-assertThrown!JSONConvertExceptionAP(JsonAP.APdeserializeJsonArray!Point(`{"x":5}`));  // not an array
-```
-
-## `APserializeToJsonArray` الحاق می‌کند
+خروجی تاریخچه یک `JSONValue[]` می‌سازد و آن را به‌صورت یک سند می‌نویسد
+([TextDAPConvert.d:102](../../../JsonDAPtest/TextDAPConvert.d#L102)):
 
 ```d
 JSONValue[] wire;
 foreach (record; records)
 {
-    wire ~= JsonAP.APserializeToJsonArray!Point(Point(7, 8));   // one value in, ONE element out
+    wire ~= JsonAP.APserializeToJsonArray!DocumentRecord(record);  // یک رکورد -> یک آرایه
 }
-assert(wire.length == records.length);
+
+JsonAP.APwriteJsonFile!JSONValue(outPath, JSONValue(wire));
+
+Optional!(DocumentRecord[]) imported = JsonAP.APreadJsonArray!DocumentRecord(outPath);
 ```
 
-| ورودی `T` | خروجی `JSONValue[]` |
-|---|---|
-| یک struct، یک class، یک enum | یک آرایهٔ تک‌عضویی که همان گره را نگه می‌دارد |
-| `JSONValue` | یک آرایهٔ تک‌عضویی که او را نگه می‌دارد |
-| `JSONValue[]` | همان آرایه، دست‌نخورده |
+`APserializeToJsonArray!T` همیشه یک آرایهٔ **تک‌عضوی** پیرامون همان رکورد برمی‌گرداند؛ برای همین
+الحاق با `~=` کار درست را می‌کند. `APreadJsonArray!T` نوع عضو `T` را می‌خواهد، نه `T[]`، و فایلی
+که ریشه‌اش object است را رد می‌کند.
 
-[FileAPJson.d:155](../../../JsonDAP/FileAPJson.d#L155). این متد برای ساختن یک آرایه از رکوردها داخل
-یک حلقه وجود دارد، و همین کاری است که
-[TextDAPConvert.d:102](../../../JsonDAPtest/TextDAPConvert.d#L102) پیش از نوشتن فایل تاریخچه انجام
-می‌دهد و دو خط بعدتر با `APreadJsonArray` دوباره می‌خواندش ([:114](../../../JsonDAPtest/TextDAPConvert.d#L114)).
+همان تبدیل از متن (نه فایل) با `APdeserializeJsonArray!T` است
+([TextDAPConvert.d:186](../../../JsonDAPtest/TextDAPConvert.d#L186)):
+
+```d
+auto many = JsonAP.APdeserializeJsonArray!DocumentRecord(pack);
+assert(many.get.length == 2);
+assertThrown!JSONConvertExceptionAP(JsonAP.APdeserializeJsonArray!DocumentRecord(`{"x":5}`));
+```
 
 ## API فایل در یک جدول
 
 | متد | چه برمی‌گرداند | حالت شکست |
 |---|---|---|
-| `APwriteJsonFile!T(filePath, data)` | `bool` | `false`، یا یک استثنای کتابخانه از لایهٔ OS |
-| `APreadJsonFile!T(filePath)` | `Optional!T` | وقتی فایل یا JSONش قابل استفاده نباشد پرتاب می‌کند |
-| `APreadJsonArray!T(filePath)` | `Optional!(T[])` | وقتی گرهٔ بالاترین سطح array نباشد پرتاب می‌کند |
-| `APgetJsonFileSize(filePath)` | `Optional!long` | `Optional` خالی |
-| `APexistsFile(filePath)` | `bool` | `false`، هرگز پرتاب نمی‌کند |
-| `APexists(filePath)` | `bool` | همان پاسخ، با نام قدیمی‌تر |
+| `APwriteJsonFile!T(path, data)` | `bool` | `false`، یا یک استثنای کتابخانه از لایهٔ OS |
+| `APreadJsonFile!T(path)` | `Optional!T` | وقتی فایل یا JSONِ آن قابل استفاده نباشد پرتاب می‌کند |
+| `APreadJsonArray!T(path)` | `Optional!(T[])` | وقتی ریشه array نباشد پرتاب می‌کند |
+| `APgetJsonFileSize(path)` | `Optional!long` | اندازه ناشدنی → `Optional` خالی |
+| `APexistsFile(path)` | `bool` | `false`، هرگز استثنا نمی‌دهد |
+| `APexists(path)` | `bool` | همان پاسخ، با نام قدیمی‌تر |
 
 بعدی: [۰۴ — نحوِ مسیر](04-path-syntax.md)

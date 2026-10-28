@@ -2,51 +2,48 @@
 
 فهرست: [StartPe.md](../../StartPe.md) · قبلی: [۰۱](01-setup.md)
 
-## نوعی که زیر آزمایش است
+## نوعی که یک session ذخیره می‌کند
+
+کلِ وضعیتِ یک session یک struct است. اول `DocumentRecord` را بخوانید — هر قانونِ پایین همین‌جا
+دیده می‌شود
+([TextDAPModel.d:35](../../../JsonDAPtest/TextDAPModel.d#L35)):
 
 ```d
-struct Note
+public struct DocumentRecord
 {
-    @JsonName("text") string body;          // the wire key is "text", not "body"
-    @JsonName("tags") string[] labels;      // arrays of strings are arrays on the wire
-    @JsonIgnore string cacheKey;            // never written, never read
+    @JsonName("file_path") string filePath;
+    @JsonName("title") string title;
+    @JsonName("open_count") int openCount;
+    @JsonName("state") DocumentState state;      // enum -> روی سیم عدد صحیح
+    @JsonName("note") Optional!string note;      // Optional خالی -> null
+    @JsonIgnore string lookupKey;                // در حافظه ساخته می‌شود، هرگز نوشته نمی‌شود
 }
 ```
 
-`@JsonName` و `@JsonIgnore` تنها دو صفتی هستند که کتابخانه آن‌ها را می‌خواند
-([CoreAP.d:19](../../../JsonDAP/CoreAP.d#L19)، [CoreAP.d:24](../../../JsonDAP/CoreAP.d#L24)).
-فیلدهایی که هیچ صفتی ندارند نام D خودشان را نگه می‌دارند.
+`@JsonName` و `@JsonIgnore` تنها دو صفتی‌اند که کتابخانه می‌خواند. فیلد بدون صفت، نام D خودش را
+نگه می‌دارد.
 
 ## بیرون، و بعد دوباره درون
 
+همان رفت‌وبرگشتی که در هر ذخیره اجرا می‌شود
+([TextDAPSession.d:91](../../../JsonDAPtest/TextDAPSession.d#L91)):
+
 ```d
-import std.json : JSONValue, JSONType;
-import JsonDAP;
+JSONValue wire = JsonAP.APserializeToJson!SessionFile(session);      // struct -> JSONValue
+auto back = JsonAP.APdeserializeJson!SessionFile(wire.toString());   // متن -> Optional!SessionFile
 
-Note note = Note("first post", ["d", "json"], "never-serialised");
-
-JSONValue wire = JsonAP.APserializeToJson!Note(note);   // Note  -> JSONValue
-auto back      = JsonAP.APdeserializeJson!Note(wire.toString());   // text -> Optional!Note
-
-assert(back.get.body == "first post");
-assert(back.get.labels == ["d", "json"]);
-assert(back.get.cacheKey is null);                      // the ignored field stayed at its default
+assert(back.get.schema == session.schema);
+assert(back.get.documents.length == session.documents.length);
 ```
 
-خروجی `wire.toString()` برابر است با `{"tags":["d","json"],"text":"first post"}` — ترتیب
-کلیدها از آرایهٔ انجمنی (associative array) `std.json` پیروی می‌کند، پس هرگز متن تولیدشده را با
-متن انتظار مقایسه نکنید.
+ترتیب `wire.toString()` از آرایهٔ انجمنیِ `std.json` می‌آید؛ پس هرگز متن تولیدشده را با متن
+انتظار مقایسه نکنید — مقدارهای پارسه‌شده را مقایسه کنید.
 
 | خط | چه کاری انجام می‌دهد |
 |---|---|
-| `APserializeToJson!Note` | نویسندهٔ سطح‌بالا؛ `APserializeTToJsonValue!Note` نسخهٔ سطح‌پایین است، با همان خروجی |
-| `APdeserializeJson!Note` | **سخت‌گیر**: هر فیلد باید حاضر باشد، وگرنه استثنا پرتاب می‌کند |
-| `back.get` | خواننده پاسخ `Optional!Note` می‌دهد؛ `.get` فقط بعد از بررسی `.isNull` قانونی است |
-
-مرجع اپ: [TextDAPConvert.d:18](../../../JsonDAPtest/TextDAPConvert.d#L18)
-(`APserializeTToJsonValue` → `APgetJsonValueType` → `APconvertJsonValueToT`، و بعد یک مقایسهٔ
-فیلد‌به‌فیلد) و [TextDAPModel.d:27](../../../JsonDAPtest/TextDAPModel.d#L27) برای مدلی که از هر
-نگاشتِ جدول پایین استفاده می‌کند.
+| `APserializeToJson!T` | نویسندهٔ سطح‌بالا؛ `APserializeTToJsonValue!T` هم‌تای سطح‌پایینش است، با همان خروجی |
+| `APdeserializeJson!T` | **سخت‌گیر**: هر فیلد باید حاضر باشد، وگرنه استثنا پرتاب می‌کند |
+| `back.get` | خواننده پاسخ `Optional!T` می‌دهد؛ `.get` فقط بعد از بررسی `.isNull` قانونی است |
 
 ## قرارداد
 
@@ -55,70 +52,63 @@ assert(back.get.cacheKey is null);                      // the ignored field sta
 | `struct` / `class` | object |
 | `T[]` | array |
 | `enum` | عدد صحیح، و تنها یک **عضو معتبر** |
-| `Optional!T` (= `Nullable!T`) | وقتی خالی است `null` |
+| `Optional!T` (= `Nullable!T`) | خالی که باشد `null` |
 | مرجع کلاسِ `null` | `null` |
-| `SumType` | `{"tag":"<member>","value":<payload>}` — ر.ک [۰۸](08-sumtype.md)
-
-## enum و Nullable، در هر دو جهت
-
-```d
-enum Priority { low = 0, high = 1 }
-
-struct Task
-{
-    @JsonName("title") string title;
-    @JsonName("priority") Priority priority;
-    @JsonName("done") Optional!bool done;
-}
-
-JSONValue written = JsonAP.APserializeToJson!Task(Task("ship it", Priority.high, Optional!bool.init));
-// {"done":null,"priority":1,"title":"ship it"}
-
-assert(written.object["done"].type == JSONType.NULL);        // an empty Nullable is JSON null
-assertThrown!JSONConvertExceptionAP(JsonAP.APdeserializeJson!Task(`{"title":"x","priority":9}`));
-```
-
-`9` یک `Priority` نیست، پس خواننده به‌جای تبدیل (cast) آن را رد می‌کند. این همان نگهبانی است که اپ
-در [TextDAPConvert.d:132](../../../JsonDAPtest/TextDAPConvert.d#L132) نشان می‌دهد، جایی که کل
-مقدار ردشده از فیلدهای خودِ استثنا چاپ می‌شود.
+| `SumType` | `{"tag":"<عضو>","value":<payload>}` — ر.ک [۰۸](08-sumtype.md) |
 
 ## سخت‌گیر در برابر مداراگر
 
+خواندن فایلی که شاید دستی ویرایش شده باشد، در حالت سخت‌گیر استثنا می‌دهد؛ مداراگر جاهای خالی را
+پر می‌کند:
+
 ```d
-struct Options
-{
-    @JsonName("autosave") bool autosave;
-    @JsonName("tab_width") int tabWidth;
-}
+string partial = `{"schema":"textdap.session.1"}`;
 
-auto lenient = JsonAP.APdeserializeJsonLenient!Options(`{"autosave":true}`);
-assert(lenient.get.tabWidth == 0);                  // the missing field keeps its type default
-
-assertThrown!JSONConvertExceptionAP(JsonAP.APdeserializeJson!Options(`{"autosave":true}`));
+auto strict  = JsonAP.APdeserializeJson!SessionFile(partial);        // MissingField پرتاب می‌کند
+auto lenient = JsonAP.APdeserializeJsonLenient!SessionFile(partial); // documents == []
 ```
 
 | موقعیت | سخت‌گیر | مداراگر |
 |---|---|---|
-| فیلد غایب | `JSONConvertExceptionAP` با `MissingField` | مقدار پیش‌فرض نوع را نگه می‌دارد |
-| فیلد `Optional` / `class` غایب | `JSONConvertExceptionAP` | خالی / `null` می‌ماند |
+| فیلد غایب | `JSONConvertExceptionAP` با `MissingField` | مقدار پیش‌فرض را نگه می‌دارد |
+| فیلد `Optional` / کلاسِ غایب | استثنا | خالی / `null` می‌ماند |
 | مقدار `enum` ناشناخته | خطا | خطا — هرگز cast نمی‌شود |
-| tag ناشناختهٔ `SumType` | خطا با فهرست کردن tagها | خطا با فهرست کردن tagها |
+| tag ناشناختهٔ `SumType` | خطا با فهرست tagها | خطا با فهرست tagها |
 
-مرجع اپ: [TextDAPConvert.d:258](../../../JsonDAPtest/TextDAPConvert.d#L258) همان متن را به هر دو
-روش می‌خواند و اختلاف را چاپ می‌کند؛
-[TextDAPSession.d:53](../../../JsonDAPtest/TextDAPSession.d#L53) یک session را عمداً به‌صورت
-مداراگر بارگذاری می‌کند، چون فایلی که دستی ویرایش شده ممکن است کلیدهایی را نداشته باشد.
-
-## یک `JSONValue` وارد، یک `T` خارج
+خودِ `load` فایلِ session را عمداً مداراگر می‌خواند:
 
 ```d
-JSONValue node = parseJSON(`{"autosave":true,"tab_width":8}`);
-auto viaLowLevel = JsonAP.APconvertJsonValueToT!Options(node, false);   // false = strict
-assert(viaLowLevel.get.tabWidth == 8);
+auto parsed = JsonAP.APdeserializeJsonLenient!SessionFile(text);
+if (parsed.isNull)
+{
+    CL_TextDap_Console.sayFail("the session document read back as empty.");
+    return Optional!SessionFile.init;
+}
 ```
 
-`APconvertJsonValueToT!T(JSONValue, bool lenient = false)` همان چیزی است که هر خواننده‌ای در
-آخرین مرحله به آن زنگ می‌زند؛ وقتی به‌کارش ببرید که درخت پارسه‌شده را از قبل در دست دارید و فقط
-می‌خواهید یک گره را تبدیل کنید.
+## رد شدن یک enum چه شکلی است
+
+`DocumentState` عضوهای `saved=0`، `edited=1`، `missing=2` را دارد. به خواننده `"state":9` بدهید
+تا به‌جای cast آن را رد کند — همین کاری که `enumGuardDemo` با گرفتنِ شکست و چاپِ هر فیلدِ آن
+نشان می‌دهد:
+
+```d
+catch (JSONConvertExceptionAP caught)
+{
+    // field   caught.parameterName      // "state"
+    // value   caught.invalidValue      // "9"
+    // code    caught.jsonSpecificError // InvalidEnumMember
+    // wanted  caught.reasonForFailure  // a valid DocumentState member
+    return true;
+}
+```
+
+```text
+rejected enum
+  field   state
+  value   9
+  code    InvalidEnumMember
+  wanted  a valid DocumentState member
+```
 
 بعدی: [۰۳ — فایل‌ها و آرایه‌ها](03-files-and-arrays.md)

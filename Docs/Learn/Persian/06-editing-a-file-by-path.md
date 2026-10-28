@@ -2,53 +2,97 @@
 
 فهرست: [StartPe.md](../../StartPe.md) · قبلی: [۰۵](05-reading-a-value.md)
 
-هر یک از این فراخوانی‌ها فایل را می‌خواند، یک گره را عوض می‌کند، فایل را دوباره می‌نویسد و در پاسخ
-`bool` می‌دهد. در برابر مسیر بد، هیچ‌چیز به سمت شما پرتاب نمی‌شود — فقط `false` می‌گیرید، و
-دوقلوی `…WithMessage` دلیلش را می‌گوید.
+شش متد، یک گره از فایل را جابه‌جا می‌کنند؛ شش دوقلویشان همان کار را می‌کنند و وقتی `false`
+برگردانند **چرا** را هم می‌گویند. دوتایی که بیشتر لازم می‌شوند `add` و `update`‌اند — این هم یک
+ذخیرهٔ واقعی که هر دو را با هم به کار می‌گیرد.
+
+## ساختن یک ذخیره روی یک دوقلو
+
+`writeValue` اول add می‌زند، بعد update — «ایجاد یا جایگزینی» در دو فراخوانی
+([TextDAPSession.d:114](../../../JsonDAPtest/TextDAPSession.d#L114)):
 
 ```d
-string path = /* a file holding {"autosave":false,"tab_width":4} */;
+public static bool writeValue(V)(string filePath, string jsonPath, V value, out string message)
+{
+    message = "";
 
-assert(JsonAP.APupdateJsonValueOBJECT!bool(path, "autosave", true));    // replace an existing key
-assert(JsonAP.APaddJsonItemOBJECT!int(path, "max_history", 12));        // add a key that is not there
-assert(JsonAP.APaddJsonItemOBJECT!int(path, "limits.rows", 50));        // creates "limits" on the way
-assert(JsonAP.APremoveJsonItemOBJECT(path, "max_history"));             // removes a key
+    string[] blankInputs = [filePath, jsonPath];
+    if (JsonAP.APCheckStringIsNullArray(blankInputs))
+    {
+        message = "the session path and the file path must both hold text.";
+        return false;
+    }
+
+    bool added = JsonAP.APaddJsonItemOBJECTWithMessage!V(filePath, jsonPath, value, message);
+    if (added)
+    {
+        return true;                  // نبود: اضافه شد
+    }
+
+    return JsonAP.APupdateJsonValueOBJECTWithMessage!V(filePath, jsonPath, value, message);
+}
 ```
 
-پس از آن چهار فراخوانی فایل `{"autosave":true,"limits":{"rows":50},"tab_width":4}` است؛ حذفِ بالا
-`{"autosave":true,"limits":{},"tab_width":4}` را باقی می‌گذارد — یک شیء خالی سر جایش می‌ماند، چون
-فقط همان گره‌ای که نامش آمده بود حذف شده است.
+| خط | چه می‌کند |
+|---|---|
+| `APCheckStringIsNullArray` | یک گارد برای هر دو ورودی، پیش از دست زدن به فایل |
+| اول `add` | اگر کلید تازه باشد ساخته می‌شود — نیازی به پیش‌خواندن نیست |
+| بعد `update` | اگر از قبل بوده، `add` همین را گفته؛ `message` حالا دلیل واقعی را دارد |
+
+گزینه‌ها، مکان‌نما و هر فیلدِ سند واقعاً از همین یک تابع می‌گذرند — تابعِ سند فقط اول مسیر را
+می‌سازد:
+
+```d
+public static bool writeDocumentValue(V)(string filePath, int index, string memberPath,
+        V value, out string message)
+{
+    return writeValue(filePath, CL_TextDap_History.documentPath(index) ~ "." ~ memberPath,
+            value, message);
+}
+```
+
+## انتخاب OBJECT یا ARRAY از روی مسیر
+
+خودِ مسیر می‌گوید کدام خانواده لازم است — **گام آخر** تصمیم می‌گیرد (ر.ک [۰۴](04-path-syntax.md)
+و `itemShape` در [TextDAPJsonEdit.d:113](../../../JsonDAPtest/TextDAPJsonEdit.d#L113)):
+
+```d
+return Optional!bool(steps[$ - 1].type == PathStepType.ArrayIndex);
+```
+
+`true` → خانوادهٔ `…ARRAY…`، `false` → خانوادهٔ `…OBJECT…`.
+
+## آن شش تا چه می‌کنند
 
 | متد | قرارداد |
 |---|---|
-| `APupdateJsonValueOBJECT!V` | کلید باید وجود داشته باشد؛ `V` نوعِ مقدار است |
-| `APaddJsonItemOBJECT!T` | کلید باید وجود **نداشته** باشد، وگرنه `false` |
-| `APremoveJsonItemOBJECT` | یک کلید تودرتو یا یک کلید سطح‌بالا را حذف می‌کند |
-| `APupdateJsonValueARRAY!V` | عنصرِ موجود در آن index را جایگزین می‌کند |
-| `APaddJsonItemARRAY!T` | **در** آن index درج می‌کند؛ `index == length` همان محل افزودن به انتهاست |
-| `APremoveJsonItemARRAY` | عنصرِ موجود در آن index را حذف می‌کند |
+| `APupdateJsonValueOBJECT!V(path, key, value)` | کلید باید وجود داشته باشد؛ `V` نوعِ مقدار است |
+| `APaddJsonItemOBJECT!T(path, key, value)` | کلید باید وجود **نداشته** باشد، وگرنه `false` |
+| `APremoveJsonItemOBJECT(path, key)` | یک کلید تودرتو یا سطح‌بالا را حذف می‌کند |
+| `APupdateJsonValueARRAY!V(path, index, value)` | عنصرِ در آن index را جایگزین می‌کند |
+| `APaddJsonItemARRAY!T(path, index, value)` | **درج در** آن index؛ `index == length` یعنی الحاق |
+| `APremoveJsonItemARRAY(path, index)` | عنصرِ در آن index را حذف می‌کند |
 
-اگر یک **کلید شیء** میانی وجود نداشته باشد، ساخته می‌شود. اگر یک **index آرایه** میانی وجود
-نداشته باشد، ساخته نمی‌شود.
+اگر یک **کلید شیء** میانی نبود، در مسیر ساخته می‌شود. اگر یک **index آرایه** میانی نبود، ساخته
+نمی‌شود — چیزی نیست که گسترش پیدا کند.
 
 ```d
-string arrayPath = /* a file holding [{"x":1,"y":1},{"x":2,"y":2}] */;
+assert(JsonAP.APaddJsonItemOBJECTWithMessage!int(path, "limits.rows", 50, message));
+// "limits" در همین مسیر ساخته می‌شود → {"limits":{"rows":50}, …}
 
-assert(JsonAP.APupdateJsonValueARRAY!int(arrayPath, "[1].y", 99));        // [{"x":1,"y":1},{"x":2,"y":99}]
-assert(JsonAP.APaddJsonItemARRAY!Point(arrayPath, "[2]", Point(7, 8)));   // append at length
-// [{"x":1,"y":1},{"x":2,"y":99},{"x":7,"y":8}]
-assert(JsonAP.APremoveJsonItemARRAY(arrayPath, "[0]"));                   // [{"x":2,"y":99},{"x":7,"y":8}]
+assert(JsonAP.APupdateJsonValueARRAYWithMessage!int(path, "[1].y", 99, message));
+// [{…,"y":1},{…,"y":2}] → yِ عنصر دوم می‌شود 99
 ```
 
-شماره‌ی index‌ها از ریشه‌ی فایل شروع می‌شود، پس `"[1].y"` یعنی *`y`ِ عنصر دوم*. راهی نیست که
-بدون براکتِ ابتدایی بگوییم «یک عنصر از آرایه‌ی ریشه»، و `APupdateJsonValueARRAY` indexِ
-وجودنداشته را قبول نمی‌کند — به‌روزرسانیِ عنصری که وجود ندارد، جایگزینی حساب نمی‌شود.
+ایندکس منفی رد می‌شود (`items[-1]`)، و به‌روزرسانیِ ایندکسی که نیست هم رد می‌شود — جایگزین‌کردنِ
+هیچ، جایگزینی حساب نمی‌شود.
 
-## چرا `false` برگشت
+## چرا `false` برگرداند
 
-هر متدِ بالا یک دوقلو با `out string message` دارد
-([JsonAPMessages.d:13](../../../JsonDAP/JsonAPMessages.d#L13)). این دوقلوها **هرگز throw نمی‌کنند**:
-فایلِ نبود، سندِ خراب، مسیرِ به‌دردنخور — همه‌شان به شکل `false` به‌اضافه یک جمله برمی‌گردند.
+هر متدِ بالا یک دوقلو با `out string message` دارد. این دوقلوها **هرگز throw نمی‌کنند**:
+فایلِ نبود، سندِ خراب، مسیرِ نامناسب — همه به شکل `false` به‌همراه یک جمله برمی‌گردند. `message`
+در ابتدای هر فراخوانی پاک می‌شود، پس یک متغیر برای استفادهٔ دوباره بی‌خطر است — دقیقاً همان‌طور
+که `writeValue` استفاده می‌کند.
 
 ```d
 string message;
@@ -65,8 +109,6 @@ if (!JsonAP.APupdateJsonValueOBJECTWithMessage!int(path, "settings.retry", 3, me
     // the path 'settings.retry' does not exist: key 'settings' is missing.
 }
 
-assert(JsonAP.APremoveJsonItemOBJECTWithMessage(path, "limits.rows", message));
-
 if (!JsonAP.APaddJsonItemARRAYWithMessage!Point(arrayPath, "[9]", Point(0, 0), message))
 {
     writeln(message);
@@ -74,33 +116,9 @@ if (!JsonAP.APaddJsonItemARRAYWithMessage!Point(arrayPath, "[9]", Point(0, 0), m
 }
 ```
 
-`message` در ابتدای هر فراخوانی پاک می‌شود، پس یک متغیر برای استفاده‌ی دوباره بی‌خطر است — و
-[TextDAPSession.d:118](../../../JsonDAPtest/TextDAPSession.d#L118) دقیقاً همین را می‌خواهد:
-
-```d
-bool added = JsonAP.APaddJsonItemOBJECTWithMessage!V(filePath, jsonPath, value, message);
-if (added)
-{
-    return true;                                  // the key did not exist: it is new
-}
-
-return JsonAP.APupdateJsonValueOBJECTWithMessage!V(filePath, jsonPath, value, message);
-```
-
-| خط | چه کاری انجام می‌دهد |
-|---|---|
-| اول `add` | ارزان‌ترین راه برای گفتنِ «ایجاد یا جایگزینی» بدون خواندنِ فایل |
-| `if (added) return true` | همان‌جا برمی‌گردد، تا update هرگز `message` را بازنویسی نکند |
-| فراخوانی دوم | همان متغیر `message`، از داخل بازنویسی می‌شود |
-
-همان تابع `writeValue` است — تنها مسیرِ نوشتن در کل اپ. گزینه‌ها، مکان‌نما (cursor)، فایل جاری و
-هر فیلدِ سند از آن رد می‌شوند
-([TextDAPSession.d:138](../../../JsonDAPtest/TextDAPSession.d#L138) قبل از فراخوانی، indexِ سند را به
-مسیر اضافه می‌کند).
-
 ## دو خانواده در کنار هم
 
-| نسخه‌ی ساده (تست‌ها استفاده می‌کنند) | دوقلوی پیام‌دار (اپ استفاده می‌کند) |
+| ساده (`bool`) | دوقلو (`bool` + `message`) |
 |---|---|
 | `APupdateJsonValueOBJECT` | `APupdateJsonValueOBJECTWithMessage` |
 | `APupdateJsonValueARRAY` | `APupdateJsonValueARRAYWithMessage` |
@@ -109,10 +127,20 @@ return JsonAP.APupdateJsonValueOBJECTWithMessage!V(filePath, jsonPath, value, me
 | `APremoveJsonItemOBJECT` | `APremoveJsonItemOBJECTWithMessage` |
 | `APremoveJsonItemARRAY` | `APremoveJsonItemARRAYWithMessage` |
 
-نسخه‌های ساده `bool` برمی‌گردانند و درباره‌ی دلیل ساکت می‌مانند؛ تست‌ها همان‌ها را استفاده می‌کنند، چون
-آنجا یک assertion روی `false` کافی است
-([jsondap_file_tests.d:32](../../../JsonDAPtest/test/jsondap_file_tests.d#L32)،
-[:56](../../../JsonDAPtest/test/jsondap_file_tests.d#L56)). هر دو دوقلو را نگه دارید — هیچ‌کدام جانشین
-دیگری نمی‌شود.
+خودِ TextDAP همیشه دوقلو را انتخاب می‌کند — در هر شکستی دلیل را می‌خواهد. نسخه‌های ساده برای
+همان لحظه‌ای‌اند که فقط موفقیت اهمیت دارد، مثلاً یک تست که صرفاً انجام شدنِ ویرایش را assert
+می‌کند:
+
+```d
+assert(JsonAP.APupdateJsonValueARRAY!int(path, "[1].y", 99));
+assert(JsonAP.APaddJsonItemARRAY!Point(path, "[2]", Point(7, 8)));
+assert(JsonAP.APremoveJsonItemARRAY(path, "[0]"));
+
+assert(JsonAP.APupdateJsonValueOBJECT!string(path, "text", "after"));
+assert(JsonAP.APaddJsonItemOBJECT!int(path, "extra.count", 5));
+assert(JsonAP.APremoveJsonItemOBJECT(path, "extra.count"));
+```
+
+هر دو خانواده را نگه دارید: هیچ‌کدام جانشین دیگری نمی‌شود.
 
 بعدی: [۰۷ — ادغام و کپی](07-merge-and-copy.md)

@@ -2,108 +2,100 @@
 
 Index: [StartEn.md](../../StartEn.md) · Previous: [02](02-types-and-the-round-trip.md)
 
-## One record, one file
+## One save, one load
+
+Here is a `save` almost as it is
+([TextDAPSession.d:83](../../../JsonDAPtest/TextDAPSession.d#L83)) — serialize, merge into the
+existing file, then read the result back:
 
 ```d
-struct Point
+JSONValue wire = JsonAP.APserializeToJson!SessionFile(session);
+
+if (JsonAP.APexistsFile(filePath))
 {
-    @JsonName("x") int x;
-    @JsonName("y") int y;
+    if (JsonAP.APmergeJsonWithMessage(filePath, wire, true, false, message))
+    {
+        return verify(filePath, message);
+    }
 }
 
-string path = buildPath(tempDir, "note.json");
-
-assert(!JsonAP.APexistsFile(path));                              // nothing there yet
-assert(JsonAP.APwriteJsonFile!Point(path, Point(1, 2)));         // serialize + write, true on success
-assert(JsonAP.APexists(path));                                   // the same check, the older name
-assert(JsonAP.APgetJsonFileSize(path).get > 0);                   // Optional!long, bytes
-assert(JsonAP.APreadJsonFile!Point(path).get == Point(1, 2));     // read + deserialize
+if (!JsonAP.APwriteJsonFile!JSONValue(filePath, wire))
+{
+    message = format!"nothing was written to %s."(filePath);
+    return false;
+}
 ```
 
-The file now holds `{"x":1,"y":2}`.
+Why merge instead of overwrite: keys the app does not know about — a `cursor` written by
+another feature — survive the save. `verify` then re-reads the file: it exists, it is readable,
+it is still valid JSON.
 
 | Line | What it does |
 |---|---|
-| `APwriteJsonFile!Point` | the template argument is the type of the *second* argument; `bool` answer, no value back |
-| `APexistsFile` | one call, no exception on a missing file — it just answers `false` |
-| `APgetJsonFileSize` | `Optional!long`; empty when the size cannot be measured |
-| `APreadJsonFile!Point` | **throws** `FileOperationExceptionAP` when the file is not there (see below) |
+| `APexistsFile(path)` | `false` for a missing file; never throws |
+| `APwriteJsonFile!T` | `bool`; the `!T` is the type of the second argument |
+| `APmergeJsonWithMessage` | merges `wire` into the file on disk; answers with `bool` + `message` |
+| `verify` | no silent success: what was written must read back |
+
+`APreadJsonFile!T` throws `FileOperationExceptionAP` when the file is not there:
 
 ```d
-try
-{
-    JsonAP.APreadJsonFile!Point(buildPath(tempDir, "no_such_file.json"));
-}
 catch (FileOperationExceptionAP caught)
 {
-    caught.filePath;        // C:\Users\…\Temp\no_such_file.json
-    caught.operationType;   // read
-    // File not found for reading.
+    caught.filePath;      // which file
+    caught.operationType; // "read"
 }
 ```
 
 ## Parent folders are created for you
 
 ```d
-string nested = buildPath(tempDir, "a", "b", "note.json");
-assert(JsonAP.APwriteJsonFile!Point(nested, Point(9, 9)));   // a/ and a/b/ are made on the way
-assert(exists(nested));
+// a state file at a nested path on the first run:
+JsonAP.APwriteJsonFile!JSONValue("state/session/textdap_session.json", wire);
+// state/ and state/session/ are made on the way
 ```
 
-[FileAP.d:87](../../../JsonDAP/FileAP.d#L87) calls `mkdirRecurse` before writing, so a first run
-of a program that stores its state in `state/app.json` does not need to create anything by hand.
+No `mkdirRecurse` of your own needed: the writer creates missing folders.
 
-## An array of records in a file
+## An array of records
 
-```d
-Point[] points = [Point(1, 2), Point(3, 4)];
-
-assert(JsonAP.APwriteJsonFile!(Point[])(path, points));       // writes [{"x":1,"y":2},{"x":3,"y":4}]
-Point[] fromFile = JsonAP.APreadJsonArray!Point(path).get;    // the array reader wants T, not T[]
-assert(fromFile.length == 2);
-assert(fromFile[1] == Point(3, 4));
-```
-
-`APreadJsonArray!T` reads the whole file, insists the top node is an array, and hands back
-`Optional!(T[])`. The same conversion from **text** is `APdeserializeJsonArray!T`:
-
-```d
-Point[] fromText = JsonAP.APdeserializeJsonArray!Point(`[{"x":5,"y":6}]`).get;
-assert(fromText[0] == Point(5, 6));
-assertThrown!JSONConvertExceptionAP(JsonAP.APdeserializeJsonArray!Point(`{"x":5}`));  // not an array
-```
-
-## `APserializeToJsonArray` appends
+The history export builds a `JSONValue[]` and writes it as one document
+([TextDAPConvert.d:102](../../../JsonDAPtest/TextDAPConvert.d#L102)):
 
 ```d
 JSONValue[] wire;
 foreach (record; records)
 {
-    wire ~= JsonAP.APserializeToJsonArray!Point(Point(7, 8));   // one value in, ONE element out
+    wire ~= JsonAP.APserializeToJsonArray!DocumentRecord(record);  // one record -> one array
 }
-assert(wire.length == records.length);
+
+JsonAP.APwriteJsonFile!JSONValue(outPath, JSONValue(wire));
+
+Optional!(DocumentRecord[]) imported = JsonAP.APreadJsonArray!DocumentRecord(outPath);
 ```
 
-| Input `T` | `JSONValue[]` out |
-|---|---|
-| a struct, a class, an enum | a one-element array holding that node |
-| `JSONValue` | a one-element array holding it |
-| `JSONValue[]` | the same array, untouched |
+`APserializeToJsonArray!T` always answers a **one-element** array wrapping that record;
+that is why appending with `~=` does the right thing. `APreadJsonArray!T` wants the element
+type `T`, not `T[]`, and refuses a file whose root is an object.
 
-[FileAPJson.d:155](../../../JsonDAP/FileAPJson.d#L155). It exists to build an array of records in
-a loop, which is exactly what [TextDAPConvert.d:102](../../../JsonDAPtest/TextDAPConvert.d#L102)
-does before writing the history file and reading it back with `APreadJsonArray` two lines later
-([:114](../../../JsonDAPtest/TextDAPConvert.d#L114)).
+The same conversion from text, not a file, is `APdeserializeJsonArray!T`
+([TextDAPConvert.d:186](../../../JsonDAPtest/TextDAPConvert.d#L186)):
+
+```d
+auto many = JsonAP.APdeserializeJsonArray!DocumentRecord(pack);
+assert(many.get.length == 2);
+assertThrown!JSONConvertExceptionAP(JsonAP.APdeserializeJsonArray!DocumentRecord(`{"x":5}`));
+```
 
 ## The file API in one table
 
 | Method | Returns | Failure mode |
 |---|---|---|
-| `APwriteJsonFile!T(filePath, data)` | `bool` | `false`, or a library exception from the OS layer |
-| `APreadJsonFile!T(filePath)` | `Optional!T` | throws when the file or its JSON is unusable |
-| `APreadJsonArray!T(filePath)` | `Optional!(T[])` | throws when the top node is not an array |
-| `APgetJsonFileSize(filePath)` | `Optional!long` | empty `Optional` |
-| `APexistsFile(filePath)` | `bool` | `false`, never throws |
-| `APexists(filePath)` | `bool` | the same answer, the older name |
+| `APwriteJsonFile!T(path, data)` | `bool` | `false`, or a library exception from the OS layer |
+| `APreadJsonFile!T(path)` | `Optional!T` | throws when the file or its JSON is unusable |
+| `APreadJsonArray!T(path)` | `Optional!(T[])` | throws when the root is not an array |
+| `APgetJsonFileSize(path)` | `Optional!long` | empty `Optional` when the size cannot be measured |
+| `APexistsFile(path)` | `bool` | `false`, never throws |
+| `APexists(path)` | `bool` | the same answer, the older name |
 
 Next: [04 — Path syntax](04-path-syntax.md)

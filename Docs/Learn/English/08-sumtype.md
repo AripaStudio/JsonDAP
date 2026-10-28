@@ -2,113 +2,126 @@
 
 Index: [StartEn.md](../../StartEn.md) · Previous: [07](07-merge-and-copy.md)
 
-`std.sumtype.SumType` carries no reflection — a library cannot ask it what its members are called.
-So the support is an explicit pair: **write an envelope**, **read an envelope**.
+A `SumType` holds **one** of its members, and JSON has to say which one. The envelope is
 
-```
-{"tag":"<which member>","value":<the payload>}
+```json
+{"tag":"line","value":42}
 ```
 
-## The default tags
+## The two calls you will actually use
 
 ```d
-import std.sumtype;
+alias CursorTarget = SumType!(int, string);
 
-alias Payload = SumType!(int, string);
-
-JSONValue envelope = JsonAP.APserializeSumType!Payload(Payload(42));
+// write — the tag is the member's type name by default
+JSONValue wire = JsonAP.APserializeSumType!CursorTarget(CursorTarget(42));
 // {"tag":"int","value":42}
 
-auto back = JsonAP.APdeserializeSumType!Payload(envelope, false);
-assert(back.get == Payload(42));
+// read
+auto back = JsonAP.APdeserializeSumType!CursorTarget(wire, false);
+assert(back.get.get!int == 42);
 ```
 
-With no delegate, the tag is the D member type name — `"int"`, `"string"`. It works, but it
-freezes your wire format to Phobos' type names.
-
-## Your own names
+An unknown tag in the envelope is refused with the list of tags that do exist — no silent
+default, no empty value:
 
 ```d
-JSONValue named = JsonAP.APserializeSumType!Payload(Payload("search"),
-        (string memberName) => memberName == "int" ? "line" : "term");
-// {"tag":"term","value":"search"}
-
-auto namedBack = JsonAP.APdeserializeSumType!Payload(named, false,
-        (string memberName) => memberName == "int" ? "line" : "term");
-assert(namedBack.get == Payload("search"));
-```
-
-| Line | What it does |
-|---|---|
-| the delegate | `string delegate(string memberName) tagOf` — receives `int` / `string`, returns the tag to write |
-| the same delegate on the read | it is used **in reverse**, mapping the tag back to the member name to select |
-| `false` | `lenient` — the second parameter of the reader |
-
-The delegate has to be the same on both sides or the tags will not match. The app keeps one
-function for it ([TextDAPModel.d:163](../../../JsonDAPtest/TextDAPModel.d#L163)
-`cursorTagName`) and passes it to both calls
-([TextDAPConvert.d:61](../../../JsonDAPtest/TextDAPConvert.d#L61)).
-
-## From text, and unknown tags
-
-```d
-auto fromText = JsonAP.APdeserializeSumTypeFromString!Payload(`{"tag":"string","value":"later"}`);
-assert(fromText.get == Payload("later"));
-```
-
-An unknown tag is refused, and the message lists the tags that do exist — there is no default
-member, no silently empty value:
-
-```d
-try
-{
-    JsonAP.APdeserializeSumType!Payload(parseJSON(`{"tag":"bool","value":1}`));
-}
 catch (BaseExceptionAP caught)
 {
-    caught.msg;    // Unknown tag in SumType envelope.
+    caught.msg;   // Unknown tag in SumType envelope.  (known tags are listed)
 }
 ```
 
-## When the payload needs more than the member's own conversion
+## Naming the tags yourself
 
-`APserializeSumType` writes the payload with the normal serializer. When a member needs a shape of
-its own, or the tag depends on the value rather than the type, use the handler pair:
+The default tags are D type names (`"int"`, `"string"`). Give both directions the **same**
+function and your file gets stable names instead. `cursorTagName` maps member ↔ tag
+([TextDAPModel.d:163](../../../JsonDAPtest/TextDAPModel.d#L163)):
 
 ```d
-JSONValue written = JsonAP.APserializeSumTypeWithHandlers!Payload(Payload(7),
-        (Payload held) => held.match!((int n) => "number", (string s) => "text"),
-        (Payload held) => held.match!((int n) => JSONValue(n), (string s) => JSONValue(s)));
-// {"tag":"number","value":7}
+string cursorTagName(string memberName)
+{
+    if (memberName == "int")    return CursorTag.line;    // "line"
+    if (memberName == "string") return CursorTag.search;  // "search"
+    return memberName;
+}
 
-auto resolved = JsonAP.APdeserializeSumTypeWithHandlers!Payload(written,
-        (string tag, JSONValue value) => tag == "number"
-                ? Payload(cast(int) value.integer)
-                : Payload(value.str));
-assert(resolved.get == Payload(7));
+JSONValue wire = JsonAP.APserializeSumType!CursorTarget(target,
+        (string memberName) => cursorTagName(memberName));
+
+auto back = JsonAP.APdeserializeSumType!CursorTarget(wire, false,
+        (string memberName) => cursorTagName(memberName));
+```
+
+Now the file says `{"tag":"line","value":42}`, not `{"tag":"int",…}`.
+
+| Line | What it does |
+|---|---|
+| the delegate on write | member name → tag, before the payload is written |
+| `false` on read | `lenient` — same flag as every reader |
+| the delegate on read | tag → member name, so the reader knows which member to build |
+| same function both times | the only way the two directions stay in agreement |
+
+TextDAP's `cursorRoundTrip` runs exactly that pair on every round trip:
+
+```d
+JSONValue envelope = JsonAP.APserializeSumType!CursorTarget(target,
+        (string memberName) => cursorTagName(memberName));
+
+Optional!CursorTarget readBack = JsonAP.APdeserializeSumType!CursorTarget(envelope,
+        false, (string memberName) => cursorTagName(memberName));
+```
+
+## When the value itself decides the tag
+
+`…WithHandlers` gives you the **whole value** instead of a member name; save writes the cursor
+that way ([TextDAPSession.d:147](../../../JsonDAPtest/TextDAPSession.d#L147)):
+
+```d
+JSONValue envelope = JsonAP.APserializeSumTypeWithHandlers!CursorTarget(target,
+        (CursorTarget held) => cursorTagOf(held),       // the value -> "line" | "search"
+        (CursorTarget held) => cursorPayloadOf(held));  // the value -> JSONValue payload
+```
+
+and `readCursor` resolves it back through one function of your own
+([TextDAPSession.d:172](../../../JsonDAPtest/TextDAPSession.d#L172),
+[TextDAPModel.d:192](../../../JsonDAPtest/TextDAPModel.d#L192)):
+
+```d
+return JsonAP.APdeserializeSumTypeWithHandlers!CursorTarget(*stored,
+        (string tag, JSONValue payload) => resolveCursor(tag, payload));
+```
+
+Inside `resolveCursor`, the payload must match its tag before it is trusted — a string payload
+under a `"line"` tag raises `JSONConvertExceptionAP` instead of being coerced. That check is the
+difference between *encoding* and *guessing*:
+
+```d
+if (tag == CursorTag.line)
+{
+    requireNodeType(tag, payload, JSONType.INTEGER);    // throws unless the payload is an integer
+    return CursorTarget(cast(int) payload.integer);
+}
 ```
 
 | Line | What it does |
 |---|---|
-| `tagOf` | takes the **whole** `Payload`, not a member name — so two `int` members can have different tags |
-| `payloadOf` | returns the `JSONValue` to write, whatever shape you want |
+| `tagOf` delegate | takes the **whole value**, so two `int` members can carry different tags |
+| `payloadOf` delegate | returns the `JSONValue` to write — any shape you want |
 | `resolver` | `T delegate(string tag, JSONValue payload)` — the only place that decides which member to build |
-| `held.match!(…)` | Phobos' `SumType` exhaustive visit; the delegate is where the switch lives |
+| `held.match!` | Phobos' exhaustive visit; the lambda is where the "switch" lives |
 
-The app's cursor is the real case: a line number or a search term, one field in the session file
-([TextDAPSession.d:145](../../../JsonDAPtest/TextDAPSession.d#L145) writes with handlers,
-[:153](../../../JsonDAPtest/TextDAPSession.d#L153) reads back through
-`resolveCursor` at [TextDAPModel.d:192](../../../JsonDAPtest/TextDAPModel.d#L192), which raises
-`JsonOperationExceptionAP` for a tag it does not know).
-
-## The five
+## The five in one table
 
 | Method | In | Out |
 |---|---|---|
-| `APserializeSumType!T(T value, string delegate(string) tagOf = null)` | a value | `JSONValue` |
-| `APdeserializeSumType!T(JSONValue, bool lenient = false, string delegate(string) tagOf = null)` | an envelope | `Optional!T` |
-| `APdeserializeSumTypeFromString!T(string jsonContent, bool lenient = false, string delegate(string) tagOf = null)` | JSON text | `Optional!T` |
-| `APserializeSumTypeWithHandlers!T(T value, string delegate(T) tagOf, JSONValue delegate(T) payloadOf)` | a value and two delegates | `JSONValue` |
-| `APdeserializeSumTypeWithHandlers!T(JSONValue, T delegate(string tag, JSONValue payload) resolver)` | an envelope and a resolver | `Optional!T` |
+| `APserializeSumType!T(value, tagOf = null)` | a value | `JSONValue` |
+| `APdeserializeSumType!T(json, lenient = false, tagOf = null)` | an envelope | `Optional!T` |
+| `APdeserializeSumTypeFromString!T(text, lenient = false, tagOf = null)` | JSON text | `Optional!T` |
+| `APserializeSumTypeWithHandlers!T(value, tagOf, payloadOf)` | value + two delegates | `JSONValue` |
+| `APdeserializeSumTypeWithHandlers!T(json, resolver)` | envelope + resolver | `Optional!T` |
 
-Next: [09 — Inspecting text and guarding input](09-inspecting-and-guarding.md)
+The `…WithHandlers` pair is the one you will prefer in real code: the tag lives next to the
+value it describes, and the reader refuses payloads that contradict their tag.
+
+Next: [09 — Inspecting and guarding](09-inspecting-and-guarding.md)

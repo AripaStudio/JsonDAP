@@ -2,68 +2,10 @@
 
 فهرست: [StartPe.md](../../StartPe.md) · قبلی: [۰۴](04-path-syntax.md)
 
-`APgetJsonValue!V(string jsonContent, string path)` یک مسیر را طی می‌کند و **گره‌ای که رویش
-می‌نشیند** را به `V` تبدیل می‌کند. این متد متن را می‌خواند نه فایل را — اول فایل را به رشته بدهید،
-یا از `APreadJsonFile` استفاده کنید ([۰۳](03-files-and-arrays.md)).
+## خواندن چهار نوع
 
-```d
-string text = `{"settings":{"retry":7,"ratio":1.5,"label":"Aripa","on":true},`
-        ~ `"rows":[{"name":"first"},{"name":"second"}]}`;
-
-assert(JsonAP.APgetJsonValue!long(text, "settings.retry") == 7);
-assert(JsonAP.APgetJsonValue!int(text, "settings.retry") == 7);
-assert(JsonAP.APgetJsonValue!double(text, "settings.ratio") == 1.5);
-assert(JsonAP.APgetJsonValue!double(text, "settings.retry") == 7.0);    // an integer node is a number
-assert(JsonAP.APgetJsonValue!string(text, "settings.label") == "Aripa");
-assert(JsonAP.APgetJsonValue!bool(text, "settings.on") == true);
-assert(JsonAP.APgetJsonValue!string(text, "rows[1].name") == "second");
-```
-
-| `V` | چه گره‌ای را می‌پذیرد | چه چیزی را رد می‌کند |
-|---|---|---|
-| `string` | `STRING` | هر چیز دیگر |
-| `int`, `long` | `INTEGER` | `FLOAT` — هیچ truncate بی‌سر‌وصدایی در کار نیست |
-| `float`, `double` | `FLOAT` **یا** `INTEGER` | رشته، bool، object |
-| `bool` | `TRUE` / `FALSE` | `0` / `1` صحیح‌اند نه بولین |
-
-آن `V` نوع **خواسته** است، نه نوعِ گره. ناهمخوانی خطاست، هرگز تبدیل (cast) نیست:
-
-```d
-try
-{
-    JsonAP.APgetJsonValue!int(text, "settings.ratio");      // 1.5 read as int
-}
-catch (ConvertExceptionAP caught)
-{
-    caught.msg;     // JSON value is not an integer.
-    caught.inputType;    // FLOAT
-}
-```
-
-## پاسخ خالی، دقیقاً یک حالت
-
-```d
-assert(JsonAP.APgetJsonValue!string("", "a.b").isNull);     // empty text
-assert(JsonAP.APgetJsonValue!string(text, "").isNull);      // empty path
-```
-
-هر چیز دیگر یا مقداری برمی‌گرداند یا استثنا پرتاب می‌کند. از 2.4.0 این getter آنچه کتابخانه پرتاب
-کرده بود را دوباره **پرتاب می‌کند** (rethrow) و دیگر آن را در یک `Optional` خالی قورت نمی‌دهد، پس
-`isNull` دیگر معنایش «چیزی اشتباه شد» نیست.
-
-| چه چیزی خراب است | استثنا | پیامی که می‌گیرید |
-|---|---|---|
-| متن اصلاً JSON نیست | `JsonOperationExceptionAP` | `Error parsing JSON while getting value.` |
-| یکی از کلیدهای سر راه غایب است | `JSONExceptionAP` | `JSON path invalid: key 'nope' not found.` |
-| یک ایندکس روی چیزی غیر از array به‌کار رفته | `JSONExceptionAP` | `JSON path invalid: index used on a non-array.` |
-| ایندکس فراتر از پایان آرایه | `InvalidArgumentExceptionAP` | `JSON array index out of bounds.` به‌همراه `expectedFormatOrRange` |
-| گره نوعش اشتباه است | `ConvertExceptionAP` | `JSON value is not an integer.` و هم‌خانواده‌هایش |
-| خودِ مسیر بدشکل است | `InvalidArgumentExceptionAP` | رد کردنِ خودِ پارسر، ر.ک [۰۴](04-path-syntax.md) |
-
-## خواندن چهار گونه، آن‌طور که یک اپ انجامش می‌دهد
-
-[TextDAPJsonTools.d:108](../../../JsonDAPtest/TextDAPJsonTools.d#L108) مسیر و گونه را از کاربر
-می‌گیرد، و آن چهار `V` چهار شاخه‌اند:
+`readValueAt` نوع را از انتخاب کاربر برمی‌دارد و در یک فراخوانی مقدار را می‌خواند
+([TextDAPJsonTools.d:114](../../../JsonDAPtest/TextDAPJsonTools.d#L114)):
 
 ```d
 if (kind == scalarKindText)
@@ -76,13 +18,24 @@ if (kind == scalarKindWhole)
     reportValue(JsonAP.APgetJsonValue!long(text, dotPath), dotPath);
     return true;
 }
-// … double, bool
+if (kind == scalarKindNumber)
+{
+    reportValue(JsonAP.APgetJsonValue!double(text, dotPath), dotPath);
+    return true;
+}
+if (kind == scalarKindFlag)
+{
+    reportValue(JsonAP.APgetJsonValue!bool(text, dotPath), dotPath);
+    return true;
+}
 ```
+
+خواننده `Optional!V` برمی‌گرداند — خالی یعنی چیزی پیدا نشد، و گزارش همان را می‌گوید:
 
 ```d
 private static void reportValue(V)(Optional!V found, string dotPath)
 {
-    if (found.isNull)                                   // only reachable for empty text/path
+    if (found.isNull)
     {
         CL_TextDap_Console.sayFail(format!"'%s' holds no %s value."(dotPath, V.stringof));
         return;
@@ -92,24 +45,75 @@ private static void reportValue(V)(Optional!V found, string dotPath)
 }
 ```
 
-همان `catch (BaseExceptionAP caught)` که دور تمام ماجرا پیچیده شده
-([:142](../../../JsonDAPtest/TextDAPJsonTools.d#L142)) است که یک مسیر غلط را به یک خط چاپی تبدیل
-می‌کند، نه به یک stack trace.
-
-## خواندن یک گرهٔ کامل به‌جای یک اسکالر
-
-`APgetJsonValue` تبدیل می‌کند، پس نمی‌تواند یک object یا یک array به شما بدهد. برای آن کار فایل را
-به‌صورت `JSONValue` بخوانید و رویش ایندکس بزنید:
+کلِ ماجرا داخلِ یک `catch` نشسته، پس مسیرِ غلط به یک خطِ چاپی تبدیل می‌شود نه به یک stack
+trace:
 
 ```d
-JSONValue root = JsonAP.APreadJsonFile!JSONValue(path).get;
-
-foreach (key; root.object.byKey)
+catch (BaseExceptionAP caught)
 {
-    writeln(key, " is a ", JsonAP.APgetJsonValueType(root.object[key]));   // INTEGER, OBJECT, ARRAY…
+    CL_TextDap_Console.sayFail(caught.msg);
+    return false;
 }
 ```
 
-این همان [TextDAPJsonTools.d:162](../../../JsonDAPtest/TextDAPJsonTools.d#L162) است — `inspectRoot`.
+## هر نوع چه چیزی را می‌پذیرد
+
+| `V` خواسته‌شده | گرهٔ پذیرفته‌شده | ردشده |
+|---|---|---|
+| `string` | `STRING` | هر چیز دیگر |
+| `long`, `int` | `INTEGER` | `FLOAT` — هیچ truncate بی‌سر‌وصدایی نیست |
+| `double`, `float` | `FLOAT` **یا** `INTEGER` | رشته، بولین، شیء |
+| `bool` | `TRUE` / `FALSE` | `0` / `1` صحیح‌اند نه بولین |
+
+آن `V` نوعِ **خواسته‌شده** است، نه نوعِ گره. ناهمخوانی `ConvertExceptionAP` با `inputType` و
+`outputType` پرتاب می‌کند — مقدار هرگز بی‌سر‌وصدا cast نمی‌شود.
+
+```d
+//
+// Result of APgetJsonValue!double on {"items":[10,20,30]} "items[1]":  20.0
+// گرهِ INTEGER برای درخواستِ اعشاری پذیرفته می‌شود — ر.ک jsondap_path_tests.d:115
+//
+```
+
+## پاسخ خالی، دقیقاً یک حالت
+
+```d
+assert(JsonAP.APgetJsonValue!string("", "a.b").isNull);   // متن خالی
+assert(JsonAP.APgetJsonValue!string(text, "").isNull);    // مسیر خالی
+```
+
+هر چیز دیگری یا مقداری برمی‌گرداند یا استثنا پرتاب می‌کند. پس `isNull` هرگز معنایش «چیزی خراب
+شد» نیست — خطای واقعی همیشه یک استثنای قابل‌گرفتن است.
+
+## چه چیزی استثنا می‌دهد
+
+| چه خراب است | استثنا |
+|---|---|
+| متن JSON نیست | `JsonOperationExceptionAP` |
+| کلیدی در مسیر غایب است | `JSONExceptionAP` با `jsonPath` و `jsonSnippet` |
+| ایندکس روی چیزی غیر از array | `JSONExceptionAP` |
+| ایندکس پس از پایان آرایه | `InvalidArgumentExceptionAP` با `expectedFormatOrRange` |
+| نوع گره اشتباه است | `ConvertExceptionAP` با `inputType` و `outputType` |
+| خودِ مسیر بدشکل است | `InvalidArgumentExceptionAP` — ر.ک [۰۴](04-path-syntax.md) |
+
+## خواندنِ شکل یک سند
+
+برای دیدن کلیدها و نوع مقادیر به‌جای تبدیلِ یک گره، فایل را به‌صورت `JSONValue` بخوانید و رویش
+طری کنید — `inspectRoot` همین کار را می‌کند و هر کلید را با نوعش فهرست می‌کند
+([TextDAPJsonTools.d:166](../../../JsonDAPtest/TextDAPJsonTools.d#L166)):
+
+```d
+auto read = JsonAP.APreadJsonFile!JSONValue(filePath);
+if (read.get.type != JSONType.OBJECT)
+{
+    // "the root is <type>, so there are no member names to list."
+    return true;
+}
+
+foreach (key; read.get.object.byKey.array)
+{
+    // key -> JsonAP.APgetJsonValueType(read.get.object[key])   INTEGER, OBJECT, ARRAY…
+}
+```
 
 بعدی: [۰۶ — ویرایش یک فایل با مسیر](06-editing-a-file-by-path.md)
