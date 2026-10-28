@@ -19,7 +19,7 @@ alias Optional = Nullable;
 public class CL_TextDap_JsonActions
 {
     public static void validateBuffer(CL_TextDap_State state)
-    {
+    {        
         if (!state.document.open)
         {
             CL_TextDap_Console.sayFail("open or start a document first.");

@@ -408,3 +408,5 @@ JsonDAPtest/probe-cli.json
 # Agent workspace and agent documentation
 /.freebuff
 /Archive
+/Docs/.obsidian
+/JsonDAP/Output

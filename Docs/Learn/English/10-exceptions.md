@@ -112,4 +112,4 @@ The rule to write your program by: **a `false` from this library always has a re
 `WithMessage` twin is what prints it.** Use exceptions where an unexpected failure should abort
 a command; use the twins where a bad path is a normal thing for a user to type.
 
-Next: [11 — API coverage map](11-api-coverage-map.md)
+Next: [11 — The API, one example at a time](11-api-coverage-map.md)

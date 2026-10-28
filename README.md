@@ -45,11 +45,11 @@ control over the wire format. JsonDAP sits in between:
 
 ### Requirements
 
-| Item | Version |
-|---|---|
-| D compiler | DMD 2.100+ (tested with DMD 2.113.0, x86_64) |
-| Build tool | dub 1.30+ (tested with dub 1.42.0) |
-| Platform | any platform DMD runs on — Windows, Linux, macOS |
+| Item       | Version                                          |
+| ---------- | ------------------------------------------------ |
+| D compiler | DMD 2.100+ (tested with DMD 2.113.0, x86_64)     |
+| Build tool | dub 1.30+ (tested with dub 1.42.0)               |
+| Platform   | any platform DMD runs on — Windows, Linux, macOS |
 
 ## Install
 

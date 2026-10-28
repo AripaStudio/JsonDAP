@@ -26,7 +26,7 @@ your own types, editing JSON files by path, and one exception tree that says wha
 | [08 — SumType](Learn/English/08-sumtype.md) | the envelope, custom tags, the handler pair |
 | [09 — Inspecting and guarding](Learn/English/09-inspecting-and-guarding.md) | predicates, digits in three scripts, blank guards |
 | [10 — Exceptions](Learn/English/10-exceptions.md) | the tree, the fields worth printing, the catch ladder |
-| [11 — API coverage map](Learn/English/11-api-coverage-map.md) | every exported name → chapter → the call site |
+| [11 — The API, one example at a time](Learn/English/11-api-coverage-map.md) | nine programs that each run on their own, and every exported name in one table |
 
 ## The rules the library is built on
 

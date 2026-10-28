@@ -22,7 +22,7 @@ The API reference lives in the READMEs and is not repeated here:
 | 08 | [SumType](Learn/English/08-sumtype.md) | [سام‌تایپ](Learn/Persian/08-sumtype.md) | the `{"tag","value"}` envelope, custom tags, the handler pair |
 | 09 | [Inspecting and guarding](Learn/English/09-inspecting-and-guarding.md) | [بررسی و نگهبان‌ها](Learn/Persian/09-inspecting-and-guarding.md) | the predicates, the digit family, the blank guards |
 | 10 | [Exceptions](Learn/English/10-exceptions.md) | [استثناها](Learn/Persian/10-exceptions.md) | the tree, the fields, the catch ladder |
-| 11 | [API coverage map](Learn/English/11-api-coverage-map.md) | [نقشه‌ی پوشش API](Learn/Persian/11-api-coverage-map.md) | every `AP…` name → chapter → the line that uses it |
+| 11 | [The API, one example at a time](Learn/English/11-api-coverage-map.md) | [API، یکی‌یکی با یک مثال](Learn/Persian/11-api-coverage-map.md) | nine runnable programs, one per section, and every `AP…` name in one table |
 
 ## How these examples were produced
 
